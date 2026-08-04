@@ -5,7 +5,6 @@
     $currentPath = request()->path();
     $isActive = fn (?string $href) => $href && $href !== '#' && ltrim($href, '/') === $currentPath;
     $sections = config('nav.sections');
-    $profile  = config('nav.profile');
 @endphp
 
 <aside class="sidebar" id="sidebar">
@@ -54,25 +53,5 @@
             </nav>
         @endforeach
 
-        <div class="upgrade mt-3">
-            <h6><i class="bi bi-gem me-1"></i>Go Pro</h6>
-            <p>Unlock 2,400+ premium navbar &amp; sidebar designs.</p>
-            <button class="btn btn-sm text-white border-0" style="background:var(--accent-grad); border-radius:8px; font-weight:600; width:100%;">
-                Upgrade Now
-            </button>
-        </div>
-    </div>
-
-    {{-- sidebar footer: profile --}}
-    <div class="side-foot">
-        <div class="profile-row">
-            <div class="avatar" style="width:34px;height:34px;flex-shrink:0;">{{ $profile['initial'] }}</div>
-            <div class="info">
-                <div class="name">{{ $profile['name'] }}</div>
-                <div class="role">{{ $profile['role'] }}</div>
-            </div>
-            <button class="mini-btn" type="button" title="Settings"><i class="bi bi-gear"></i></button>
-            <button class="mini-btn" type="button" title="Log out"><i class="bi bi-box-arrow-right"></i></button>
-        </div>
     </div>
 </aside>

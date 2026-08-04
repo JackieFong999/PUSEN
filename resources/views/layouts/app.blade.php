@@ -341,37 +341,7 @@
   .ex-card .foot a { font-size: .8rem; font-weight: 600; color: var(--accent); text-decoration: none; }
   .ex-card .foot a:hover { text-decoration: underline; }
 
-  /* sidebar bottom (profile card) */
-  .side-foot {
-    border-top: 1px solid var(--border);
-    padding: .9rem .85rem;
-    background: var(--sidebar-bg);
-    transition: background .3s ease;
-    flex-shrink: 0;
-  }
-  .profile-row { display: flex; align-items: center; gap: .7rem; }
-  .profile-row .info { flex: 1; min-width: 0; white-space: nowrap; }
-  .profile-row .info .name { font-size: .83rem; font-weight: 600; color: var(--text); }
-  .profile-row .info .role { font-size: .72rem; color: var(--text-faint); }
-  .profile-row .mini-btn {
-    width: 30px; height: 30px; border-radius: 8px;
-    border: 1px solid var(--border); background: transparent;
-    color: var(--text-faint); font-size: .85rem;
-    display: grid; place-items: center;
-    transition: all .15s; flex-shrink: 0;
-  }
-  .profile-row .mini-btn:hover { color: var(--danger); border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.08); }
-
-  .upgrade {
-    border-radius: var(--radius);
-    background: linear-gradient(150deg, rgba(var(--accent-rgb), .16), rgba(143,109,255,.10));
-    border: 1px solid rgba(var(--accent-rgb), .28);
-    padding: .95rem;
-    margin-bottom: 1rem;
-    text-align: center;
-  }
-  .upgrade h6 { font-weight: 700; font-size: .85rem; margin-bottom: .3rem; }
-  .upgrade p { font-size: .72rem; color: var(--text-muted); margin-bottom: .7rem; }
+  /* sidebar bottom (profile card) — removed; profile moved to header */
 
   .side-collapse-btn {
     width: 26px; height: 26px; border-radius: 8px;
@@ -385,16 +355,13 @@
   .sidebar.collapsed .side-collapse-btn i { transform: rotate(180deg); }
   .sidebar.collapsed .side-search, .sidebar.collapsed .side-label,
   .sidebar.collapsed .side-link .txt, .sidebar.collapsed .side-link .badge-soft,
-  .sidebar.collapsed .side-link .chev, .sidebar.collapsed .upgrade,
-  .sidebar.collapsed .profile-row .info, .sidebar.collapsed .profile-row .mini-btn,
-  .sidebar.collapsed .side-foot .foot-extra {
+  .sidebar.collapsed .side-link .chev {
     display: none !important;
   }
   .sidebar.collapsed .side-link { justify-content: center; padding: .6rem 0; }
   .sidebar.collapsed .sidebar-scroll > .d-flex { justify-content: center; }
   .sidebar.collapsed .side-label { text-align: center; padding: .85rem 0 .45rem; font-size: .6rem; }
   .sidebar.collapsed .side-scroll { padding: 1rem .5rem; }
-  .sidebar.collapsed .profile-row { justify-content: center; }
 
   /* colorful icon chip on CTA button */
   .icon-chip {
@@ -443,8 +410,20 @@
   </div>
 
   <div class="ms-auto d-flex align-items-center gap-2">
+    {{-- Login name / title (left of theme button) --}}
+    <div class="d-flex align-items-center gap-2 me-2">
+      <div class="avatar" style="width:32px;height:32px;flex-shrink:0;">{{ config('nav.profile.initial') }}</div>
+      <div class="d-none d-md-block lh-1">
+        <div style="font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:3px;">{{ config('nav.profile.name') }}</div>
+        <div style="font-size:.68rem;color:var(--text-faint);">{{ config('nav.profile.role') }}</div>
+      </div>
+    </div>
     <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">
       <i class="bi bi-moon-stars-fill"></i>
+    </button>
+    {{-- Logout (right of theme button) --}}
+    <button class="icon-btn" id="logoutBtn" type="button" aria-label="Log out" title="Log out">
+      <i class="bi bi-box-arrow-right"></i>
     </button>
   </div>
 </header>
