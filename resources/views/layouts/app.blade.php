@@ -441,27 +441,10 @@
     </a>
   </div>
 
-  <nav class="d-none d-md-flex align-items-center ms-2">
-    <a class="nav-link" href="{{ route('dashboard') }}">Dashboard</a>
-    <a class="nav-link" href="#">Projects</a>
-    <a class="nav-link" href="#">Reports</a>
-    <a class="nav-link" href="#">Settings</a>
-  </nav>
-
   <div class="ms-auto d-flex align-items-center gap-2">
-    <div class="d-none d-lg-flex align-items-center side-search mb-0" style="width:220px; margin:0;">
-      <i class="bi bi-search"></i>
-      <input type="text" placeholder="Search designs...">
-      <kbd>⌘K</kbd>
-    </div>
     <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">
       <i class="bi bi-moon-stars-fill"></i>
     </button>
-    <button class="icon-btn" type="button" aria-label="Notifications">
-      <i class="bi bi-bell"></i>
-      <span class="dot"></span>
-    </button>
-    <div class="avatar" title="{{ config('nav.profile.name') }}">{{ config('nav.profile.initial') }}</div>
   </div>
 </header>
 
