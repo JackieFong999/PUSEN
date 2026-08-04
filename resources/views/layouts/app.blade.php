@@ -391,6 +391,7 @@
     display: none !important;
   }
   .sidebar.collapsed .side-link { justify-content: center; padding: .6rem 0; }
+  .sidebar.collapsed .sidebar-scroll > .d-flex { justify-content: center; }
   .sidebar.collapsed .side-label { text-align: center; padding: .85rem 0 .45rem; font-size: .6rem; }
   .sidebar.collapsed .side-scroll { padding: 1rem .5rem; }
   .sidebar.collapsed .profile-row { justify-content: center; }
@@ -470,10 +471,11 @@
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
   <div class="offcanvas-body p-3">
-    <div class="side-search"><i class="bi bi-search"></i><input type="text" placeholder="Search..."></div>
-    @foreach (config('nav.sections') as $label => $items)
-      <div class="side-label">{{ $label }}</div>
-      @foreach ($items as $item)
+    @foreach (config('nav.sections') as $label => $section)
+      @if (! empty($section['show_label']))
+        <div class="side-label">{{ $label }}</div>
+      @endif
+      @foreach ($section['items'] as $item)
         @if (! empty($item['children']))
           @foreach ($item['children'] as $child)
             <a class="side-link" href="{{ $child['href'] ?? '#' }}">

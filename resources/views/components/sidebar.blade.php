@@ -10,21 +10,18 @@
 
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-scroll">
-        <div class="d-flex align-items-center gap-2 mb-3">
-            <div class="side-search flex-grow-1" style="margin:0;">
-                <i class="bi bi-search"></i>
-                <input type="text" placeholder="Search...">
-                <kbd>⌘K</kbd>
-            </div>
+        <div class="d-flex align-items-center justify-content-end mb-3">
             <button class="side-collapse-btn" id="sidebarToggle" type="button" title="Collapse sidebar">
                 <i class="bi bi-chevron-left"></i>
             </button>
         </div>
 
-        @foreach ($sections as $label => $items)
-            <div class="side-label">{{ $label }}</div>
+        @foreach ($sections as $label => $section)
+            @if (! empty($section['show_label']))
+                <div class="side-label">{{ $label }}</div>
+            @endif
             <nav>
-                @foreach ($items as $item)
+                @foreach ($section['items'] as $item)
                     @if (! empty($item['children']))
                         {{-- collapsible group --}}
                         <div class="side-group">
