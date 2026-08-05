@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\SubjectListController;
 use App\Http\Controllers\Admin\FundTypeListController;
 use App\Http\Controllers\Admin\StudentStatusListController;
 use App\Http\Controllers\Admin\SubjectTypeListController;
+use App\Http\Controllers\Admin\AdvisorTypeListController;
+use App\Http\Controllers\Admin\AcademicYearSemesterListController;
 use Illuminate\Support\Facades\Route;
 
 // Root → dashboard
@@ -31,3 +33,9 @@ Route::get('/admin/student-status-list', [StudentStatusListController::class, 'i
 
 // Admin: Subject Type
 Route::get('/admin/subject-type-list', [SubjectTypeListController::class, 'index'])->name('admin.subject-type-list');
+
+// Admin: Advisor Type
+Route::get('/admin/advisor-type-list', [AdvisorTypeListController::class, 'index'])->name('admin.advisor-type-list');
+
+// Admin: Academic Year Semester
+Route::get('/admin/academic-year-semester-list', [AcademicYearSemesterListController::class, 'index'])->name('admin.academic-year-semester-list');
