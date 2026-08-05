@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdvisorTypeListController;
 use App\Http\Controllers\Admin\AcademicYearSemesterListController;
 use App\Http\Controllers\Admin\AdvisorListController;
 use App\Http\Controllers\Admin\StudentRegistrationListController;
+use App\Http\Controllers\Admin\StaffListController;
 use Illuminate\Support\Facades\Route;
 
 // Root → dashboard
@@ -47,3 +48,8 @@ Route::get('/admin/advisor-list', [AdvisorListController::class, 'index'])->name
 
 // Admin: Student Registration
 Route::get('/admin/student-registration-list', [StudentRegistrationListController::class, 'index'])->name('admin.student-registration-list');
+
+// Admin: Staff List (AG Grid + search + status update)
+Route::get('/admin/staff-list', [StaffListController::class, 'index'])->name('admin.staff-list');
+Route::get('/admin/staff-list/search', [StaffListController::class, 'search']);
+Route::post('/admin/staff-list/update-status', [StaffListController::class, 'updateStatus']);
