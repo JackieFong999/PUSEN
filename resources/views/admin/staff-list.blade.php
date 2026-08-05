@@ -62,21 +62,14 @@
   .btn-cancel:hover { background: var(--bg-soft); color: var(--text); }
 </style>
 
-<div class="crumb mb-3">
-  <a href="{{ route('dashboard') }}">Home</a><span class="sep">/</span>
-  <a href="#">Admin</a><span class="sep">/</span>
-  <span>Staff List</span>
-</div>
-
-<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
   <div>
-    <h1 class="mb-1">Staff List</h1>
-    <p>Search, browse and manage staff — data from <code>tblStaff</code>.</p>
+    <h1 class="mb-0" style="font-size:1.25rem;">Staff List</h1>
   </div>
 </div>
 
 {{-- ============ CRITERIA BAR ============ --}}
-<div class="stat-card mb-4">
+<div class="stat-card mb-2">
   <form id="staffSearchForm" class="row g-3 align-items-end">
     <div class="col-md-3">
       <label class="form-label" for="fStaffId">Staff Id</label>
@@ -174,7 +167,7 @@
     ],
     rowData: [],
     pagination: true,
-    paginationPageSize: 10,
+    paginationPageSize: 8,
     paginationPageSizeSelector: false,
     defaultColDef: { sortable: true, resizable: true },
     singleClickEdit: true,
