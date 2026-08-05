@@ -3,6 +3,9 @@
 use App\Http\Controllers\Admin\RoleListController;
 use App\Http\Controllers\Admin\TargetUserListController;
 use App\Http\Controllers\Admin\SubjectListController;
+use App\Http\Controllers\Admin\FundTypeListController;
+use App\Http\Controllers\Admin\StudentStatusListController;
+use App\Http\Controllers\Admin\SubjectTypeListController;
 use Illuminate\Support\Facades\Route;
 
 // Root → dashboard
@@ -19,3 +22,12 @@ Route::get('/admin/target-user-list', [TargetUserListController::class, 'index']
 
 // Admin: Subject/Lecture List
 Route::get('/admin/subject-list', [SubjectListController::class, 'index'])->name('admin.subject-list');
+
+// Admin: Fund Type
+Route::get('/admin/fund-type-list', [FundTypeListController::class, 'index'])->name('admin.fund-type-list');
+
+// Admin: Student Status
+Route::get('/admin/student-status-list', [StudentStatusListController::class, 'index'])->name('admin.student-status-list');
+
+// Admin: Subject Type
+Route::get('/admin/subject-type-list', [SubjectTypeListController::class, 'index'])->name('admin.subject-type-list');
