@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\StudentStatusListController;
 use App\Http\Controllers\Admin\SubjectTypeListController;
 use App\Http\Controllers\Admin\AdvisorTypeListController;
 use App\Http\Controllers\Admin\AcademicYearSemesterListController;
+use App\Http\Controllers\Admin\AdvisorListController;
+use App\Http\Controllers\Admin\StudentRegistrationListController;
 use Illuminate\Support\Facades\Route;
 
 // Root → dashboard
@@ -39,3 +41,9 @@ Route::get('/admin/advisor-type-list', [AdvisorTypeListController::class, 'index
 
 // Admin: Academic Year Semester
 Route::get('/admin/academic-year-semester-list', [AcademicYearSemesterListController::class, 'index'])->name('admin.academic-year-semester-list');
+
+// Admin: Advisor List
+Route::get('/admin/advisor-list', [AdvisorListController::class, 'index'])->name('admin.advisor-list');
+
+// Admin: Student Registration
+Route::get('/admin/student-registration-list', [StudentRegistrationListController::class, 'index'])->name('admin.student-registration-list');
