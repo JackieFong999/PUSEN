@@ -45,7 +45,6 @@ return [
                         ['label' => 'SEN Type',          'icon' => 'bi-bandaid',    'color' => 'ic-yellow', 'href' => '/admin/sen-type-list'],
                         ['label' => 'Subject Type',     'icon' => 'bi-window-sidebar',  'color' => 'ic-blue', 'href' => '/admin/subject-type-list'],
                         ['label' => 'Advisor Type',     'icon' => 'bi-layout-sidebar-inset',  'color' => 'ic-pink', 'href' => '/admin/advisor-type-list'],
-                        ['label' => 'SEN Type',     'icon' => 'bi-star',  'color' => 'ic-yellow', 'href' => '#'],
                         ['label' => 'Academic Year Semester',     'icon' => 'bi-signpost-split',  'color' => 'ic-cyan', 'href' => '/admin/academic-year-semester-list'],
                     ],
                 ],

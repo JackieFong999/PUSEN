@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('content')
 
@@ -24,16 +24,9 @@
   .table-hover tbody tr:hover { background: var(--accent-soft); }
 </style>
 
-<div class="crumb mb-3">
-  <a href="{{ route('dashboard') }}">Home</a><span class="sep">/</span>
-  <a href="#">Admin</a><span class="sep">/</span>
-  <span>Academic Year Semester</span>
-</div>
-
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
   <div>
     <h1 class="mb-1">Academic Year Semester</h1>
-    <p>Academic year/semester periods — retrieved from <code>tblAcademicYear_Semester</code>.</p>
   </div>
 </div>
 
