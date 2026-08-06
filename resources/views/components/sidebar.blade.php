@@ -23,7 +23,12 @@
                 @foreach ($section['items'] as $item)
                     @if (! empty($item['children']))
                         {{-- collapsible group --}}
-                        <div class="side-group">
+                        @php
+                            // keep the group open when one of its children is the current page
+                            $groupHasActive = collect($item['children'])
+                                ->contains(fn ($c) => $isActive($c['href'] ?? null));
+                        @endphp
+                        <div class="side-group {{ $groupHasActive ? 'open' : '' }}" data-group="{{ $item['label'] }}">
                             <a class="side-link" href="#" data-group-toggle>
                                 <i class="bi {{ $item['icon'] }} {{ $item['color'] }}"></i>
                                 <span class="txt">{{ $item['label'] }}</span>

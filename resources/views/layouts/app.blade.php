@@ -483,18 +483,49 @@
   // ---------- Sidebar collapse (desktop) ----------
   const sidebar = document.getElementById('sidebar');
   const sidebarToggle = document.getElementById('sidebarToggle');
+  // restore collapsed state across page navigations
+  if (sidebar && sidebarToggle && localStorage.getItem('pusen-sidebar-collapsed') === '1') {
+    sidebar.classList.add('collapsed');
+    sidebarToggle.title = 'Expand sidebar';
+  }
   if (sidebarToggle) {
     sidebarToggle.addEventListener('click', () => {
       sidebar.classList.toggle('collapsed');
+      localStorage.setItem('pusen-sidebar-collapsed', sidebar.classList.contains('collapsed') ? '1' : '0');
       sidebarToggle.title = sidebar.classList.contains('collapsed') ? 'Expand sidebar' : 'Collapse sidebar';
     });
   }
 
-  // ---------- Collapsible group ----------
+  // ---------- Collapsible group (state survives page navigations) ----------
+  const GROUP_STORAGE_KEY = 'pusen-open-groups';
+  function loadOpenGroups() {
+    try { return JSON.parse(localStorage.getItem(GROUP_STORAGE_KEY) || '[]'); } catch { return []; }
+  }
+  function saveOpenGroups(groups) {
+    localStorage.setItem(GROUP_STORAGE_KEY, JSON.stringify(groups));
+  }
+  // restore persisted state: open groups that were saved open, close ones the
+  // user collapsed, but never close the group containing the active page link.
+  const savedOpenGroups = new Set(loadOpenGroups());
+  const activeGroup = document.querySelector('.side-group .side-link.active')?.closest('.side-group');
+  document.querySelectorAll('.side-group[data-group]').forEach(group => {
+    const name = group.dataset.group;
+    if (savedOpenGroups.has(name) || group === activeGroup) group.classList.add('open');
+    else group.classList.remove('open');
+  });
   document.querySelectorAll('[data-group-toggle]').forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
-      link.closest('.side-group').classList.toggle('open');
+      const group = link.closest('.side-group');
+      if (!group) return;
+      group.classList.toggle('open');
+      const name = group.dataset.group;
+      if (!name) return;
+      const open = loadOpenGroups();
+      const idx = open.indexOf(name);
+      if (group.classList.contains('open') && idx === -1) open.push(name);
+      if (!group.classList.contains('open') && idx !== -1) open.splice(idx, 1);
+      saveOpenGroups(open);
     });
   });
 
