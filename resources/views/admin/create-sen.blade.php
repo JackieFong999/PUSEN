@@ -205,9 +205,9 @@
     </div>
   </div>
 
-  {{-- ============ STUDENT INFO (display only) ============ --}}
+  {{-- ============ STUDENT INFO ============ --}}
   <div class="form-card mb-3">
-    <div class="card-head">Student Information <span class="text-muted" style="text-transform:none;letter-spacing:0;">(display only)</span></div>
+    <div class="card-head">Student Information</div>
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-4">
@@ -246,19 +246,19 @@
 
       <div class="row g-3 mt-1">
         <div class="col-md-4">
-          <label class="form-label" for="dTeachers">Subject Teacher (display only)</label>
+          <label class="form-label" for="dTeachers">Subject Teacher</label>
           <select class="form-select display-list display-only" id="dTeachers" multiple size="4" disabled>
             <option value="">— none —</option>
           </select>
         </div>
         <div class="col-md-4">
-          <label class="form-label" for="dAdvisors">Academic Advisor (display only)</label>
+          <label class="form-label" for="dAdvisors">Academic Advisor</label>
           <select class="form-select display-list display-only" id="dAdvisors" multiple size="4" disabled>
             <option value="">— none —</option>
           </select>
         </div>
         <div class="col-md-4">
-          <label class="form-label" for="dSubjects">Subject (display only)</label>
+          <label class="form-label" for="dSubjects">Subject</label>
           <select class="form-select display-list display-only" id="dSubjects" multiple size="4" disabled>
             <option value="">— none —</option>
           </select>
@@ -277,7 +277,7 @@
       </div>
       <input type="file" id="docFileInput" accept=".pdf,application/pdf" multiple hidden>
       <label class="form-label d-flex justify-content-between align-items-center mb-1">
-        <span>Uploaded Documents <span class="text-muted fw-normal">(display only)</span> &mdash; limited to 20 documents</span>
+        <span>Uploaded Documents &mdash; limited to 20 documents</span>
         <span class="badge-soft" id="docCountLabel">0 / 20</span>
       </label>
       <select class="form-select display-list display-only mb-2" id="dDocs" multiple size="4" disabled>
