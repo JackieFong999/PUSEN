@@ -31,6 +31,8 @@
     box-shadow: 0 4px 14px rgba(var(--accent-rgb), .3);
   }
   .btn-search:hover { color: #fff; filter: brightness(1.08); }
+  /* override global .stat-card i rule: icon must match button text color */
+  .btn-search i { color: #fff; }
 
   #staffGrid {
     height: 62vh;
@@ -53,6 +55,25 @@
   #staffGrid .ag-cell { display: flex; align-items: center; }
   #staffGrid .ag-paging-panel { font-size: .8rem; color: var(--text-muted); border-top: 1px solid var(--card-border); }
 
+  /* ---------- loading overlay ---------- */
+  #staffGrid .ag-overlay {
+    background: color-mix(in srgb, var(--card-bg) 45%, transparent);
+  }
+  .grid-loading-overlay {
+    display: flex; flex-direction: column; align-items: center; gap: .65rem;
+    font-size: .82rem; font-weight: 600; color: var(--text-muted);
+    padding: 1.25rem 1.75rem;
+    background: color-mix(in srgb, var(--card-bg) 92%, transparent);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.18);
+  }
+  .grid-loading-overlay .spinner-border {
+    width: 2.1rem; height: 2.1rem;
+    border-width: .26em;
+    color: var(--accent);
+  }
+
   .row-actions .btn { font-size: .75rem; font-weight: 600; border-radius: 8px; padding: .28rem .75rem; }
   .btn-edit { border: 1px solid rgba(var(--accent-rgb), .45); color: var(--accent); background: transparent; }
   .btn-edit:hover { background: var(--accent-soft); color: var(--accent); }
@@ -60,6 +81,8 @@
   .btn-save:hover { filter: brightness(1.08); }
   .btn-cancel { border: 1px solid var(--border); color: var(--text-muted); background: transparent; }
   .btn-cancel:hover { background: var(--bg-soft); color: var(--text); }
+  .btn-cancel i { color: var(--text-muted); }
+  .btn-cancel:hover i { color: var(--text); }
 </style>
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
@@ -127,6 +150,19 @@
   const statusMap  = { 0: 'Enable', 1: 'Disable' };
   const statusRev  = { Enable: 0, Disable: 1 };
 
+  /* ---------- loading overlay component (must be defined before gridOptions) ---------- */
+  class StaffLoadingOverlay {
+    init() {
+      this.eGui = document.createElement('div');
+      this.eGui.className = 'grid-loading-overlay';
+      this.eGui.innerHTML = `
+        <div class="spinner-border" role="status" aria-hidden="true"></div>
+        <div>Loading staff…</div>
+      `;
+    }
+    getGui() { return this.eGui; }
+  }
+
   /* ---------- AG Grid ---------- */
   const gridOptions = {
     columnDefs: [
@@ -175,6 +211,7 @@
     getRowId: p => p.data.staff_id,
     onGridReady: (params) => { gridApi = params.api; },
     suppressCellFocus: true,
+    loadingOverlayComponent: StaffLoadingOverlay,
   };
   let gridApi;
   agGrid.createGrid(document.getElementById('staffGrid'), gridOptions);
@@ -195,13 +232,21 @@
     const fd = new FormData(e.target);
     const params = new URLSearchParams();
     for (const [k, v] of fd) { if (v !== '') params.set(k, v); }
-    const res = await fetch('/admin/staff-list/search?' + params.toString());
-    const rows = await res.json();
-    gridApi.setGridOption('rowData', rows.map(r => ({
-      ...r,
-      status: statusMap[r.status] ?? r.status,
-      _editing: false,
-    })));
+    gridApi.showLoadingOverlay(); // spinner in the middle of the grid while fetching
+    try {
+      const res = await fetch('/admin/staff-list/search?' + params.toString());
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const rows = await res.json();
+      gridApi.setGridOption('rowData', rows.map(r => ({
+        ...r,
+        status: statusMap[r.status] ?? r.status,
+        _editing: false,
+      })));
+    } catch (err) {
+      toast('❌ Search failed: ' + err.message);
+    } finally {
+      gridApi.hideOverlay();
+    }
   });
 
   /* ---------- Reset ---------- */
