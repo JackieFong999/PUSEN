@@ -183,6 +183,7 @@
   /* ---------- AG Grid ---------- */
   const gridOptions = {
     columnDefs: [
+      { field: 'sen_id',                  headerName: 'SEN Id',       width: 95 },
       { field: 'student_id',              headerName: 'Student Id',     width: 120 },
       { field: 'student_name_eng',        headerName: 'Name (Eng)',     flex: 1, minWidth: 150 },
       { field: 'student_name_chn',        headerName: 'Name (Chn)',     width: 105 },
