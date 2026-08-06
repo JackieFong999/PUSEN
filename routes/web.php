@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\StudentListController;
 use App\Http\Controllers\Admin\CreateSenController;
 use App\Http\Controllers\Admin\SenSearchController;
 use App\Http\Controllers\Admin\SenTypeListController;
+use App\Http\Controllers\Admin\EmailTemplateListController;
 use Illuminate\Support\Facades\Route;
 
 // Root → dashboard
@@ -61,6 +62,11 @@ Route::post('/admin/staff-list/update-status', [StaffListController::class, 'upd
 // Admin: Student List (AG Grid + search, read-only)
 Route::get('/admin/student-list', [StudentListController::class, 'index'])->name('admin.student-list');
 Route::get('/admin/student-list/search', [StudentListController::class, 'search']);
+
+// Admin: Email Template
+Route::get('/admin/email-template-list', [EmailTemplateListController::class, 'index'])->name('admin.email-template-list');
+Route::get('/admin/email-template-list/data', [EmailTemplateListController::class, 'data']);
+Route::post('/admin/email-template-list/save', [EmailTemplateListController::class, 'save']);
 
 // Admin: SEN Type
 Route::get('/admin/sen-type-list', [SenTypeListController::class, 'index'])->name('admin.sen-type-list');

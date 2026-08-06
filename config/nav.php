@@ -33,10 +33,11 @@ return [
                 [
                     'label' => 'Admin', 'icon' => 'bi-collection', 'color' => 'ic-yellow',
                     'children' => [
-                        ['label' => 'Role List',     'icon' => 'bi-search',          'color' => 'ic-green',  'href' => '/admin/role-list'],
-                        ['label' => 'Target User List',   'icon' => 'bi-megaphone',       'color' => 'ic-green',  'href' => '/admin/target-user-list'],
                         ['label' => 'Staff List',     'icon' => 'bi-signpost-split',  'color' => 'ic-purple', 'href' => '/admin/staff-list'],
                         ['label' => 'Student List',    'icon' => 'bi-people',          'color' => 'ic-blue',   'href' => '/admin/student-list'],
+                        ['label' => 'Email Template',    'icon' => 'bi-envelope',          'color' => 'ic-cyan',   'href' => '/admin/email-template-list'],
+                        ['label' => 'Role List',     'icon' => 'bi-search',          'color' => 'ic-green',  'href' => '/admin/role-list'],
+                        ['label' => 'Target User List',   'icon' => 'bi-megaphone',       'color' => 'ic-green',  'href' => '/admin/target-user-list'],
                         ['label' => 'Subject/Lecture List',     'icon' => 'bi-star',  'color' => 'ic-yellow', 'href' => '/admin/subject-list'],
                         ['label' => 'Student Registration',     'icon' => 'bi-clock-history',  'color' => 'ic-cyan', 'href' => '/admin/student-registration-list'],
                         ['label' => 'Advisor List',     'icon' => 'bi-bookmark',  'color' => 'ic-blue', 'href' => '/admin/advisor-list'],
