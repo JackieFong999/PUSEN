@@ -97,14 +97,16 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
   <div>
-    <h1 class="mb-0" style="font-size:1.25rem;">Create SEN</h1>
+    <h1 class="mb-0" style="font-size:1.25rem;">{{ $isEdit ? 'Edit SEN' : 'Create SEN' }}</h1>
   </div>
 </div>
 
-{{-- ============ CREATE BUTTON ============ --}}
-<div class="mb-3">
-  <button type="button" id="createCaseBtn" class="btn btn-create"><i class="bi bi-plus-lg me-1"></i>Create SEN Case</button>
-</div>
+{{-- ============ CREATE BUTTON (hidden in edit mode) ============ --}}
+@if (! $isEdit)
+  <div class="mb-3">
+    <button type="button" id="createCaseBtn" class="btn btn-create"><i class="bi bi-plus-lg me-1"></i>Create SEN Case</button>
+  </div>
+@endif
 
 {{-- ============ FORM ============ --}}
 <form id="senForm" autocomplete="off">
@@ -115,14 +117,14 @@
       <div class="row g-3">
         <div class="col-md-3">
           <label class="form-label" for="fSenId">SEN Id</label>
-          <input type="text" class="form-control display-only" id="fSenId" value="{{ $nextSenId }}" readonly disabled>
+          <input type="text" class="form-control display-only" id="fSenId" value="{{ $isEdit ? $editSen->SEN_Id : $nextSenId }}" readonly disabled>
         </div>
         <div class="col-md-4">
           <label class="form-label" for="fStudentId">Student Id <span class="text-danger">*</span></label>
           <select class="form-select" id="fStudentId" name="student_id" disabled>
             <option value="">-- Select Student (Active) --</option>
             @foreach ($students as $st)
-              <option value="{{ $st->Student_Id }}">{{ $st->Student_Id }} — {{ $st->Student_Name_Eng }}</option>
+              <option value="{{ $st->Student_Id }}" @selected($isEdit && $editSen->Student_Id === $st->Student_Id)>{{ $st->Student_Id }} — {{ $st->Student_Name_Eng }}</option>
             @endforeach
           </select>
         </div>
@@ -134,7 +136,7 @@
           <select class="form-select" id="fPL" name="programme_leader" disabled>
             <option value="">-- Select --</option>
             @foreach ($staff['programme_leader'] as $s)
-              <option value="{{ $s->Staff_Id }}">{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
+              <option value="{{ $s->Staff_Id }}" @selected($isEdit && $editSen->Programme_Leader === $s->Staff_Id)>{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
             @endforeach
           </select>
         </div>
@@ -143,7 +145,7 @@
           <select class="form-select" id="fDA" name="department_admin_staff" disabled>
             <option value="">-- Select --</option>
             @foreach ($staff['department_admin_staff'] as $s)
-              <option value="{{ $s->Staff_Id }}">{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
+              <option value="{{ $s->Staff_Id }}" @selected($isEdit && $editSen->Department_Admin_Staff === $s->Staff_Id)>{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
             @endforeach
           </select>
         </div>
@@ -152,7 +154,7 @@
           <select class="form-select" id="fC" name="counsellor" disabled>
             <option value="">-- Select --</option>
             @foreach ($staff['counsellor'] as $s)
-              <option value="{{ $s->Staff_Id }}">{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
+              <option value="{{ $s->Staff_Id }}" @selected($isEdit && $editSen->Counsellor === $s->Staff_Id)>{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
             @endforeach
           </select>
         </div>
@@ -161,7 +163,7 @@
           <select class="form-select" id="fSO" name="sen_officer" disabled>
             <option value="">-- Select --</option>
             @foreach ($staff['sen_officer'] as $s)
-              <option value="{{ $s->Staff_Id }}">{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
+              <option value="{{ $s->Staff_Id }}" @selected($isEdit && $editSen->SEN_Officer === $s->Staff_Id)>{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
             @endforeach
           </select>
         </div>
@@ -170,7 +172,7 @@
           <select class="form-select" id="fUSSO" name="undergraduate_studies_support_officer" disabled>
             <option value="">-- Select --</option>
             @foreach ($staff['undergraduate_studies_support_officer'] as $s)
-              <option value="{{ $s->Staff_Id }}">{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
+              <option value="{{ $s->Staff_Id }}" @selected($isEdit && $editSen->Undergraduate_Studies_Support_Officer === $s->Staff_Id)>{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
             @endforeach
           </select>
         </div>
@@ -179,25 +181,25 @@
           <select class="form-select" id="fSenType" name="sen_type" disabled>
             <option value="">-- Select --</option>
             @foreach ($senTypes as $t)
-              <option value="{{ $t }}">{{ $t }}</option>
+              <option value="{{ $t }}" @selected($isEdit && $editSen->SEN_Type === $t)>{{ $t }}</option>
             @endforeach
           </select>
         </div>
         <div class="col-md-4">
           <label class="form-label" for="fTemp">Temporary Special Support</label>
-          <input type="text" class="form-control" id="fTemp" name="temporary_special_support" disabled>
+          <input type="text" class="form-control" id="fTemp" name="temporary_special_support" value="{{ $isEdit ? $editSen->Temporary_Special_Support : '' }}" disabled>
         </div>
         <div class="col-12">
           <label class="form-label" for="fDetail">SEN Detail</label>
-          <textarea class="form-control" id="fDetail" name="sen_detail" rows="2" disabled></textarea>
+          <textarea class="form-control" id="fDetail" name="sen_detail" rows="2" disabled>{{ $isEdit ? $editSen->SEN_Detail : '' }}</textarea>
         </div>
         <div class="col-md-6">
           <label class="form-label" for="fSupport">Special Support Required</label>
-          <textarea class="form-control" id="fSupport" name="special_support_required" rows="2" disabled></textarea>
+          <textarea class="form-control" id="fSupport" name="special_support_required" rows="2" disabled>{{ $isEdit ? $editSen->Special_Support_Required : '' }}</textarea>
         </div>
         <div class="col-md-6">
           <label class="form-label" for="fExam">Special Examination Arrangement</label>
-          <textarea class="form-control" id="fExam" name="special_examination_arrangement" rows="2" disabled></textarea>
+          <textarea class="form-control" id="fExam" name="special_examination_arrangement" rows="2" disabled>{{ $isEdit ? $editSen->Special_Examination_Arrangement : '' }}</textarea>
         </div>
       </div>
     </div>
@@ -332,6 +334,10 @@
   /* ---------- state ---------- */
   let studentValid = false;
   let nextSenId = '{{ $nextSenId }}'; // advanced locally after each save
+  const IS_EDIT = {{ $isEdit ? 'true' : 'false' }};
+  const EDIT_SEN_ID = '{{ $isEdit ? $editSen->SEN_Id : '' }}';
+  let removedDocs = []; // saved docs marked for deletion (edit mode, applied on Save)
+  let savedDocNames = []; // filenames that exist in tblSEN_Doc (edit mode)
 
   const editableSelectors = '#senForm .form-control, #senForm .form-select, #senForm textarea';
 
@@ -374,20 +380,23 @@
     });
   }
 
-  /* ---------- [+ Create SEN Case] ---------- */
-  document.getElementById('createCaseBtn').addEventListener('click', () => {
-    // clear any staged files left from a previous aborted session for this SEN_Id
-    // (fire-and-forget so the form reset below is immediate)
-    fetch('/admin/create-sen/clear-staged', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
-      body: JSON.stringify({ sen_id: document.getElementById('fSenId').value }),
-    }).catch(() => {});
-    resetAll();
-    document.getElementById('fSenId').value = nextSenId;
-    setFormDisabled(false);
-    document.getElementById('fStudentId').focus();
-  });
+  /* ---------- [+ Create SEN Case] (create mode only) ---------- */
+  const createCaseBtn = document.getElementById('createCaseBtn');
+  if (createCaseBtn) {
+    createCaseBtn.addEventListener('click', () => {
+      // clear any staged files left from a previous aborted session for this SEN_Id
+      // (fire-and-forget so the form reset below is immediate)
+      fetch('/admin/create-sen/clear-staged', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+        body: JSON.stringify({ sen_id: document.getElementById('fSenId').value }),
+      }).catch(() => {});
+      resetAll();
+      document.getElementById('fSenId').value = nextSenId;
+      setFormDisabled(false);
+      document.getElementById('fStudentId').focus();
+    });
+  }
 
   /* ================= Document upload ================= */
   const docFileInput = document.getElementById('docFileInput');
@@ -411,8 +420,7 @@
         });
         const json = await res.json();
         if (json.success) {
-          fillList('dDocs', json.files);
-          document.getElementById('docCountLabel').textContent = json.files.length + ' / 20';
+          refreshDocList(json.files);
           // once any file is uploaded, the Student Id can no longer be changed
           document.getElementById('fStudentId').disabled = true;
         } else {
@@ -430,22 +438,51 @@
     document.getElementById('removeDocBtn').disabled = !dDocs.selectedOptions.length;
   });
 
+  // click a file in the Document List -> open the PDF in a new tab (preview)
+  dDocs.addEventListener('click', () => {
+    const sel = dDocs.selectedOptions[0];
+    if (sel && sel.value) {
+      window.open('/admin/sen-doc/' + encodeURIComponent(sel.value), '_blank');
+    }
+  });
+
+  // refresh the doc list UI: always show saved docs (minus marked-removed) + staged files
+  function refreshDocList(stagedFiles) {
+    const visible = [];
+    savedDocNames.forEach(n => { if (!removedDocs.includes(n)) visible.push(n); });
+    (stagedFiles || []).forEach(n => { if (!visible.includes(n)) visible.push(n); });
+    fillList('dDocs', visible);
+    const total = visible.length;
+    document.getElementById('docCountLabel').textContent = total + ' / 20';
+    document.getElementById('removeDocBtn').disabled = true;
+  }
+
   document.getElementById('removeDocBtn').addEventListener('click', async () => {
     const sel = dDocs.selectedOptions[0];
     if (!sel || !sel.value) return;
     const senId = document.getElementById('fSenId').value;
+    const filename = sel.value;
+
+    // edit mode: removing an already-saved doc only marks it for deletion (applied on Save,
+    // so Cancel can discard it)
+    if (IS_EDIT && savedDocNames.includes(filename)) {
+      removedDocs.push(filename);
+      refreshDocList([]);
+      toast('🗑️ Marked for removal: ' + filename);
+      return;
+    }
+
+    // staged file -> delete immediately
     try {
       const res = await fetch('/admin/create-sen/remove-doc', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
-        body: JSON.stringify({ sen_id: senId, filename: sel.value }),
+        body: JSON.stringify({ sen_id: senId, filename }),
       });
       const json = await res.json();
       if (json.success) {
-        fillList('dDocs', json.files);
-        document.getElementById('docCountLabel').textContent = json.files.length + ' / 20';
-        document.getElementById('removeDocBtn').disabled = true;
-        toast('🗑️ Removed ' + sel.value);
+        refreshDocList(json.files);
+        toast('🗑️ Removed ' + filename);
       } else {
         toast('❌ ' + (json.message || 'Remove failed'));
       }
@@ -517,7 +554,8 @@
       fStudentId.focus();
       return;
     }
-    const ok = await askConfirm('Save SEN case', 'Save this SEN case for student ' + sid + '?');
+    const ok = await askConfirm(IS_EDIT ? 'Save changes' : 'Save SEN case',
+      IS_EDIT ? 'Save changes to SEN case ' + EDIT_SEN_ID + '?' : 'Save this SEN case for student ' + sid + '?');
     if (!ok) return;
 
     const fd = new FormData(document.getElementById('senForm'));
@@ -526,6 +564,10 @@
     // student_id is excluded from FormData when the select is disabled (lock after upload),
     // so add it explicitly
     payload.student_id = sid;
+    if (IS_EDIT) {
+      payload.sen_id = EDIT_SEN_ID;
+      payload.removed_docs = removedDocs;
+    }
 
     try {
       const res = await fetch('/admin/create-sen/save', {
@@ -536,6 +578,11 @@
       const json = await res.json();
       if (json.success) {
         toast('✅ SEN case ' + json.sen_id + ' saved');
+        if (IS_EDIT) {
+          // back to SEN Search after a short beat so the toast is visible
+          setTimeout(() => { window.location.href = '/admin/sen-search'; }, 900);
+          return;
+        }
         // advance the auto SEN_Id for the next case (after reset so it isn't wiped)
         const m = (json.sen_id || '').match(/(\d+)$/);
         if (m) {
@@ -554,7 +601,7 @@
 
   /* ---------- Cancel ---------- */
   document.getElementById('cancelBtn').addEventListener('click', async () => {
-    const ok = await askConfirm('Cancel', 'Discard all changes and reset the form?');
+    const ok = await askConfirm('Cancel', IS_EDIT ? 'Discard all changes and go back to SEN Search?' : 'Discard all changes and reset the form?');
     if (!ok) return;
     // delete staged uploads from the server too
     try {
@@ -564,13 +611,31 @@
         body: JSON.stringify({ sen_id: document.getElementById('fSenId').value }),
       });
     } catch (e) { /* ignore */ }
+    if (IS_EDIT) {
+      // discard ALL changes: saved docs stay untouched, staged files already deleted
+      window.location.href = '/admin/sen-search';
+      return;
+    }
     resetAll();
     setFormDisabled(true);
     toast('Form reset');
   });
 
+  /* ---------- edit mode: prefill docs + enable form ---------- */
+  if (IS_EDIT) {
+    // saved docs from tblSEN_Doc
+    savedDocNames = @json($editDocs->pluck('Doc_Filename'));
+    refreshDocList([]);
+    // enable the form, but keep Student Id disabled (not changeable)
+    setFormDisabled(false);
+    fStudentId.disabled = true;
+    // populate the display-only student block + lists
+    lookupStudent();
+  }
+
   /* ---------- initial state ---------- */
   setFormDisabled(true);
+  if (IS_EDIT) { setFormDisabled(false); fStudentId.disabled = true; }
 </script>
 
 @endsection

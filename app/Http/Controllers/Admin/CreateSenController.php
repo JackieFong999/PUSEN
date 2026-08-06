@@ -22,18 +22,48 @@ class CreateSenController extends Controller
 
     /**
      * Create SEN page: form + dropdown data (staff by role, SEN types, next SEN_Id).
+     * When ?sen_id= is given, renders in EDIT mode (loads the SEN record + its docs).
      */
-    public function index()
+    public function index(Request $request)
     {
         $conn = DB::connection('pusen');
 
+        $isEdit  = false;
+        $editSen = null;
+        $editDocs = collect();
+
+        $senId = trim((string) $request->input('sen_id'));
+        if ($senId !== '') {
+            $editSen = $conn->table('tblSEN')->where('SEN_Id', $senId)->first();
+            if (! $editSen) {
+                return redirect()->route('admin.sen-search');
+            }
+            $isEdit = true;
+            $editDocs = $conn->table('tblSEN_Doc')
+                ->where('SEN_Id', $senId)
+                ->orderBy('Doc_Seq')
+                ->get();
+        }
+
         $staff = [];
         foreach (self::STAFF_ROLES as $key => $targetUserId) {
-            $staff[$key] = $conn->table('tblStaff')
-                ->where('Target_User_Id', $targetUserId)
-                ->where('status', 0) // enabled only
-                ->orderBy('Staff_Id')
-                ->get(['Staff_Id', 'Staff_Name']);
+            $q = $conn->table('tblStaff')->where('Target_User_Id', $targetUserId);
+            if (! $isEdit) {
+                $q->where('status', 0); // create mode: enabled only
+            }
+            // edit mode: ignore status — existing SEN data may reference disabled staff
+            $staff[$key] = $q->orderBy('Staff_Id')->get(['Staff_Id', 'Staff_Name']);
+
+            // ensure the record's current value is always present in the dropdown
+            if ($isEdit && $editSen->{$this->colName($key)}) {
+                $cur = $editSen->{$this->colName($key)};
+                if (! $staff[$key]->contains('Staff_Id', $cur)) {
+                    $s = $conn->table('tblStaff')->where('Staff_Id', $cur)->first(['Staff_Id', 'Staff_Name']);
+                    if ($s) {
+                        $staff[$key]->push($s);
+                    }
+                }
+            }
         }
 
         $senTypes = $conn->table('tblSEN_Type')
@@ -46,9 +76,17 @@ class CreateSenController extends Controller
             ->orderBy('Student_Id')
             ->get(['Student_Id', 'Student_Name_Eng']);
 
-        $nextSenId = $this->nextSenId();
+        // edit mode: ensure the record's student is in the dropdown even if not ACTIVE
+        if ($isEdit && $editSen->Student_Id && ! $students->contains('Student_Id', $editSen->Student_Id)) {
+            $s = $conn->table('tblStudent')->where('Student_Id', $editSen->Student_Id)->first(['Student_Id', 'Student_Name_Eng']);
+            if ($s) {
+                $students->push($s);
+            }
+        }
 
-        return view('admin.create-sen', compact('staff', 'senTypes', 'students', 'nextSenId'));
+        $nextSenId = $isEdit ? $editSen->SEN_Id : $this->nextSenId();
+
+        return view('admin.create-sen', compact('staff', 'senTypes', 'students', 'nextSenId', 'isEdit', 'editSen', 'editDocs'));
     }
 
     /**
@@ -127,7 +165,8 @@ class CreateSenController extends Controller
     }
 
     /**
-     * Save a new SEN case.
+     * Save a SEN case. Create mode: INSERT new row + finalize staged docs.
+     * Edit mode (sen_id given): UPDATE row, finalize staged docs, delete removed docs.
      */
     public function save(Request $request)
     {
@@ -141,7 +180,15 @@ class CreateSenController extends Controller
             return response()->json(['success' => false, 'message' => 'Student not found.'], 422);
         }
 
-        // staff fields: optional, but if provided must be an enabled staff of the right role
+        // edit mode? (sen_id present in the payload)
+        $senId = trim((string) $request->input('sen_id'));
+        $isEdit = $senId !== '';
+        if ($isEdit && ! $conn->table('tblSEN')->where('SEN_Id', $senId)->exists()) {
+            return response()->json(['success' => false, 'message' => 'SEN case not found.'], 404);
+        }
+
+        // staff fields: optional; create mode requires an ENABLED staff of the right role,
+        // edit mode ignores status (existing values may reference disabled staff)
         $data = [];
         foreach (self::STAFF_ROLES as $key => $targetUserId) {
             $val = trim((string) $request->input($key));
@@ -149,12 +196,13 @@ class CreateSenController extends Controller
                 $data[$this->colName($key)] = null;
                 continue;
             }
-            $exists = $conn->table('tblStaff')
+            $q = $conn->table('tblStaff')
                 ->where('Staff_Id', $val)
-                ->where('Target_User_Id', $targetUserId)
-                ->where('status', 0)
-                ->exists();
-            if (! $exists) {
+                ->where('Target_User_Id', $targetUserId);
+            if (! $isEdit) {
+                $q->where('status', 0);
+            }
+            if (! $q->exists()) {
                 return response()->json(['success' => false, 'message' => "Invalid staff selected for $key."], 422);
             }
             $data[$this->colName($key)] = $val;
@@ -167,31 +215,69 @@ class CreateSenController extends Controller
         }
         $data['SEN_Type'] = $senType !== '' ? $senType : null;
 
-        $data['SEN_Id'] = $this->nextSenId();
         $data['Student_Id'] = $studentId;
         $data['SEN_Detail'] = $this->nullable($request->input('sen_detail'));
         $data['Special_Support_Required'] = $this->nullable($request->input('special_support_required'));
         $data['Special_Examination_Arrangement'] = $this->nullable($request->input('special_examination_arrangement'));
         $data['Temporary_Special_Support'] = $this->nullable($request->input('temporary_special_support'));
 
-        $data['created_at'] = now();
         $data['updated_at'] = now();
-        $data['created_by'] = 'system01';
         $data['updated_by'] = 'system01';
         $data['updated_ip'] = $request->ip();
 
-        $conn->table('tblSEN')->insert($data);
+        if ($isEdit) {
+            $conn->table('tblSEN')->where('SEN_Id', $senId)->update($data);
+            $finalSenId = $senId;
+        } else {
+            $data['SEN_Id'] = $this->nextSenId();
+            $data['created_at'] = now();
+            $data['created_by'] = 'system01';
+            $conn->table('tblSEN')->insert($data);
+            $finalSenId = $data['SEN_Id'];
+        }
 
         // move staged docs to the final folder + insert tblSEN_Doc rows
-        $this->finalizeDocs($data['SEN_Id'], (string) $request->ip());
+        $this->finalizeDocs($finalSenId, (string) $request->ip());
 
-        return response()->json(['success' => true, 'sen_id' => $data['SEN_Id']]);
+        // edit mode: delete docs the user removed (file + tblSEN_Doc row)
+        $removed = $request->input('removed_docs', []);
+        if ($isEdit && is_array($removed)) {
+            foreach ($removed as $name) {
+                $name = basename((string) $name);
+                if (! str_starts_with($name, $finalSenId . '_')) {
+                    continue;
+                }
+                $conn->table('tblSEN_Doc')
+                    ->where('SEN_Id', $finalSenId)
+                    ->where('Doc_Filename', $name)
+                    ->delete();
+                @unlink($this->finalDocDir() . '/' . $name);
+            }
+        }
+
+        return response()->json(['success' => true, 'sen_id' => $finalSenId]);
     }
 
-    /** form input key -> tblSEN column name (e.g. programme_leader -> Programme_Leader) */
+    /** Serve a SEN document for in-browser PDF preview (checks staging, then final). */
+    public function previewDoc(string $filename)
+    {
+        $filename = basename($filename);
+        $candidates = [
+            $this->finalDocDir() . '/' . $filename,
+            $this->stagingDir() . '/' . $filename,
+        ];
+        foreach ($candidates as $path) {
+            if (is_file($path)) {
+                return response()->file($path, ['Content-Type' => 'application/pdf']);
+            }
+        }
+        abort(404, 'Document not found');
+    }
+
+    /** form input key -> tblSEN column name (SEN_Officer is the only non-ucwords case) */
     private function colName(string $key): string
     {
-        return ucwords($key, '_');
+        return $key === 'sen_officer' ? 'SEN_Officer' : ucwords($key, '_');
     }
 
     private function nullable($value): ?string
@@ -235,7 +321,7 @@ class CreateSenController extends Controller
         return $names;
     }
 
-    /** next 2-digit sequence for the staged files of a SEN case */
+    /** next 2-digit sequence for a SEN case = max(saved Doc_Seq, staged seq) + 1 */
     private function nextDocSeq(string $senId): int
     {
         $max = 0;
@@ -244,6 +330,10 @@ class CreateSenController extends Controller
                 $max = max($max, (int) $m[1]);
             }
         }
+        $saved = DB::connection('pusen')->table('tblSEN_Doc')
+            ->where('SEN_Id', $senId)
+            ->max('Doc_Seq');
+        $max = max($max, (int) $saved);
         return $max + 1;
     }
 
@@ -262,7 +352,7 @@ class CreateSenController extends Controller
             'file' => 'required|file|mimes:pdf|max:' . self::MAX_DOC_SIZE_KB,
         ]);
 
-        if (count($this->stagedList($senId)) >= self::MAX_DOCS) {
+        if (count($this->stagedList($senId)) + DB::connection('pusen')->table('tblSEN_Doc')->where('SEN_Id', $senId)->count() >= self::MAX_DOCS) {
             return response()->json(['success' => false, 'message' => 'Maximum ' . self::MAX_DOCS . ' documents allowed.'], 422);
         }
 

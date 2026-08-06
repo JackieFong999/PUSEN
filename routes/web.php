@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\StudentRegistrationListController;
 use App\Http\Controllers\Admin\StaffListController;
 use App\Http\Controllers\Admin\StudentListController;
 use App\Http\Controllers\Admin\CreateSenController;
+use App\Http\Controllers\Admin\SenSearchController;
 use Illuminate\Support\Facades\Route;
 
 // Root → dashboard
@@ -60,10 +61,17 @@ Route::post('/admin/staff-list/update-status', [StaffListController::class, 'upd
 Route::get('/admin/student-list', [StudentListController::class, 'index'])->name('admin.student-list');
 Route::get('/admin/student-list/search', [StudentListController::class, 'search']);
 
-// Admin: Create SEN
+// Admin: SEN Search (AG Grid + search, edit opens Create SEN in edit mode)
+Route::get('/admin/sen-search', [SenSearchController::class, 'index'])->name('admin.sen-search');
+Route::get('/admin/sen-search/search', [SenSearchController::class, 'search']);
+
+// Admin: Create SEN (also serves as Edit SEN when ?sen_id= is given)
 Route::get('/admin/create-sen', [CreateSenController::class, 'index'])->name('admin.create-sen');
 Route::get('/admin/create-sen/student-info', [CreateSenController::class, 'studentInfo']);
 Route::post('/admin/create-sen/save', [CreateSenController::class, 'save']);
 Route::post('/admin/create-sen/upload', [CreateSenController::class, 'upload']);
 Route::post('/admin/create-sen/remove-doc', [CreateSenController::class, 'removeDoc']);
 Route::post('/admin/create-sen/clear-staged', [CreateSenController::class, 'clearStaged']);
+
+// Admin: SEN document preview (serves the PDF for browser preview)
+Route::get('/admin/sen-doc/{filename}', [CreateSenController::class, 'previewDoc'])->where('filename', '.*');
