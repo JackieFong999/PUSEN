@@ -42,6 +42,7 @@ return [
                         ['label' => 'Advisor List',     'icon' => 'bi-bookmark',  'color' => 'ic-blue', 'href' => '/admin/advisor-list'],
                         ['label' => 'Fund Type',     'icon' => 'bi-question-circle',  'color' => 'ic-purple', 'href' => '/admin/fund-type-list'],
                         ['label' => 'Student Status',     'icon' => 'bi-keyboard',  'color' => 'ic-green', 'href' => '/admin/student-status-list'],
+                        ['label' => 'SEN Type',          'icon' => 'bi-bandaid',    'color' => 'ic-yellow', 'href' => '/admin/sen-type-list'],
                         ['label' => 'Subject Type',     'icon' => 'bi-window-sidebar',  'color' => 'ic-blue', 'href' => '/admin/subject-type-list'],
                         ['label' => 'Advisor Type',     'icon' => 'bi-layout-sidebar-inset',  'color' => 'ic-pink', 'href' => '/admin/advisor-type-list'],
                         ['label' => 'SEN Type',     'icon' => 'bi-star',  'color' => 'ic-yellow', 'href' => '#'],

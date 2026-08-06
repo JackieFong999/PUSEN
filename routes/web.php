@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\StaffListController;
 use App\Http\Controllers\Admin\StudentListController;
 use App\Http\Controllers\Admin\CreateSenController;
 use App\Http\Controllers\Admin\SenSearchController;
+use App\Http\Controllers\Admin\SenTypeListController;
 use Illuminate\Support\Facades\Route;
 
 // Root → dashboard
@@ -60,6 +61,9 @@ Route::post('/admin/staff-list/update-status', [StaffListController::class, 'upd
 // Admin: Student List (AG Grid + search, read-only)
 Route::get('/admin/student-list', [StudentListController::class, 'index'])->name('admin.student-list');
 Route::get('/admin/student-list/search', [StudentListController::class, 'search']);
+
+// Admin: SEN Type
+Route::get('/admin/sen-type-list', [SenTypeListController::class, 'index'])->name('admin.sen-type-list');
 
 // Admin: SEN Search (AG Grid + search, edit opens Create SEN in edit mode)
 Route::get('/admin/sen-search', [SenSearchController::class, 'index'])->name('admin.sen-search');
