@@ -341,6 +341,19 @@
 
   const editableSelectors = '#senForm .form-control, #senForm .form-select, #senForm textarea';
 
+  /* ---------- unsaved changes guard (wired to the layout's menu guard) ---------- */
+  let formDirty = false;
+  document.querySelectorAll(editableSelectors).forEach(el => {
+    ['input', 'change'].forEach(ev => el.addEventListener(ev, () => { formDirty = true; }));
+  });
+  // uploading / removing documents also counts as an unsaved change
+  document.getElementById('docFileInput').addEventListener('change', () => {
+    if (document.getElementById('docFileInput').files.length) formDirty = true;
+  });
+  document.getElementById('removeDocBtn').addEventListener('click', () => { formDirty = true; });
+  // the layout script (runs after this one) picks this up to guard sidebar navigation
+  window.PUSEN_DIRTY_FN = () => formDirty;
+
   function setFormDisabled(disabled) {
     document.querySelectorAll(editableSelectors).forEach(el => el.disabled = disabled);
     document.getElementById('saveBtn').disabled = disabled;
@@ -361,6 +374,7 @@
     document.getElementById('docCountLabel').textContent = '0 / 20';
     document.getElementById('docFileInput').value = '';
     studentValid = false;
+    formDirty = false;
   }
 
   function fillList(listId, items) {
@@ -578,6 +592,7 @@
       const json = await res.json();
       if (json.success) {
         toast('✅ SEN case ' + json.sen_id + ' saved');
+        formDirty = false;
         if (IS_EDIT) {
           // back to SEN Search after a short beat so the toast is visible
           setTimeout(() => { window.location.href = '/admin/sen-search'; }, 900);

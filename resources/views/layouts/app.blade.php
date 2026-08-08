@@ -391,6 +391,19 @@
 
   .toast-holder { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 2000; }
 
+  /* generic action buttons + modal used by confirm dialogs (incl. nav guard) */
+  .btn-search {
+    background: var(--accent-grad);
+    color: #fff; font-weight: 600; font-size: .85rem;
+    border: 0; border-radius: 10px; padding: .5rem 1.4rem;
+    box-shadow: 0 4px 14px rgba(var(--accent-rgb), .3);
+  }
+  .btn-search:hover { color: #fff; filter: brightness(1.08); }
+  .btn-cancel { border: 1px solid var(--border); color: var(--text-muted); background: transparent; }
+  .btn-cancel:hover { background: var(--bg-soft); color: var(--text); }
+  .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; }
+  .modal-content .modal-title { font-size: 1rem; font-weight: 600; color: var(--text); }
+
   @media (max-width: 991.98px) {
     .sidebar { display: none; }
     .main { margin-left: 0 !important; padding: 1.5rem 1.1rem 2.5rem; }
@@ -475,6 +488,23 @@
   </div>
 </div>
 
+<!-- ============ NAV GUARD CONFIRM MODAL (unsaved changes) ============ -->
+<div class="modal fade" id="navConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title">Unsaved changes</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="font-size:.88rem;color:var(--text);">This form has unsaved changes. If you leave this page, all unsaved changes will be discarded. Do you want to continue?</div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-cancel" id="navConfirmStay">Stay</button>
+        <button type="button" class="btn btn-search" id="navConfirmLeave">Discard &amp; Leave</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- toast holder -->
 <div class="toast-holder"></div>
 
@@ -529,10 +559,42 @@
     });
   });
 
-  // ---------- Active link switching ----------
+  // ---------- Unsaved-changes navigation guard ----------
+  // A page with an editable form can register a dirty checker:
+  //   window.PUSEN_DIRTY_FN = () => true/false   (set from the page script, which runs
+  //   before this layout script) — or later via window.pusenSetDirtyChecker(fn).
+  let pusenDirtyChecker = typeof window.PUSEN_DIRTY_FN === 'function' ? window.PUSEN_DIRTY_FN : null;
+  window.pusenSetDirtyChecker = (fn) => { pusenDirtyChecker = fn; };
+
+  function pusenAskLeave() {
+    return new Promise(resolve => {
+      const modalEl = document.getElementById('navConfirmModal');
+      const leaveBtn = document.getElementById('navConfirmLeave');
+      let settled = false;
+      const finish = (ok) => {
+        if (settled) return;
+        settled = true;
+        bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        resolve(ok);
+      };
+      leaveBtn.onclick = () => finish(true);
+      document.getElementById('navConfirmStay').onclick = () => finish(false);
+      modalEl.addEventListener('hidden.bs.modal', () => finish(false), { once: true });
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+  }
+
+  // ---------- Active link switching + unsaved-changes guard ----------
   document.querySelectorAll('.side-link').forEach(link => {
-    link.addEventListener('click', () => {
+    link.addEventListener('click', (e) => {
       if (link.hasAttribute('data-group-toggle')) return;
+      const href = link.getAttribute('href');
+      // while a form on the page has unsaved changes, ask before leaving
+      if (href && href !== '#' && pusenDirtyChecker && pusenDirtyChecker()) {
+        e.preventDefault();
+        pusenAskLeave().then(ok => { if (ok) window.location.href = href; });
+        return;
+      }
       link.closest('nav, .offcanvas-body')?.querySelectorAll('.side-link.active').forEach(a => a.classList.remove('active'));
       link.classList.add('active');
     });
