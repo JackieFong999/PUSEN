@@ -425,21 +425,25 @@
   </div>
 
   <div class="ms-auto d-flex align-items-center gap-2">
+    @php $authStaff = Auth::user(); @endphp
     {{-- Login name / title (left of theme button) --}}
     <div class="d-flex align-items-center gap-2 me-2">
-      <div class="avatar" style="width:32px;height:32px;flex-shrink:0;">{{ config('nav.profile.initial') }}</div>
+      <div class="avatar" style="width:32px;height:32px;flex-shrink:0;">{{ $authStaff ? strtoupper(mb_substr($authStaff->Staff_Display_Name ?: $authStaff->Staff_Name, 0, 1)) : config('nav.profile.initial') }}</div>
       <div class="d-none d-md-block lh-1">
-        <div style="font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:3px;">{{ config('nav.profile.name') }}</div>
-        <div style="font-size:.68rem;color:var(--text-faint);">{{ config('nav.profile.role') }}</div>
+        <div style="font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:3px;">{{ $authStaff ? ($authStaff->Staff_Display_Name ?: $authStaff->Staff_Name) : config('nav.profile.name') }}</div>
+        <div style="font-size:.68rem;color:var(--text-faint);">{{ $authStaff ? ($authStaff->Target_User_Id ?: $authStaff->Staff_Id) : config('nav.profile.role') }}</div>
       </div>
     </div>
     <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">
       <i class="bi bi-moon-stars-fill"></i>
     </button>
     {{-- Logout (right of theme button) --}}
-    <button class="icon-btn" id="logoutBtn" type="button" aria-label="Log out" title="Log out">
-      <i class="bi bi-box-arrow-right"></i>
-    </button>
+    <form method="POST" action="{{ route('logout') }}" class="m-0">
+      @csrf
+      <button type="submit" class="icon-btn" aria-label="Log out" title="Log out">
+        <i class="bi bi-box-arrow-right"></i>
+      </button>
+    </form>
   </div>
 </header>
 

@@ -40,7 +40,7 @@ return [
     'guards' => [
         'web' => [
             'driver' => 'session',
-            'provider' => 'users',
+            'provider' => 'pusen-staff',
         ],
     ],
 
@@ -65,6 +65,14 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        // Login accounts come from the legacy tblStaff table (pusen MySQL).
+        // The custom driver (PusenStaffUserProvider) compares plain-text
+        // passwords and rejects disabled accounts.
+        'pusen-staff' => [
+            'driver' => 'pusen-staff',
+            'model' => App\Models\Staff::class,
         ],
 
         // 'users' => [
