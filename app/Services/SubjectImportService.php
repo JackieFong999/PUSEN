@@ -132,6 +132,7 @@ class SubjectImportService
 
             $logId = $conn->table('tblImport_Log')->insertGetId([
                 'File_Name'   => $filename,
+                'FileType'    => 'SUBJECT',
                 'CSV_Content' => $csvContent,
                 'created_by'  => $user,
                 'updated_ip'  => $ip,
