@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\CreateSenController;
 use App\Http\Controllers\Admin\SenSearchController;
 use App\Http\Controllers\Admin\SenTypeListController;
 use App\Http\Controllers\Admin\EmailTemplateListController;
+use App\Http\Controllers\Admin\ImportController;
 use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Support\Facades\Route;
 
@@ -94,5 +95,9 @@ Route::middleware('auth')->group(function () {
 
     // Admin: SEN document preview (serves the PDF for browser preview)
     Route::get('/admin/sen-doc/{filename}', [CreateSenController::class, 'previewDoc'])->where('filename', '.*');
+
+    // Admin: Data Import (Subject first)
+    Route::get('/admin/data-import', [ImportController::class, 'index'])->name('admin.data-import');
+    Route::post('/admin/data-import/import', [ImportController::class, 'import']);
 
 });

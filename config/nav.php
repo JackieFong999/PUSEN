@@ -29,7 +29,7 @@ return [
                 ['label' => 'Create SEN',  'icon' => 'bi-window-sidebar',        'color' => 'ic-green',  'href' => '/admin/create-sen'],
                 ['label' => 'SEN Search',        'icon' => 'bi-layout-sidebar-inset',  'color' => 'ic-pink',   'href' => '/admin/sen-search'],
                 ['label' => 'User Management',       'icon' => 'bi-star',          'color' => 'ic-yellow', 'href' => '#'],
-                ['label' => 'Data Import', 'icon' => 'bi-clock-history', 'color' => 'ic-cyan',   'href' => '#'],
+                ['label' => 'Data Import', 'icon' => 'bi-clock-history', 'color' => 'ic-cyan',   'href' => '/admin/data-import'],
                 [
                     'label' => 'Admin', 'icon' => 'bi-collection', 'color' => 'ic-yellow',
                     'children' => [
