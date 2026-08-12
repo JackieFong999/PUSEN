@@ -31,8 +31,16 @@ Route::middleware('auth')->group(function () {
     // Root -> dashboard
     Route::get('/', fn () => redirect()->route('dashboard'));
 
-    // Dashboard (screen layout step 1)
-    Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
+    // Dashboard: subject import logging
+    Route::get('/dashboard', function () {
+        // Subject import logging from the failed-row log (latest 50)
+        $subjectLogs = DB::connection('pusen')->table('tblImport_Failed_Log')
+            ->where('FileType', 'SUBJECT')
+            ->orderByDesc('Id')
+            ->limit(50)
+            ->get(['File_Date', 'File_Name', 'FileType', 'Import_Status', 'Remarks', 'Import_By']);
+        return view('dashboard', compact('subjectLogs'));
+    })->name('dashboard');
 
     // Admin: Role List
     Route::get('/admin/role-list', [RoleListController::class, 'index'])->name('admin.role-list');

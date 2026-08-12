@@ -390,14 +390,30 @@
 
   /* generic action buttons + modal used by confirm dialogs (incl. nav guard) */
   .btn-search {
-    background: var(--accent-grad);
+    background: #2563eb;
     color: #fff; font-weight: 600; font-size: .85rem;
-    border: 0; border-radius: 10px; padding: .5rem 1.2rem;
-    box-shadow: 0 4px 14px rgba(var(--accent-rgb), .3);
+    border: 1px solid #1e40af; border-radius: 10px; padding: .5rem 1.2rem;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, .3);
   }
-  .btn-search:hover { color: #fff; filter: brightness(1.08); }
-  .btn-cancel { border: 1px solid var(--border); color: var(--text-muted); background: transparent; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
-  .btn-cancel:hover { background: var(--bg-soft); color: var(--text); }
+  .btn-search:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-cancel { border: 1px solid #1e40af; color: #fff; background: #2563eb; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
+  .btn-cancel:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+
+  /* disabled state: gray with black text (applies to every standardized button) */
+  .btn-search:disabled, .btn-cancel:disabled, .btn-create:disabled, .btn-add:disabled,
+  .btn-import:disabled, .btn-save:disabled, .btn-edit:disabled, .btn-login:disabled {
+    background: #e5e7eb !important;
+    border-color: #d1d5db !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    cursor: not-allowed;
+  }
+  .btn-search:disabled i, .btn-cancel:disabled i, .btn-create:disabled i, .btn-add:disabled i,
+  .btn-import:disabled i, .btn-save:disabled i, .btn-edit:disabled i, .btn-login:disabled i {
+    color: #000 !important;
+  }
   .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; }
   .modal-content .modal-title { font-size: 1rem; font-weight: 600; color: var(--text); }
 

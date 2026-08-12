@@ -25,19 +25,19 @@
   .form-select option { background: var(--card-bg); color: var(--text); }
 
   .btn-search {
-    background: var(--accent-grad);
+    background: #2563eb;
     color: #fff; font-weight: 600; font-size: .85rem;
-    border: 0; border-radius: 10px; padding: .5rem 1.2rem;
-    box-shadow: 0 4px 14px rgba(var(--accent-rgb), .3);
+    border: 1px solid #1e40af; border-radius: 10px; padding: .5rem 1.2rem;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, .3);
   }
-  .btn-search:hover { color: #fff; filter: brightness(1.08); }
+  .btn-search:hover { background: #16a34a; border-color: #15803d; color: #fff; }
   /* override global .stat-card i rule: icon must match button text color */
   .btn-search i { color: #fff; }
 
-  .btn-cancel { border: 1px solid var(--border); color: var(--text-muted); background: transparent; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
-  .btn-cancel:hover { background: var(--bg-soft); color: var(--text); }
-  .btn-cancel i { color: var(--text-muted); }
-  .btn-cancel:hover i { color: var(--text); }
+  .btn-cancel { border: 1px solid #1e40af; color: #fff; background: #2563eb; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
+  .btn-cancel:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-cancel i { color: #fff; }
+  .btn-cancel:hover i { color: #fff; }
 
   #studentGrid {
     height: 62vh;

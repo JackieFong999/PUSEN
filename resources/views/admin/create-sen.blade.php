@@ -62,21 +62,21 @@
   .form-select option { background: var(--card-bg); color: var(--text); }
 
   .btn-search {
-    background: var(--accent-grad);
+    background: #2563eb;
     color: #fff; font-weight: 600; font-size: .85rem;
-    border: 0; border-radius: 10px; padding: .5rem 1.2rem;
-    box-shadow: 0 4px 14px rgba(var(--accent-rgb), .3);
+    border: 1px solid #1e40af; border-radius: 10px; padding: .5rem 1.2rem;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, .3);
   }
-  .btn-search:hover { color: #fff; filter: brightness(1.08); }
+  .btn-search:hover { background: #16a34a; border-color: #15803d; color: #fff; }
   .btn-search i { color: #fff; }
 
-  .btn-cancel { border: 1px solid var(--border); color: var(--text-muted); background: transparent; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
-  .btn-cancel:hover { background: var(--bg-soft); color: var(--text); }
-  .btn-cancel i { color: var(--text-muted); }
-  .btn-cancel:hover i { color: var(--text); }
+  .btn-cancel { border: 1px solid #1e40af; color: #fff; background: #2563eb; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
+  .btn-cancel:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-cancel i { color: #fff; }
+  .btn-cancel:hover i { color: #fff; }
 
-  .btn-create { background: var(--accent-grad); color: #fff; font-weight: 600; font-size: .85rem; border: 0; border-radius: 10px; padding: .5rem 1.2rem; box-shadow: 0 4px 14px rgba(var(--accent-rgb), .3); }
-  .btn-create:hover { color: #fff; filter: brightness(1.08); }
+  .btn-create { background: #2563eb; color: #fff; font-weight: 600; font-size: .85rem; border: 1px solid #1e40af; border-radius: 10px; padding: .5rem 1.2rem; box-shadow: 0 4px 14px rgba(37, 99, 235, .3); }
+  .btn-create:hover { background: #16a34a; border-color: #15803d; color: #fff; }
   .btn-create i { color: #fff; }
 
   .form-card { border: 1px solid var(--card-border); border-radius: var(--radius); background: var(--card-bg); }

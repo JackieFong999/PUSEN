@@ -25,12 +25,12 @@
   .form-select option { background: var(--card-bg); color: var(--text); }
 
   .btn-search {
-    background: var(--accent-grad);
+    background: #2563eb;
     color: #fff; font-weight: 600; font-size: .85rem;
-    border: 0; border-radius: 10px; padding: .5rem 1.2rem;
-    box-shadow: 0 4px 14px rgba(var(--accent-rgb), .3);
+    border: 1px solid #1e40af; border-radius: 10px; padding: .5rem 1.2rem;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, .3);
   }
-  .btn-search:hover { color: #fff; filter: brightness(1.08); }
+  .btn-search:hover { background: #16a34a; border-color: #15803d; color: #fff; }
   /* override global .stat-card i rule: icon must match button text color */
   .btn-search i { color: #fff; }
 
@@ -75,14 +75,14 @@
   }
 
   .row-actions .btn { font-size: .75rem; font-weight: 600; border-radius: 8px; padding: .28rem .75rem; }
-  .btn-edit { border: 1px solid rgba(var(--accent-rgb), .45); color: var(--accent); background: transparent; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
-  .btn-edit:hover { background: var(--accent-soft); color: var(--accent); }
-  .btn-save { background: var(--success); border: 0; color: #04120c; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
-  .btn-save:hover { filter: brightness(1.08); }
-  .btn-cancel { border: 1px solid var(--border); color: var(--text-muted); background: transparent; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
-  .btn-cancel:hover { background: var(--bg-soft); color: var(--text); }
-  .btn-cancel i { color: var(--text-muted); }
-  .btn-cancel:hover i { color: var(--text); }
+  .btn-edit { border: 1px solid #1e40af; color: #fff; background: #2563eb; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
+  .btn-edit:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-save { background: #2563eb; border: 1px solid #1e40af; color: #fff; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
+  .btn-save:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-cancel { border: 1px solid #1e40af; color: #fff; background: #2563eb; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
+  .btn-cancel:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-cancel i { color: #fff; }
+  .btn-cancel:hover i { color: #fff; }
 </style>
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">

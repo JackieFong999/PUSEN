@@ -133,14 +133,14 @@
 
   .btn-login {
     width: 100%;
-    background: var(--accent-grad);
+    background: #2563eb;
     color: #fff; font-weight: 700; font-size: .9rem;
-    border: 0; border-radius: 10px; padding: .7rem 1rem;
-    box-shadow: 0 4px 14px rgba(var(--accent-rgb), .3);
+    border: 1px solid #1e40af; border-radius: 10px; padding: .7rem 1rem;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, .3);
     transition: filter .15s;
   }
-  .btn-login:hover { color: #fff; filter: brightness(1.08); }
-  .btn-login:disabled { opacity: .6; }
+  .btn-login:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-login:disabled { background: #e5e7eb !important; border-color: #d1d5db !important; color: #000 !important; opacity: 1; cursor: not-allowed; }
 
   .alert-danger {
     background: rgba(248, 113, 113, .1);
