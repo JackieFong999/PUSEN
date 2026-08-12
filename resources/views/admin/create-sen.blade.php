@@ -568,9 +568,6 @@
       fStudentId.focus();
       return;
     }
-    const ok = await askConfirm(IS_EDIT ? 'Save changes' : 'Save SEN case',
-      IS_EDIT ? 'Save changes to SEN case ' + EDIT_SEN_ID + '?' : 'Save this SEN case for student ' + sid + '?');
-    if (!ok) return;
 
     const fd = new FormData(document.getElementById('senForm'));
     const payload = {};

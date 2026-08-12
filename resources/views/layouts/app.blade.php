@@ -368,6 +368,26 @@
 
   .toast-holder { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 2000; }
 
+  /* page loading overlay (shown during navigation) */
+  .page-loader {
+    position: fixed; inset: 0; z-index: 3000;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    display: none; place-items: center;
+  }
+  .page-loader.show { display: grid; }
+  .page-loader .loader-box {
+    display: flex; flex-direction: column; align-items: center; gap: .8rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 1.6rem 2.2rem;
+    box-shadow: var(--shadow);
+  }
+  .page-loader .spinner-border { width: 2rem; height: 2rem; color: var(--accent); }
+  .page-loader .loader-text { font-size: .85rem; font-weight: 600; color: var(--text-muted); letter-spacing: .02em; }
+
   /* generic action buttons + modal used by confirm dialogs (incl. nav guard) */
   .btn-search {
     background: var(--accent-grad);
@@ -486,6 +506,14 @@
 <!-- toast holder -->
 <div class="toast-holder"></div>
 
+<!-- page loading overlay (shown during navigation) -->
+<div id="pageLoader" class="page-loader" aria-hidden="true">
+  <div class="loader-box">
+    <div class="spinner-border" role="status" aria-label="Loading"></div>
+    <div class="loader-text">Loading…</div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   // ---------- Sidebar collapse (desktop) ----------
@@ -590,6 +618,35 @@
   document.getElementById('mobileMenuBtn').addEventListener('click', () => {
     bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('mobileSidebar')).show();
   });
+
+  // ---------- Page loading overlay (navigation) ----------
+  const pageLoader = document.getElementById('pageLoader');
+  function showPageLoader() { pageLoader.classList.add('show'); }
+  function hidePageLoader() { pageLoader.classList.remove('show'); }
+
+  // Show as soon as a real navigation starts (link click / form submit), but
+  // skip if the action was cancelled (e.g. unsaved-changes guard preventDefault).
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    if (!href || href === '#' || href.startsWith('http') || href.startsWith('//') ||
+        href.startsWith('mailto:') || href.startsWith('tel:') ||
+        a.hasAttribute('download') || a.target === '_blank') return;
+    setTimeout(() => { if (!e.defaultPrevented) showPageLoader(); }, 0);
+  });
+  document.addEventListener('submit', (e) => {
+    setTimeout(() => { if (!e.defaultPrevented) showPageLoader(); }, 0);
+  });
+
+  // Safety net: cover JS-driven navigation (e.g. redirect after Save) too,
+  // and let ESC cancel a stuck overlay (browser-cancelled navigation).
+  window.addEventListener('beforeunload', showPageLoader);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePageLoader(); });
+
+  // Hide once the new page is fully loaded (also on back/forward cache restore).
+  window.addEventListener('load', hidePageLoader);
+  window.addEventListener('pageshow', hidePageLoader);
 
   // ---------- Toast helper ----------
   function toast(msg) {
