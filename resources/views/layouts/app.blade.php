@@ -1,17 +1,10 @@
 @props(['title' => null])
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en" data-bs-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ $title ? $title . ' — ' : '' }}{{ config('app.name', 'Pusen01') }}</title>
-<script>
-  // Apply saved theme before first paint (avoids flash)
-  (function () {
-    var t = localStorage.getItem('pusen-theme');
-    document.documentElement.setAttribute('data-bs-theme', t || 'dark');
-  })();
-</script>
 
 <!-- Bootstrap 5.3 + Icons + Inter font -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -24,30 +17,6 @@
 
 <style>
   :root {
-    --bg: #0e1016;
-    --bg-soft: #131722;
-    --sidebar-bg: #151926;
-    --sidebar-bg-collapsed: #10131d;
-    --card-bg: #181d2b;
-    --card-border: #242b3d;
-    --border: #222939;
-    --text: #e8eaf0;
-    --text-muted: #8b93a7;
-    --text-faint: #5c6478;
-    --accent: #6d8dff;
-    --accent-rgb: 109, 141, 255;
-    --accent-soft: rgba(109, 141, 255, 0.12);
-    --accent-grad: linear-gradient(135deg, #6d8dff, #8f6dff);
-    --success: #34d399;
-    --danger: #f87171;
-    --radius: 12px;
-    --sidebar-w: 264px;
-    --sidebar-w-collapsed: 78px;
-    --topbar-h: 60px;
-    --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-  }
-
-  [data-bs-theme="light"] {
     --bg: #f4f6fb;
     --bg-soft: #ffffff;
     --sidebar-bg: #ffffff;
@@ -58,7 +27,16 @@
     --text: #171b26;
     --text-muted: #5d6679;
     --text-faint: #9aa2b5;
+    --accent: #6d8dff;
+    --accent-rgb: 109, 141, 255;
     --accent-soft: rgba(109, 141, 255, 0.12);
+    --accent-grad: linear-gradient(135deg, #6d8dff, #8f6dff);
+    --success: #34d399;
+    --danger: #f87171;
+    --radius: 12px;
+    --sidebar-w: 264px;
+    --sidebar-w-collapsed: 78px;
+    --topbar-h: 60px;
     --shadow: 0 8px 24px rgba(23, 27, 38, 0.08);
   }
 
@@ -225,7 +203,6 @@
     box-shadow: 0 6px 16px rgba(var(--accent-rgb), .3);
   }
   .side-link.active .badge-soft { background: rgba(255,255,255,.2); color: #fff; }
-  [data-bs-theme="light"] .side-link.active { color: #fff; }
 
   /* colorful icon palette */
   .ic-gray   { color: #c9cdd6; }
@@ -426,7 +403,7 @@
 
   <div class="ms-auto d-flex align-items-center gap-2">
     @php $authStaff = Auth::user(); @endphp
-    {{-- Login name / title (left of theme button) --}}
+    {{-- Login name / title --}}
     <div class="d-flex align-items-center gap-2 me-2">
       <div class="avatar" style="width:32px;height:32px;flex-shrink:0;">{{ $authStaff ? strtoupper(mb_substr($authStaff->Staff_Display_Name ?: $authStaff->Staff_Name, 0, 1)) : config('nav.profile.initial') }}</div>
       <div class="d-none d-md-block lh-1">
@@ -434,10 +411,7 @@
         <div style="font-size:.68rem;color:var(--text-faint);">{{ $authStaff ? ($authStaff->Target_User_Id ?: $authStaff->Staff_Id) : config('nav.profile.role') }}</div>
       </div>
     </div>
-    <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">
-      <i class="bi bi-moon-stars-fill"></i>
-    </button>
-    {{-- Logout (right of theme button) --}}
+    {{-- Logout --}}
     <form method="POST" action="{{ route('logout') }}" class="m-0">
       @csrf
       <button type="submit" class="icon-btn" aria-label="Log out" title="Log out">
@@ -610,20 +584,6 @@
       document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
     });
-  });
-
-  // ---------- Theme toggle ----------
-  const themeToggle = document.getElementById('themeToggle');
-  const themeIcon = themeToggle.querySelector('i');
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-bs-theme', theme);
-    localStorage.setItem('pusen-theme', theme);
-    themeIcon.className = theme === 'dark' ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
-  }
-  themeToggle.addEventListener('click', () => {
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-    applyTheme(isDark ? 'light' : 'dark');
-    toast(isDark ? '☀️ Light mode enabled' : '🌙 Dark mode enabled');
   });
 
   // ---------- Mobile offcanvas ----------
