@@ -26,7 +26,7 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
   <div>
-    <h1 class="mb-1">Role List</h1>
+    <h1 class="mb-0" style="font-size:1.25rem;">Role List</h1>
   </div>
 </div>
 

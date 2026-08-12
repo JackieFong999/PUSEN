@@ -27,13 +27,13 @@
   .btn-search {
     background: var(--accent-grad);
     color: #fff; font-weight: 600; font-size: .85rem;
-    border: 0; border-radius: 10px; padding: .5rem 1.4rem;
+    border: 0; border-radius: 10px; padding: .5rem 1.2rem;
     box-shadow: 0 4px 14px rgba(var(--accent-rgb), .3);
   }
   .btn-search:hover { color: #fff; filter: brightness(1.08); }
   .btn-search i { color: #fff; }
 
-  .btn-cancel { border: 1px solid var(--border); color: var(--text-muted); background: transparent; }
+  .btn-cancel { border: 1px solid var(--border); color: var(--text-muted); background: transparent; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
   .btn-cancel:hover { background: var(--bg-soft); color: var(--text); }
   .btn-cancel i { color: var(--text-muted); }
   .btn-cancel:hover i { color: var(--text); }
@@ -42,7 +42,7 @@
   .btn-add:hover { color: #fff; filter: brightness(1.08); }
   .btn-add i { color: #fff; }
 
-  .btn-edit { border: 1px solid rgba(var(--accent-rgb), .45); color: var(--accent); background: transparent; font-size: .75rem; font-weight: 600; border-radius: 8px; padding: .25rem .7rem; }
+  .btn-edit { border: 1px solid rgba(var(--accent-rgb), .45); color: var(--accent); background: transparent; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
   .btn-edit:hover { background: var(--accent-soft); color: var(--accent); }
 
   #emailGrid {

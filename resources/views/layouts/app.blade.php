@@ -372,11 +372,11 @@
   .btn-search {
     background: var(--accent-grad);
     color: #fff; font-weight: 600; font-size: .85rem;
-    border: 0; border-radius: 10px; padding: .5rem 1.4rem;
+    border: 0; border-radius: 10px; padding: .5rem 1.2rem;
     box-shadow: 0 4px 14px rgba(var(--accent-rgb), .3);
   }
   .btn-search:hover { color: #fff; filter: brightness(1.08); }
-  .btn-cancel { border: 1px solid var(--border); color: var(--text-muted); background: transparent; }
+  .btn-cancel { border: 1px solid var(--border); color: var(--text-muted); background: transparent; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
   .btn-cancel:hover { background: var(--bg-soft); color: var(--text); }
   .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; }
   .modal-content .modal-title { font-size: 1rem; font-weight: 600; color: var(--text); }

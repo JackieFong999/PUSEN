@@ -32,7 +32,7 @@
     border-radius: 99px; padding: .2rem .6rem;
     background: transparent;
   }
-  .btn-import { background: var(--accent-grad); border: none; color: #fff; }
+  .btn-import { background: var(--accent-grad); border: none; color: #fff; font-weight: 600; font-size: .85rem; border-radius: 10px; padding: .5rem 1.2rem; }
   .btn-import:hover { color: #fff; filter: brightness(1.08); }
   .btn-import:disabled { opacity: .45; filter: none; }
   .result-count { font-size: .95rem; }
@@ -45,7 +45,7 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
   <div>
-    <h1 class="mb-1">Data Import</h1>
+    <h1 class="mb-0" style="font-size:1.25rem;">Data Import</h1>
     <div class="text-muted" style="font-size:.85rem;">
       Import master data from the SFTP server. Files are picked from
       <span class="import-file"><i class="bi bi-folder2-open me-1"></i>upload/</span>
