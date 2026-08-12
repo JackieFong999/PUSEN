@@ -112,6 +112,8 @@
   #docTable .row-btn:hover i { transform: scale(1.18); } /* on hover only the icon grows */
   #docTable .row-btn:disabled { opacity: .45; cursor: not-allowed; }
   #docTable .row-btn.btn-x { border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.08); color: var(--danger); } /* X = red, tinted like hover */
+  #docTable .row-btn.btn-dl { border-color: rgba(21,128,61,.45); background: rgba(21,128,61,.1); color: #15803d; } /* download = dark green, tinted like hover */
+  #docTable .doc-name-text { flex: 0 1 auto; min-width: 0; word-break: break-all; }
 
   .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; }
   .modal-content .modal-title { font-size: 1rem; font-weight: 600; color: var(--text); }
@@ -359,7 +361,9 @@
   const IS_EDIT = {{ $isEdit ? 'true' : 'false' }};
   const EDIT_SEN_ID = '{{ $isEdit ? $editSen->SEN_Id : '' }}';
   let removedDocs = []; // saved docs marked for deletion (edit mode, applied on Save)
-  let savedDocNames = []; // filenames that exist in tblSEN_Doc (edit mode)
+  let savedDocNames = []; // storage filenames that exist in tblSEN_Doc (edit mode)
+  let savedOriginalMap = {}; // storage filename -> original filename (loaded from DB, edit mode)
+  let stagedOriginalMap = {}; // storage filename -> original filename (new uploads this session)
 
   const editableSelectors = '#senForm .form-control, #senForm .form-select, #senForm textarea';
 
@@ -457,6 +461,7 @@
         });
         const json = await res.json();
         if (json.success) {
+          stagedOriginalMap[json.filename] = file.name; // remember original name for display
           refreshDocList(json.files);
           // once any file is uploaded, the Student Id can no longer be changed
           document.getElementById('fStudentId').disabled = true;
@@ -477,12 +482,29 @@
       window.open('/admin/sen-doc/' + encodeURIComponent(viewBtn.dataset.view), '_blank');
       return;
     }
+    const dlBtn = e.target.closest('[data-download]');
+    if (dlBtn) {
+      // trigger a download with the original filename (server sends attachment).
+      // the download attribute also tells the layout's loading overlay to ignore this link.
+      const a = document.createElement('a');
+      a.href = '/admin/sen-doc/' + encodeURIComponent(dlBtn.dataset.download) + '?dl=1';
+      a.download = '';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return;
+    }
     const rmBtn = e.target.closest('[data-remove]');
     if (rmBtn) {
       removeDocument(rmBtn.dataset.remove);
       return;
     }
   });
+
+  // display name = original filename when known, else the storage name
+  function displayName(name) {
+    return savedOriginalMap[name] || stagedOriginalMap[name] || name;
+  }
 
   // render the document list table: [View] [X] filename per row
   function renderDocTable(files) {
@@ -501,8 +523,9 @@
     }
     files.forEach(name => {
       const tr = document.createElement('tr');
+      const shown = displayName(name);
 
-      // one compact left-aligned actions cell: [View] [X]
+      // left actions cell: [View] [Download]
       const tdActions = document.createElement('td');
       tdActions.style.whiteSpace = 'nowrap';
       tdActions.style.width = '1%'; // shrink-wrap: keep the column as narrow as the buttons
@@ -513,23 +536,38 @@
       const bView = document.createElement('button');
       bView.type = 'button'; bView.className = 'row-btn';
       bView.dataset.view = name;
-      bView.title = 'View ' + name;
+      bView.title = 'View ' + shown;
       bView.disabled = formLocked;
       bView.innerHTML = '<i class="bi bi-eye"></i>';
+
+      const bDl = document.createElement('button');
+      bDl.type = 'button'; bDl.className = 'row-btn btn-dl';
+      bDl.dataset.download = name;
+      bDl.title = 'Download ' + shown;
+      bDl.disabled = formLocked;
+      bDl.innerHTML = '<i class="bi bi-download"></i>';
+
+      actions.append(bView, bDl);
+      tdActions.appendChild(actions);
+
+      // filename cell: original filename grows, delete X sits at the right end
+      const tdName = document.createElement('td');
+      tdName.style.padding = '.45rem .3rem';
+      const nameRow = document.createElement('div');
+      nameRow.className = 'd-flex align-items-center gap-1';
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'doc-name-text';
+      nameSpan.textContent = shown;
 
       const bX = document.createElement('button');
       bX.type = 'button'; bX.className = 'row-btn btn-x';
       bX.dataset.remove = name;
-      bX.title = 'Remove ' + name;
+      bX.title = 'Remove ' + shown;
       bX.disabled = formLocked;
       bX.innerHTML = '<i class="bi bi-x-lg"></i>';
 
-      actions.append(bView, bX);
-      tdActions.appendChild(actions);
-
-      const tdName = document.createElement('td');
-      tdName.style.paddingLeft = '.3rem';
-      tdName.textContent = name;
+      nameRow.append(nameSpan, bX);
+      tdName.appendChild(nameRow);
 
       tr.append(tdActions, tdName);
       docTableBody.appendChild(tr);
@@ -571,6 +609,9 @@
     const visible = [];
     savedDocNames.forEach(n => { if (!removedDocs.includes(n)) visible.push(n); });
     (stagedFiles || []).forEach(n => { if (!visible.includes(n)) visible.push(n); });
+    // drop original-name entries for files that no longer exist
+    const visibleSet = new Set(visible);
+    Object.keys(stagedOriginalMap).forEach(k => { if (!visibleSet.has(k)) delete stagedOriginalMap[k]; });
     renderDocTable(visible);
     document.getElementById('docCountLabel').textContent = visible.length + ' / 20';
   }
@@ -707,6 +748,7 @@
   if (IS_EDIT) {
     // saved docs from tblSEN_Doc
     savedDocNames = @json($editDocs->pluck('Doc_Filename'));
+    savedOriginalMap = @json($editDocs->mapWithKeys(fn($d) => [$d->Doc_Filename => $d->Doc_Filename_Original])->filter()->all());
     refreshDocList([]);
     // enable the form, but keep Student Id disabled (not changeable)
     setFormDisabled(false);

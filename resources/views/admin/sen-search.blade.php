@@ -157,6 +157,7 @@
     </div>
     <div class="col-md-6 d-flex gap-2">
       <button type="submit" class="btn btn-search"><i class="bi bi-search me-1"></i>Search</button>
+      <button type="button" id="exportBtn" class="btn btn-cancel" title="Export to Excel"><i class="bi bi-box-arrow-up me-1"></i>Export</button>
       <button type="button" id="resetBtn" class="btn btn-cancel"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</button>
     </div>
   </form>
@@ -237,6 +238,7 @@
   document.getElementById('themeToggle')?.addEventListener('click', () => setTimeout(applyGridTheme, 60));
 
   /* ---------- Search ---------- */
+  let lastResultCount = 0; // total rows of the last search (for the Export guard)
   document.getElementById('senSearchForm').addEventListener('submit', async e => {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -247,6 +249,7 @@
       const res = await fetch('/admin/sen-search/search?' + params.toString());
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const rows = await res.json();
+      lastResultCount = rows.length;
       gridApi.setGridOption('rowData', rows);
     } catch (err) {
       toast('❌ Search failed: ' + err.message);
@@ -255,10 +258,29 @@
     }
   });
 
+  /* ---------- Export ---------- */
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    if (!lastResultCount) {
+      toast('⚠️ No search results to export');
+      return;
+    }
+    const fd = new FormData(document.getElementById('senSearchForm'));
+    const params = new URLSearchParams();
+    for (const [k, v] of fd) { if (v !== '') params.set(k, v); }
+    // anchor with download attribute -> the layout's loading overlay ignores it
+    const a = document.createElement('a');
+    a.href = '/admin/sen-search/export?' + params.toString();
+    a.download = '';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
+
   /* ---------- Reset ---------- */
   document.getElementById('resetBtn').addEventListener('click', () => {
     document.getElementById('senSearchForm').reset();
     gridApi.setGridOption('rowData', []);
+    lastResultCount = 0;
     toast('Criteria reset');
   });
 </script>

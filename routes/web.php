@@ -84,6 +84,7 @@ Route::middleware('auth')->group(function () {
     // Admin: SEN Search (AG Grid + search, edit opens Create SEN in edit mode)
     Route::get('/admin/sen-search', [SenSearchController::class, 'index'])->name('admin.sen-search');
     Route::get('/admin/sen-search/search', [SenSearchController::class, 'search']);
+Route::get('/admin/sen-search/export', [SenSearchController::class, 'export']);
 
     // Admin: Create SEN (also serves as Edit SEN when ?sen_id= is given)
     Route::get('/admin/create-sen', [CreateSenController::class, 'index'])->name('admin.create-sen');

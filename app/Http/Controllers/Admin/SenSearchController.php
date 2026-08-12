@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class SenSearchController extends Controller
 {
@@ -50,6 +54,12 @@ class SenSearchController extends Controller
      * (collation 1267 landmine between utf8mb4_0900_ai_ci and utf8mb4_unicode_ci).
      */
     public function search(Request $request)
+    {
+        return response()->json($this->searchRows($request));
+    }
+
+    /** shared row builder for the search grid and the Excel export */
+    private function searchRows(Request $request): \Illuminate\Support\Collection
     {
         $conn = DB::connection('pusen');
 
@@ -122,7 +132,7 @@ class SenSearchController extends Controller
             return $s->Staff_Display_Name ?: ($s->Staff_Name ?: $staffId);
         };
 
-        return response()->json($rows->map(function ($r) use ($students, $displayName) {
+        return $rows->map(function ($r) use ($students, $displayName) {
             $st = $students->get($r->Student_Id);
             return [
                 'sen_id'          => $r->SEN_Id,
@@ -140,7 +150,73 @@ class SenSearchController extends Controller
                 'special_examination_arrangement' => $r->Special_Examination_Arrangement,
                 'temporary_special_support'       => $r->Temporary_Special_Support,
             ];
-        }));
+        });
+    }
+
+    /**
+     * Export the current search result to a real Excel .xlsx file.
+     * Filename: SEN_YYYYMMDD_HHMMSS.xlsx (local HK time).
+     */
+    public function export(Request $request)
+    {
+        $rows = $this->searchRows($request);
+
+        $columns = [
+            'sen_id'          => 'SEN Id',
+            'student_id'      => 'Student Id',
+            'student_name_eng'=> 'Name (Eng)',
+            'student_name_chn'=> 'Name (Chn)',
+            'programme_leader'=> 'Programme Leader',
+            'department_admin_staff'          => 'Dept Admin',
+            'counsellor'                      => 'Counsellor',
+            'sen_officer'                     => 'SEN Officer',
+            'undergraduate_studies_support_officer' => 'USSO',
+            'sen_type'        => 'SEN Type',
+            'sen_detail'      => 'SEN Detail',
+            'special_support_required'        => 'Support Required',
+            'special_examination_arrangement' => 'Exam Arrangement',
+            'temporary_special_support'       => 'Temp Support',
+        ];
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('SEN Search');
+
+        // header row
+        $col = 1;
+        foreach ($columns as $header) {
+            $sheet->setCellValue([$col++, 1], $header);
+        }
+        $lastCol = Coordinate::stringFromColumnIndex(count($columns));
+        $headerRange = 'A1:' . $lastCol . '1';
+        $sheet->getStyle($headerRange)->getFont()->setBold(true);
+        $sheet->getStyle($headerRange)->getFill()
+            ->setFillType(Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('D9E2F3');
+
+        // data rows
+        $r = 2;
+        foreach ($rows as $row) {
+            $c = 1;
+            foreach (array_keys($columns) as $key) {
+                $sheet->setCellValue([$c++, $r], $row[$key] ?? '');
+            }
+            $r++;
+        }
+
+        foreach (range('A', $lastCol) as $colLetter) {
+            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+        }
+
+        $filename = 'SEN_' . now('Asia/Hong_Kong')->format('Ymd_His') . '.xlsx';
+
+        $writer = new Xlsx($spreadsheet);
+        $tmp = tempnam(sys_get_temp_dir(), 'sen') . '.xlsx';
+        $writer->save($tmp);
+
+        return response()->download($tmp, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     /** form input key -> tblSEN column name (SEN_Officer is the only non-ucwords case) */

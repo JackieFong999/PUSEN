@@ -259,7 +259,7 @@ class CreateSenController extends Controller
     }
 
     /** Serve a SEN document for preview / download (checks staging, then final). */
-    public function previewDoc(string $filename)
+    public function previewDoc(Request $request, string $filename)
     {
         $filename = basename($filename);
         $candidates = [
@@ -268,11 +268,38 @@ class CreateSenController extends Controller
         ];
         foreach ($candidates as $path) {
             if (is_file($path)) {
-                // auto content-type: PDF/images/text preview in-browser, others download
-                return response()->file($path);
+                // ?dl=1 forces a download; otherwise preview in-browser.
+                // Content-Disposition carries the ORIGINAL filename (RFC 5987 for non-ASCII).
+                $disposition = $request->boolean('dl') ? 'attachment' : 'inline';
+                $original = $this->originalNameFor($filename);
+                $safe = str_replace(['"', '\\', "\r", "\n"], '_', $original);
+                return response()->file($path, [
+                    'Content-Disposition' => $disposition . '; filename="' . $safe . '"; filename*=UTF-8\'\'' . rawurlencode($original),
+                ]);
             }
         }
         abort(404, 'Document not found');
+    }
+
+    /** Best-known original filename for a stored doc (staged meta -> DB -> stripped fallback). */
+    private function originalNameFor(string $filename): string
+    {
+        if (preg_match('/^(SEN-\d+)_\d+_/', $filename, $m)) {
+            $senId = $m[1];
+            $meta = $this->docMeta($senId);
+            if (isset($meta[$filename]) && $meta[$filename] !== '') {
+                return $meta[$filename];
+            }
+            $row = DB::connection('pusen')->table('tblSEN_Doc')
+                ->where('SEN_Id', $senId)
+                ->where('Doc_Filename', $filename)
+                ->first(['Doc_Filename_Original']);
+            if ($row && $row->Doc_Filename_Original) {
+                return $row->Doc_Filename_Original;
+            }
+            return preg_replace('/^' . preg_quote($senId, '/') . '_\d+_/', '', $filename);
+        }
+        return $filename;
     }
 
     /** form input key -> tblSEN column name (SEN_Officer is the only non-ucwords case) */
@@ -337,6 +364,31 @@ class CreateSenController extends Controller
         return $names;
     }
 
+    /** sidecar meta file: staged filename -> true original client filename */
+    private function docMetaPath(string $senId): string
+    {
+        return $this->stagingDir() . '/' . $senId . '.meta.json';
+    }
+
+    private function docMeta(string $senId): array
+    {
+        $path = $this->docMetaPath($senId);
+        if (! is_file($path)) {
+            return [];
+        }
+        $data = json_decode((string) file_get_contents($path), true);
+        return is_array($data) ? $data : [];
+    }
+
+    private function saveDocMeta(string $senId, array $meta): void
+    {
+        $dir = $this->stagingDir();
+        if (! is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+        file_put_contents($this->docMetaPath($senId), json_encode($meta));
+    }
+
     /** next 2-digit sequence for a SEN case = max(saved Doc_Seq, staged seq) + 1 */
     private function nextDocSeq(string $senId): int
     {
@@ -386,15 +438,22 @@ class CreateSenController extends Controller
         }
 
         $seq = $this->nextDocSeq($senId);
-        $original = preg_replace('/[^A-Za-z0-9._-]/', '_', $validated['file']->getClientOriginalName());
+        $rawOriginal = $validated['file']->getClientOriginalName();
+        $original = preg_replace('/[^A-Za-z0-9._-]/', '_', $rawOriginal);
         $original = $original === '' ? 'document.pdf' : $original;
         $filename = $senId . '_' . str_pad((string) $seq, 2, '0', STR_PAD_LEFT) . '_' . $original;
 
         $validated['file']->move($dir, $filename);
 
+        // remember the true original filename -> tblSEN_Doc.Doc_Filename_Original on save
+        $meta = $this->docMeta($senId);
+        $meta[$filename] = $rawOriginal;
+        $this->saveDocMeta($senId, $meta);
+
         return response()->json([
             'success' => true,
             'filename' => $filename,
+            'original' => $rawOriginal,
             'files' => $this->stagedList($senId),
         ]);
     }
@@ -414,6 +473,11 @@ class CreateSenController extends Controller
         if (is_file($path)) {
             unlink($path);
         }
+        $meta = $this->docMeta($senId);
+        if (array_key_exists($filename, $meta)) {
+            unset($meta[$filename]);
+            $this->saveDocMeta($senId, $meta);
+        }
 
         return response()->json(['success' => true, 'files' => $this->stagedList($senId)]);
     }
@@ -425,6 +489,7 @@ class CreateSenController extends Controller
         foreach ($this->stagedList($senId) as $name) {
             @unlink($this->stagingDir() . '/' . $name);
         }
+        @unlink($this->docMetaPath($senId));
         return response()->json(['success' => true, 'files' => []]);
     }
 
@@ -437,6 +502,7 @@ class CreateSenController extends Controller
             mkdir($final, 0775, true);
         }
 
+        $meta = $this->docMeta($senId);
         $rows = [];
         foreach ($this->stagedList($senId) as $name) {
             $from = $staging . '/' . $name;
@@ -449,20 +515,28 @@ class CreateSenController extends Controller
             if (preg_match('/_(\d+)_/', $name, $m)) {
                 $seq = (int) $m[1];
             }
+            // true original filename from the upload meta (fallback: strip the SEN_ prefix)
+            $original = $meta[$name] ?? preg_replace('/^' . preg_quote($senId, '/') . '_\d+_/', '', $name);
+            $original = mb_substr((string) $original, 0, 60);
+
             $rows[] = [
-                'SEN_Id'       => $senId,
-                'Doc_Seq'      => $seq,
-                'Doc_Filename' => $name,
-                'created_at'   => now(),
-                'updated_at'   => now(),
-                'created_by'   => 'system01',
-                'updated_by'   => 'system01',
-                'updated_ip'   => $ip,
+                'SEN_Id'                => $senId,
+                'Doc_Seq'               => $seq,
+                'Doc_Filename'          => $name,
+                'Doc_Filename_Original' => $original === '' ? null : $original,
+                'created_at'            => now(),
+                'updated_at'            => now(),
+                'created_by'            => 'system01',
+                'updated_by'            => 'system01',
+                'updated_ip'            => $ip,
             ];
         }
 
         if ($rows) {
             DB::connection('pusen')->table('tblSEN_Doc')->insert($rows);
         }
+
+        // staging is now finalized; drop the sidecar meta file
+        @unlink($this->docMetaPath($senId));
     }
 }
