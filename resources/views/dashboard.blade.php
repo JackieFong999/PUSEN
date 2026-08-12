@@ -24,15 +24,9 @@
   .table-hover tbody tr:hover { background: var(--accent-soft); }
 </style>
 
-<div class="crumb mb-3">
-    <a href="{{ route('dashboard') }}">Home</a><span class="sep">/</span>
-    <span>Dashboard</span>
-</div>
-
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
     <div>
         <h1 class="mb-0" style="font-size:1.25rem;">Dashboard</h1>
-        <p>Welcome back, {{ config('nav.profile.name') }}.</p>
     </div>
 </div>
 
@@ -43,30 +37,38 @@
     <span style="font-size:.75rem; color:var(--text-faint);">Latest 50</span>
   </div>
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0" style="min-width: 900px;">
+    <table class="table table-hover align-middle mb-0" style="min-width: 1150px;">
       <thead>
         <tr>
-          <th>File Date</th>
+          <th>Import Time</th>
           <th>File Name</th>
           <th>File Type</th>
           <th>Import Status</th>
-          <th>Remarks</th>
+          <th>CSV Rows</th>
+          <th>Imported</th>
+          <th>Updated</th>
+          <th>Duplicated</th>
+          <th>Errors</th>
           <th>Import By</th>
         </tr>
       </thead>
       <tbody>
         @forelse ($subjectLogs as $log)
           <tr>
-            <td>{{ $log->File_Date ? \Carbon\Carbon::parse($log->File_Date)->format('Y-m-d') : '—' }}</td>
+            <td>{{ $log->created_at ? \Carbon\Carbon::parse($log->created_at)->format('Y-m-d H:i') : '—' }}</td>
             <td>{{ $log->File_Name }}</td>
             <td>{{ $log->FileType }}</td>
-            <td>{{ $log->Import_Status }}</td>
-            <td>{{ $log->Remarks }}</td>
-            <td>{{ $log->Import_By }}</td>
+            <td style="color:{{ $log->Import_Status === 'Success' ? 'var(--success)' : ($log->Import_Status ? 'var(--danger)' : 'var(--text-muted)') }}; font-weight:600;">{{ $log->Import_Status ?: '—' }}</td>
+            <td>{{ $log->CSV_Row_Count }}</td>
+            <td>{{ $log->Import_Count }}</td>
+            <td>{{ $log->Updated_Count }}</td>
+            <td>{{ $log->Duplicated_Count }}</td>
+            <td>{{ $log->Error_Count }}</td>
+            <td>{{ $log->created_by }}</td>
           </tr>
         @empty
           <tr>
-            <td colspan="6" class="text-muted" style="font-size:.85rem;">No subject import logs yet.</td>
+            <td colspan="10" class="text-muted" style="font-size:.85rem;">No subject import logs yet.</td>
           </tr>
         @endforelse
       </tbody>

@@ -150,7 +150,12 @@ class SubjectImportService
             $plan = $this->validateRows($conn, $rows, $logId, $filename, $user, $ip);
 
             if ($plan['failures'] > 0) {
-                $conn->table('tblImport_Log')->where('Id', $logId)->update(['Import_Status' => 'Failure']);
+                $conn->table('tblImport_Log')->where('Id', $logId)->update([
+                    'Import_Status'    => 'Failure',
+                    'CSV_Row_Count'    => count($rows),
+                    'Duplicated_Count' => $plan['duplicated'],
+                    'Error_Count'      => $plan['failures'],
+                ]);
                 return $this->result('abort', $filename, null, [
                     'failures'   => $plan['failures'],
                     'duplicated' => $plan['duplicated'],
@@ -192,7 +197,11 @@ class SubjectImportService
                 $conn->commit();
             } catch (\Throwable $e) {
                 $conn->rollBack();
-                $conn->table('tblImport_Log')->where('Id', $logId)->update(['Import_Status' => 'Failure']);
+                $conn->table('tblImport_Log')->where('Id', $logId)->update([
+                    'Import_Status'    => 'Failure',
+                    'CSV_Row_Count'    => count($rows),
+                    'Duplicated_Count' => $plan['duplicated'],
+                ]);
                 return $this->result('error', $filename, 'Import transaction failed: ' . $e->getMessage(), [
                     'inserted'   => 0,
                     'updated'    => 0,
@@ -201,8 +210,15 @@ class SubjectImportService
                 ]);
             }
 
-            // --- 5. success: mark log, archive file ---
-            $conn->table('tblImport_Log')->where('Id', $logId)->update(['Import_Status' => 'Success']);
+            // --- 5. success: record counts, mark log, archive file ---
+            $conn->table('tblImport_Log')->where('Id', $logId)->update([
+                'Import_Status'    => 'Success',
+                'CSV_Row_Count'    => count($rows),
+                'Import_Count'     => $inserted,
+                'Updated_Count'    => $updated,
+                'Duplicated_Count' => $plan['duplicated'],
+                'Error_Count'      => $plan['failures'],
+            ]);
 
             $archiveOk = $this->sftp->rename($remoteFile, $this->archiveDir() . '/' . $filename);
 

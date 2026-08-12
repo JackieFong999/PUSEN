@@ -31,14 +31,13 @@ Route::middleware('auth')->group(function () {
     // Root -> dashboard
     Route::get('/', fn () => redirect()->route('dashboard'));
 
-    // Dashboard: subject import logging
+    // Dashboard: subject import log (per-file summary, latest 50)
     Route::get('/dashboard', function () {
-        // Subject import logging from the failed-row log (latest 50)
-        $subjectLogs = DB::connection('pusen')->table('tblImport_Failed_Log')
+        $subjectLogs = DB::connection('pusen')->table('tblImport_Log')
             ->where('FileType', 'SUBJECT')
             ->orderByDesc('Id')
             ->limit(50)
-            ->get(['File_Date', 'File_Name', 'FileType', 'Import_Status', 'Remarks', 'Import_By']);
+            ->get(['created_at', 'File_Name', 'FileType', 'Import_Status', 'CSV_Row_Count', 'Import_Count', 'Updated_Count', 'Duplicated_Count', 'Error_Count', 'created_by']);
         return view('dashboard', compact('subjectLogs'));
     })->name('dashboard');
 
