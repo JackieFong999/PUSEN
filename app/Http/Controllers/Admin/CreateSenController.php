@@ -258,7 +258,7 @@ class CreateSenController extends Controller
         return response()->json(['success' => true, 'sen_id' => $finalSenId]);
     }
 
-    /** Serve a SEN document for in-browser PDF preview (checks staging, then final). */
+    /** Serve a SEN document for preview / download (checks staging, then final). */
     public function previewDoc(string $filename)
     {
         $filename = basename($filename);
@@ -268,7 +268,8 @@ class CreateSenController extends Controller
         ];
         foreach ($candidates as $path) {
             if (is_file($path)) {
-                return response()->file($path, ['Content-Type' => 'application/pdf']);
+                // auto content-type: PDF/images/text preview in-browser, others download
+                return response()->file($path);
             }
         }
         abort(404, 'Document not found');
@@ -300,7 +301,22 @@ class CreateSenController extends Controller
     /* ================= document upload (staging) ================= */
 
     private const MAX_DOCS = 20;
-    private const MAX_DOC_SIZE_KB = 1024; // 1 MB (testing); production will be 10 MB
+    private const MAX_DOC_SIZE_KB = 10240; // 10 MB per file
+
+    /** file extensions never allowed for upload (executables / script / active content) */
+    private const BLOCKED_EXTENSIONS = [
+        // Windows executables / installers
+        'exe', 'msi', 'bat', 'cmd', 'com', 'scr', 'pif',
+        // scripts (browser / shell)
+        'js', 'jse', 'vbs', 'vbe', 'wsf', 'wsh', 'ps1', 'psm1', 'psd1',
+        'sh', 'bash', 'php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'phar',
+        'pl', 'py', 'pyc', 'rb', 'jar', 'class',
+        // misc active content
+        'app', 'dmg', 'reg', 'lnk', 'msc', 'gadget', 'cpl',
+        'asp', 'aspx', 'jsp', 'jspx', 'htaccess',
+        // served inline by previewDoc -> would execute in the app origin
+        'html', 'htm', 'shtml', 'svg',
+    ];
 
     private function stagingDir(): string
     {
@@ -338,7 +354,7 @@ class CreateSenController extends Controller
     }
 
     /**
-     * Stage an uploaded PDF (PDF only, <= 1 MB, max 20 per case).
+     * Stage an uploaded document (any type except executables, <= 1 MB, max 20 per case).
      * Filename: {SEN_Id}_{2-digit seq}_{original filename}
      */
     public function upload(Request $request)
@@ -349,7 +365,15 @@ class CreateSenController extends Controller
         }
 
         $validated = $request->validate([
-            'file' => 'required|file|mimes:pdf|max:' . self::MAX_DOC_SIZE_KB,
+            'file' => [
+                'required', 'file', 'max:' . self::MAX_DOC_SIZE_KB,
+                function ($attribute, $value, $fail) {
+                    $ext = strtolower($value->getClientOriginalExtension());
+                    if (in_array($ext, self::BLOCKED_EXTENSIONS, true)) {
+                        $fail('Executable / active-content files (.'.$ext.') are not allowed.');
+                    }
+                },
+            ],
         ]);
 
         if (count($this->stagedList($senId)) + DB::connection('pusen')->table('tblSEN_Doc')->where('SEN_Id', $senId)->count() >= self::MAX_DOCS) {

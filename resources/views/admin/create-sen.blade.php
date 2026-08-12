@@ -90,6 +90,29 @@
   .display-list:disabled { opacity: .75; }
   .display-list option { padding: .25rem .5rem; }
 
+  /* document list table (per-row View / X buttons) */
+  #docTable tbody td {
+    border-color: var(--border);
+    padding: .45rem .9rem;
+    font-size: .85rem; color: var(--text);
+    vertical-align: middle;
+    word-break: break-all;
+  }
+  #docTable .row-btn {
+    width: 30px; height: 30px; font-size: .9rem;
+    border: 1px solid rgba(var(--accent-rgb), .4); border-radius: 8px;
+    background: var(--accent-soft); color: var(--accent); /* eye = blue, tinted like hover */
+    display: inline-grid; place-items: center;
+    transition: background .15s, border-color .15s;
+  }
+  #docTable .row-btn i {
+    -webkit-text-stroke: 1px currentColor; /* thicken glyph strokes */
+    transition: transform .15s;
+  }
+  #docTable .row-btn:hover i { transform: scale(1.18); } /* on hover only the icon grows */
+  #docTable .row-btn:disabled { opacity: .45; cursor: not-allowed; }
+  #docTable .row-btn.btn-x { border-color: rgba(248,113,113,.4); background: rgba(248,113,113,.08); color: var(--danger); } /* X = red, tinted like hover */
+
   .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; }
   .modal-content .modal-title { font-size: 1rem; font-weight: 600; color: var(--text); }
   .modal-content .modal-body { font-size: .88rem; color: var(--text); }
@@ -269,21 +292,20 @@
 
   {{-- ============ DOCUMENT UPLOAD ============ --}}
   <div class="form-card mb-3">
-    <div class="card-head">Documents <span class="text-muted" style="text-transform:none;letter-spacing:0;">(upload)</span></div>
+    <div class="card-head">Documents <span class="text-muted" style="text-transform:none;letter-spacing:0;">(upload)</span> <span class="badge-soft" id="docCountLabel">0 / 20</span></div>
     <div class="card-body">
       <div class="d-flex align-items-center gap-2 mb-2">
         <button type="button" id="chooseFilesBtn" class="btn btn-cancel"><i class="bi bi-paperclip me-1"></i>Choose Files</button>
-        <span class="text-muted" style="font-size:.75rem;">PDF only &middot; max 1 MB each</span>
+        <span class="text-muted" style="font-size:.75rem;">Any file except executables (.exe, .js, etc.) &middot; max 10 MB each</span>
       </div>
-      <input type="file" id="docFileInput" accept=".pdf,application/pdf" multiple hidden>
-      <label class="form-label d-flex justify-content-between align-items-center mb-1">
-        <span>Uploaded Documents &mdash; limited to 20 documents</span>
-        <span class="badge-soft" id="docCountLabel">0 / 20</span>
-      </label>
-      <select class="form-select display-list display-only mb-2" id="dDocs" multiple size="4" disabled>
-        <option value="">— none —</option>
-      </select>
-      <button type="button" id="removeDocBtn" class="btn btn-cancel" disabled><i class="bi bi-trash me-1"></i>Remove</button>
+      <input type="file" id="docFileInput" multiple hidden>
+      <div class="table-responsive" style="max-height:230px; overflow-y:auto;">
+        <table class="table table-hover align-middle mb-0" id="docTable" style="min-width:460px;">
+          <tbody id="docTableBody">
+            <tr><td colspan="3" class="text-muted" style="font-size:.85rem;">— none —</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -350,7 +372,6 @@
   document.getElementById('docFileInput').addEventListener('change', () => {
     if (document.getElementById('docFileInput').files.length) formDirty = true;
   });
-  document.getElementById('removeDocBtn').addEventListener('click', () => { formDirty = true; });
   // the layout script (runs after this one) picks this up to guard sidebar navigation
   window.PUSEN_DIRTY_FN = () => formDirty;
 
@@ -359,7 +380,7 @@
     document.getElementById('saveBtn').disabled = disabled;
     document.getElementById('cancelBtn').disabled = disabled;
     document.getElementById('chooseFilesBtn').disabled = disabled;
-    document.getElementById('removeDocBtn').disabled = true; // re-evaluated on list selection
+    renderDocTable(currentVisibleDocs); // re-render doc rows with the locked state
   }
 
   function resetAll() {
@@ -370,7 +391,7 @@
     fillList('dTeachers', []);
     fillList('dAdvisors', []);
     fillList('dSubjects', []);
-    fillList('dDocs', []);
+    refreshDocList([]);
     document.getElementById('docCountLabel').textContent = '0 / 20';
     document.getElementById('docFileInput').value = '';
     studentValid = false;
@@ -414,7 +435,9 @@
 
   /* ================= Document upload ================= */
   const docFileInput = document.getElementById('docFileInput');
-  const dDocs = document.getElementById('dDocs');
+  const docTableBody = document.getElementById('docTableBody');
+  let formLocked = false;      // true while the whole form is disabled (e.g. after Save)
+  let currentVisibleDocs = []; // last rendered doc list (for re-render on lock/unlock)
 
   document.getElementById('chooseFilesBtn').addEventListener('click', () => docFileInput.click());
 
@@ -447,38 +470,77 @@
     docFileInput.value = '';
   });
 
-  // enable Remove only when a file is selected in the list
-  dDocs.addEventListener('change', () => {
-    document.getElementById('removeDocBtn').disabled = !dDocs.selectedOptions.length;
-  });
-
-  // click a file in the Document List -> open the PDF in a new tab (preview)
-  dDocs.addEventListener('click', () => {
-    const sel = dDocs.selectedOptions[0];
-    if (sel && sel.value) {
-      window.open('/admin/sen-doc/' + encodeURIComponent(sel.value), '_blank');
+  // document list table: per-row View / X buttons + clickable filename (event delegation)
+  docTableBody.addEventListener('click', (e) => {
+    const viewBtn = e.target.closest('[data-view]');
+    if (viewBtn) {
+      window.open('/admin/sen-doc/' + encodeURIComponent(viewBtn.dataset.view), '_blank');
+      return;
+    }
+    const rmBtn = e.target.closest('[data-remove]');
+    if (rmBtn) {
+      removeDocument(rmBtn.dataset.remove);
+      return;
     }
   });
 
-  // refresh the doc list UI: always show saved docs (minus marked-removed) + staged files
-  function refreshDocList(stagedFiles) {
-    const visible = [];
-    savedDocNames.forEach(n => { if (!removedDocs.includes(n)) visible.push(n); });
-    (stagedFiles || []).forEach(n => { if (!visible.includes(n)) visible.push(n); });
-    fillList('dDocs', visible);
-    const total = visible.length;
-    document.getElementById('docCountLabel').textContent = total + ' / 20';
-    document.getElementById('removeDocBtn').disabled = true;
+  // render the document list table: [View] [X] filename per row
+  function renderDocTable(files) {
+    currentVisibleDocs = files.slice();
+    docTableBody.innerHTML = '';
+    if (!files.length) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 2;
+      td.className = 'text-muted';
+      td.style.fontSize = '.85rem';
+      td.textContent = '— none —';
+      tr.appendChild(td);
+      docTableBody.appendChild(tr);
+      return;
+    }
+    files.forEach(name => {
+      const tr = document.createElement('tr');
+
+      // one compact left-aligned actions cell: [View] [X]
+      const tdActions = document.createElement('td');
+      tdActions.style.whiteSpace = 'nowrap';
+      tdActions.style.width = '1%'; // shrink-wrap: keep the column as narrow as the buttons
+      tdActions.style.padding = '.45rem 0 .45rem .3rem'; // no right padding -> filename sits right next to buttons
+      const actions = document.createElement('div');
+      actions.className = 'd-flex gap-1';
+
+      const bView = document.createElement('button');
+      bView.type = 'button'; bView.className = 'row-btn';
+      bView.dataset.view = name;
+      bView.title = 'View ' + name;
+      bView.disabled = formLocked;
+      bView.innerHTML = '<i class="bi bi-eye"></i>';
+
+      const bX = document.createElement('button');
+      bX.type = 'button'; bX.className = 'row-btn btn-x';
+      bX.dataset.remove = name;
+      bX.title = 'Remove ' + name;
+      bX.disabled = formLocked;
+      bX.innerHTML = '<i class="bi bi-x-lg"></i>';
+
+      actions.append(bView, bX);
+      tdActions.appendChild(actions);
+
+      const tdName = document.createElement('td');
+      tdName.style.paddingLeft = '.3rem';
+      tdName.textContent = name;
+
+      tr.append(tdActions, tdName);
+      docTableBody.appendChild(tr);
+    });
   }
 
-  document.getElementById('removeDocBtn').addEventListener('click', async () => {
-    const sel = dDocs.selectedOptions[0];
-    if (!sel || !sel.value) return;
+  // remove a document (staged -> delete now; saved in edit mode -> mark for removal)
+  async function removeDocument(filename) {
+    formDirty = true;
     const senId = document.getElementById('fSenId').value;
-    const filename = sel.value;
 
-    // edit mode: removing an already-saved doc only marks it for deletion (applied on Save,
-    // so Cancel can discard it)
     if (IS_EDIT && savedDocNames.includes(filename)) {
       removedDocs.push(filename);
       refreshDocList([]);
@@ -486,7 +548,6 @@
       return;
     }
 
-    // staged file -> delete immediately
     try {
       const res = await fetch('/admin/create-sen/remove-doc', {
         method: 'POST',
@@ -503,7 +564,16 @@
     } catch (err) {
       toast('❌ Remove failed: ' + err.message);
     }
-  });
+  }
+
+  // refresh the doc list UI: always show saved docs (minus marked-removed) + staged files
+  function refreshDocList(stagedFiles) {
+    const visible = [];
+    savedDocNames.forEach(n => { if (!removedDocs.includes(n)) visible.push(n); });
+    (stagedFiles || []).forEach(n => { if (!visible.includes(n)) visible.push(n); });
+    renderDocTable(visible);
+    document.getElementById('docCountLabel').textContent = visible.length + ' / 20';
+  }
 
   /* ---------- Student Id lookup ---------- */
   const fStudentId = document.getElementById('fStudentId');
