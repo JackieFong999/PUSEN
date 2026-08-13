@@ -3,24 +3,32 @@
 @section('content')
 
 <style>
-  .table { --bs-table-bg: transparent; color: var(--text); }
+  .stat-card { border-color: #000; }
+  .table {
+    --bs-table-bg: transparent;
+    color: var(--text);
+    border: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
   .table thead th {
     font-size: .72rem;
     text-transform: uppercase;
     letter-spacing: .06em;
     color: var(--text-faint);
     font-weight: 700;
-    border-bottom: 1px solid var(--card-border);
+    border-bottom: 1px solid #000;
     background: color-mix(in srgb, var(--bg-soft) 70%, transparent);
     padding: .8rem 1.1rem;
     white-space: nowrap;
   }
   .table tbody td {
-    border-color: var(--border);
+    border-bottom: 1px solid #000;
     padding: .75rem 1.1rem;
     font-size: .875rem;
     color: var(--text);
   }
+  .table tbody tr:last-child td { border-bottom: 0; }
   .table-hover tbody tr:hover { background: var(--accent-soft); }
 </style>
 
@@ -33,7 +41,7 @@
 {{-- ============ SUBJECT IMPORT LOGGING ============ --}}
 <div class="stat-card p-0 overflow-hidden">
   <div class="d-flex align-items-center justify-content-between px-3 pt-3 pb-2">
-    <span style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted);">Subject Logging</span>
+    <span style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#000;">Subject Logging</span>
     <span style="font-size:.75rem; color:var(--text-faint);">Latest 50</span>
   </div>
   <div class="table-responsive">
