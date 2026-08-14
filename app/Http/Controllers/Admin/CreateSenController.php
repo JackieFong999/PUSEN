@@ -11,12 +11,16 @@ class CreateSenController extends Controller
     /**
      * Staff roles that appear as selection boxes in the Create SEN form.
      * key = tblSEN column, value = tblStaff Target_User_Id filter.
+     * NOTE: Programme Leader is NOT a selection box — it is derived from the
+     * selected student's PROG_LEADER advisor (tblAdvisor_Student).
+     * NOTE: SEN Officer removed (2026-08-14, Jackie) — the field is gone from
+     * the form; the SEN_Officer column stays in tblSEN for SEN Search.
+     * The three remaining selects list ALL enabled staff (status=0) with
+     * NO Target_User_Id filter (Jackie 2026-08-14).
      */
     private const STAFF_ROLES = [
-        'programme_leader'                     => 'PL',
         'department_admin_staff'               => 'DA',
         'counsellor'                           => 'C',
-        'sen_officer'                          => 'SO',
         'undergraduate_studies_support_officer'=> 'USSO',
     ];
 
@@ -47,7 +51,8 @@ class CreateSenController extends Controller
 
         $staff = [];
         foreach (self::STAFF_ROLES as $key => $targetUserId) {
-            $q = $conn->table('tblStaff')->where('Target_User_Id', $targetUserId);
+            // All enabled staff (status=0), NO Target_User_Id filter (Jackie 2026-08-14)
+            $q = $conn->table('tblStaff');
             if (! $isEdit) {
                 $q->where('status', 0); // create mode: enabled only
             }
@@ -70,6 +75,17 @@ class CreateSenController extends Controller
             ->orderBy('SEN_Type')
             ->pluck('SEN_Type');
 
+        // Temporary Special Support options (lookup table)
+        $tempSupports = $conn->table('tblTemporary_Special_Support')
+            ->orderBy('Temporary_Special_Support')
+            ->pluck('Temporary_Special_Support');
+
+        // edit mode: ensure the record's current value is in the dropdown even if
+        // it is not in the lookup table (legacy free-text values)
+        if ($isEdit && $editSen->Temporary_Special_Support && ! $tempSupports->contains($editSen->Temporary_Special_Support)) {
+            $tempSupports->push($editSen->Temporary_Special_Support);
+        }
+
         // active students only (Student_Id selection box)
         $students = $conn->table('tblStudent')
             ->where('Student_Status', 'ACTIVE')
@@ -84,9 +100,28 @@ class CreateSenController extends Controller
             }
         }
 
+        // Programme Leader is derived from the student's PROG_LEADER advisors (edit mode display)
+        $editPlLabels = [];
+        if ($isEdit && $editSen->Student_Id) {
+            $plRows = $conn->table('tblAdvisor_Student')
+                ->where('Student_No', $editSen->Student_Id)
+                ->where('Advisor_Type', 'PROG_LEADER')
+                ->whereDate('Start_Date', '<=', now()->toDateString())
+                ->whereDate('End_Date', '>=', now()->toDateString())
+                ->get(['Advisor_Id']);
+            $plStaffIds = $plRows->pluck('Advisor_Id')->unique()->filter()->all();
+            $plStaffMap = $plStaffIds
+                ? $conn->table('tblStaff')->whereIn('Staff_Id', $plStaffIds)->get()->keyBy('Staff_Id')
+                : collect();
+            foreach ($plRows as $p) {
+                $s = $plStaffMap->get($p->Advisor_Id);
+                $editPlLabels[] = trim($p->Advisor_Id . ' — ' . ($s->Staff_Name ?? ''));
+            }
+        }
+
         $nextSenId = $isEdit ? $editSen->SEN_Id : $this->nextSenId();
 
-        return view('admin.create-sen', compact('staff', 'senTypes', 'students', 'nextSenId', 'isEdit', 'editSen', 'editDocs'));
+        return view('admin.create-sen', compact('staff', 'senTypes', 'tempSupports', 'students', 'nextSenId', 'isEdit', 'editSen', 'editDocs', 'editPlLabels'));
     }
 
     /**
@@ -125,10 +160,16 @@ class CreateSenController extends Controller
             'label' => trim($t->Staff_Id . ' — ' . ($t->Staff_Name ?? '')),
         ]);
 
-        // --- academic advisors: advisor ids -> staff names
-        $advisorIds = $conn->table('tblAdvisor_Student')
+        // --- academic advisors: PRIMARY advisors of this student whose
+        // date range (Start_Date .. End_Date) covers today
+        $advisorRows = $conn->table('tblAdvisor_Student')
             ->where('Student_No', $studentId)
-            ->pluck('Advisor_Id');
+            ->where('Advisor_Type', 'PRIMARY')
+            ->whereDate('Start_Date', '<=', now()->toDateString())
+            ->whereDate('End_Date', '>=', now()->toDateString())
+            ->get(['Advisor_Id']);
+
+        $advisorIds = $advisorRows->pluck('Advisor_Id')->unique()->filter();
 
         $advisors = $advisorIds->isNotEmpty()
             ? $conn->table('tblStaff')->whereIn('Staff_Id', $advisorIds->all())
@@ -139,6 +180,29 @@ class CreateSenController extends Controller
             'id'    => $a->Staff_Id,
             'label' => trim($a->Staff_Id . ' — ' . ($a->Staff_Name ?? '')),
         ]);
+
+        // --- programme leaders: ALL PROG_LEADER advisors of this student whose
+        // date range (Start_Date .. End_Date) covers today
+        $plRows = $conn->table('tblAdvisor_Student')
+            ->where('Student_No', $studentId)
+            ->where('Advisor_Type', 'PROG_LEADER')
+            ->whereDate('Start_Date', '<=', now()->toDateString())
+            ->whereDate('End_Date', '>=', now()->toDateString())
+            ->get(['Advisor_Id']);
+        $programmeLeaders = [];
+        if ($plRows->isNotEmpty()) {
+            $plStaffIds = $plRows->pluck('Advisor_Id')->unique()->filter()->all();
+            $plStaffMap = $plStaffIds
+                ? $conn->table('tblStaff')->whereIn('Staff_Id', $plStaffIds)->get()->keyBy('Staff_Id')
+                : collect();
+            foreach ($plRows as $p) {
+                $s = $plStaffMap->get($p->Advisor_Id);
+                $programmeLeaders[] = [
+                    'id'    => $p->Advisor_Id,
+                    'label' => trim($p->Advisor_Id . ' — ' . ($s->Staff_Name ?? '')),
+                ];
+            }
+        }
 
         // --- subjects
         $subjects = $conn->table('tblStudent_Reg')
@@ -158,6 +222,7 @@ class CreateSenController extends Controller
                 'fund_type_code'   => $student->Fund_Type_Code,
                 'student_status'   => $student->Student_Status,
             ],
+            'programme_leaders' => $programmeLeaders,
             'subject_teachers' => $teachers,
             'academic_advisors' => $advisors,
             'subjects' => $subjects,
@@ -187,8 +252,9 @@ class CreateSenController extends Controller
             return response()->json(['success' => false, 'message' => 'SEN case not found.'], 404);
         }
 
-        // staff fields: optional; create mode requires an ENABLED staff of the right role,
-        // edit mode ignores status (existing values may reference disabled staff)
+        // staff fields: optional; create mode requires an ENABLED staff (status=0),
+        // edit mode ignores status (existing values may reference disabled staff).
+        // No Target_User_Id check (Jackie 2026-08-14).
         $data = [];
         foreach (self::STAFF_ROLES as $key => $targetUserId) {
             $val = trim((string) $request->input($key));
@@ -196,9 +262,7 @@ class CreateSenController extends Controller
                 $data[$this->colName($key)] = null;
                 continue;
             }
-            $q = $conn->table('tblStaff')
-                ->where('Staff_Id', $val)
-                ->where('Target_User_Id', $targetUserId);
+            $q = $conn->table('tblStaff')->where('Staff_Id', $val);
             if (! $isEdit) {
                 $q->where('status', 0);
             }

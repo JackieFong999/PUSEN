@@ -61,6 +61,44 @@
   }
   .form-select option { background: var(--card-bg); color: var(--text); }
 
+  /* Student Id autocomplete dropdown */
+  .student-autocomplete {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    z-index: 1060;
+    max-height: 260px;
+    overflow-y: auto;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 9px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.14);
+    font-size: .85rem;
+  }
+  .student-autocomplete .ac-item {
+    padding: .5rem .8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .student-autocomplete .ac-item:hover,
+  .student-autocomplete .ac-item.active { background: var(--accent-soft); }
+  .student-autocomplete .ac-item .ac-id { font-weight: 600; flex-shrink: 0; }
+  .student-autocomplete .ac-item .ac-name {
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .student-autocomplete .ac-empty {
+    padding: .6rem .8rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
   .btn-search {
     background: #2563eb;
     color: #fff; font-weight: 600; font-size: .85rem;
@@ -146,24 +184,19 @@
         </div>
         <div class="col-md-4">
           <label class="form-label" for="fStudentId">Student Id <span class="text-danger">*</span></label>
-          <select class="form-select" id="fStudentId" name="student_id" disabled>
-            <option value="">-- Select Student (Active) --</option>
-            @foreach ($students as $st)
-              <option value="{{ $st->Student_Id }}" @selected($isEdit && $editSen->Student_Id === $st->Student_Id)>{{ $st->Student_Id }} — {{ $st->Student_Name_Eng }}</option>
-            @endforeach
-          </select>
+          <div class="position-relative">
+            <input type="text" class="form-control" id="fStudentId" name="student_id"
+                   placeholder="Type Student Id to search…" autocomplete="off"
+                   value="{{ $isEdit ? $editSen->Student_Id : '' }}" disabled>
+            <div class="student-autocomplete" id="studentAutocomplete" style="display:none;"></div>
+          </div>
         </div>
       </div>
 
       <div class="row g-3 mt-1">
         <div class="col-md-4">
           <label class="form-label" for="fPL">Programme Leader</label>
-          <select class="form-select" id="fPL" name="programme_leader" disabled>
-            <option value="">-- Select --</option>
-            @foreach ($staff['programme_leader'] as $s)
-              <option value="{{ $s->Staff_Id }}" @selected($isEdit && $editSen->Programme_Leader === $s->Staff_Id)>{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
-            @endforeach
-          </select>
+          <textarea class="form-control display-only" id="fPL" rows="3" readonly disabled>{{ $isEdit ? implode("\n", $editPlLabels ?? []) : '' }}</textarea>
         </div>
         <div class="col-md-4">
           <label class="form-label" for="fDA">Department Admin Staff</label>
@@ -184,15 +217,6 @@
           </select>
         </div>
         <div class="col-md-4">
-          <label class="form-label" for="fSO">SEN Officer</label>
-          <select class="form-select" id="fSO" name="sen_officer" disabled>
-            <option value="">-- Select --</option>
-            @foreach ($staff['sen_officer'] as $s)
-              <option value="{{ $s->Staff_Id }}" @selected($isEdit && $editSen->SEN_Officer === $s->Staff_Id)>{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
-            @endforeach
-          </select>
-        </div>
-        <div class="col-md-4">
           <label class="form-label" for="fUSSO">Undergraduate Studies Support Officer</label>
           <select class="form-select" id="fUSSO" name="undergraduate_studies_support_officer" disabled>
             <option value="">-- Select --</option>
@@ -200,6 +224,14 @@
               <option value="{{ $s->Staff_Id }}" @selected($isEdit && $editSen->Undergraduate_Studies_Support_Officer === $s->Staff_Id)>{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
             @endforeach
           </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="dTeachers">Subject Teacher</label>
+          <textarea class="form-control display-only" id="dTeachers" rows="4" readonly disabled></textarea>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label" for="dAdvisors">Academic Advisor</label>
+          <textarea class="form-control display-only" id="dAdvisors" rows="4" readonly disabled></textarea>
         </div>
         <div class="col-md-4">
           <label class="form-label" for="fSenType">SEN Type</label>
@@ -210,15 +242,11 @@
             @endforeach
           </select>
         </div>
-        <div class="col-md-4">
-          <label class="form-label" for="fTemp">Temporary Special Support</label>
-          <input type="text" class="form-control" id="fTemp" name="temporary_special_support" value="{{ $isEdit ? $editSen->Temporary_Special_Support : '' }}" disabled>
-        </div>
         <div class="col-12">
           <label class="form-label" for="fDetail">SEN Detail</label>
           <textarea class="form-control" id="fDetail" name="sen_detail" rows="2" disabled>{{ $isEdit ? $editSen->SEN_Detail : '' }}</textarea>
         </div>
-        <div class="col-md-6">
+        <div class="col-12">
           <label class="form-label" for="fSupport">Special Support Required</label>
           <textarea class="form-control" id="fSupport" name="special_support_required" rows="2" disabled>{{ $isEdit ? $editSen->Special_Support_Required : '' }}</textarea>
         </div>
@@ -226,6 +254,34 @@
           <label class="form-label" for="fExam">Special Examination Arrangement</label>
           <textarea class="form-control" id="fExam" name="special_examination_arrangement" rows="2" disabled>{{ $isEdit ? $editSen->Special_Examination_Arrangement : '' }}</textarea>
         </div>
+        <div class="col-md-4">
+          <label class="form-label" for="fTemp">Temporary Special Support</label>
+          <select class="form-select" id="fTemp" name="temporary_special_support" disabled>
+            <option value="">-- Select --</option>
+            @foreach ($tempSupports as $t)
+              <option value="{{ $t }}" @selected($isEdit && $editSen->Temporary_Special_Support === $t)>{{ $t }}</option>
+            @endforeach
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{-- ============ DOCUMENT UPLOAD ============ --}}
+  <div class="form-card mb-3">
+    <div class="card-head">Documents <span class="text-muted" style="text-transform:none;letter-spacing:0;">(upload)</span> <span class="badge-soft" id="docCountLabel">0 / 20</span></div>
+    <div class="card-body">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <button type="button" id="chooseFilesBtn" class="btn btn-cancel"><i class="bi bi-paperclip me-1"></i>Choose Files</button>
+        <span class="text-muted" style="font-size:.75rem;">Any file except executables (.exe, .js, etc.) &middot; max 10 MB each</span>
+      </div>
+      <input type="file" id="docFileInput" multiple hidden>
+      <div class="table-responsive" style="max-height:230px; overflow-y:auto;">
+        <table class="table table-hover align-middle mb-0" id="docTable" style="min-width:460px;">
+          <tbody id="docTableBody">
+            <tr><td colspan="3" class="text-muted" style="font-size:.85rem;">— none —</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -263,50 +319,13 @@
           <label class="form-label" for="dFundType">Fund Type</label>
           <input type="text" class="form-control display-only" id="dFundType" readonly disabled>
         </div>
-        <div class="col-md-2">
-          <label class="form-label" for="dStatus">Student Status</label>
-          <input type="text" class="form-control display-only" id="dStatus" readonly disabled>
-        </div>
       </div>
 
       <div class="row g-3 mt-1">
         <div class="col-md-4">
-          <label class="form-label" for="dTeachers">Subject Teacher</label>
-          <select class="form-select display-list display-only" id="dTeachers" multiple size="4" disabled>
-            <option value="">— none —</option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label" for="dAdvisors">Academic Advisor</label>
-          <select class="form-select display-list display-only" id="dAdvisors" multiple size="4" disabled>
-            <option value="">— none —</option>
-          </select>
-        </div>
-        <div class="col-md-4">
           <label class="form-label" for="dSubjects">Subject</label>
-          <select class="form-select display-list display-only" id="dSubjects" multiple size="4" disabled>
-            <option value="">— none —</option>
-          </select>
+          <textarea class="form-control display-only" id="dSubjects" rows="4" readonly disabled></textarea>
         </div>
-      </div>
-    </div>
-  </div>
-
-  {{-- ============ DOCUMENT UPLOAD ============ --}}
-  <div class="form-card mb-3">
-    <div class="card-head">Documents <span class="text-muted" style="text-transform:none;letter-spacing:0;">(upload)</span> <span class="badge-soft" id="docCountLabel">0 / 20</span></div>
-    <div class="card-body">
-      <div class="d-flex align-items-center gap-2 mb-2">
-        <button type="button" id="chooseFilesBtn" class="btn btn-cancel"><i class="bi bi-paperclip me-1"></i>Choose Files</button>
-        <span class="text-muted" style="font-size:.75rem;">Any file except executables (.exe, .js, etc.) &middot; max 10 MB each</span>
-      </div>
-      <input type="file" id="docFileInput" multiple hidden>
-      <div class="table-responsive" style="max-height:230px; overflow-y:auto;">
-        <table class="table table-hover align-middle mb-0" id="docTable" style="min-width:460px;">
-          <tbody id="docTableBody">
-            <tr><td colspan="3" class="text-muted" style="font-size:.85rem;">— none —</td></tr>
-          </tbody>
-        </table>
       </div>
     </div>
   </div>
@@ -389,12 +408,12 @@
 
   function resetAll() {
     document.getElementById('senForm').reset();
-    ['dNameEng','dNameChn','dFaculty','dDepartment','dProgSubCode','dProgTitle','dFundType','dStatus'].forEach(id => {
+    ['dNameEng','dNameChn','dFaculty','dDepartment','dProgSubCode','dProgTitle','dFundType'].forEach(id => {
       document.getElementById(id).value = '';
     });
-    fillList('dTeachers', []);
-    fillList('dAdvisors', []);
-    fillList('dSubjects', []);
+    fillTextArea('dTeachers', []);
+    fillTextArea('dAdvisors', []);
+    fillTextArea('dSubjects', []);
     refreshDocList([]);
     document.getElementById('docCountLabel').textContent = '0 / 20';
     document.getElementById('docFileInput').value = '';
@@ -417,6 +436,13 @@
       o.textContent = it.label ?? it;
       sel.appendChild(o);
     });
+  }
+
+  // fill a display-only textarea (e.g. Subject Teacher) — one entry per line
+  function fillTextArea(areaId, items) {
+    document.getElementById(areaId).value = (items || [])
+      .map(it => it.label ?? it)
+      .join('\n');
   }
 
   /* ---------- [+ Create SEN Case] (create mode only) ---------- */
@@ -616,14 +642,117 @@
     document.getElementById('docCountLabel').textContent = visible.length + ' / 20';
   }
 
-  /* ---------- Student Id lookup ---------- */
+  /* ---------- Student Id lookup (autocomplete) ---------- */
   const fStudentId = document.getElementById('fStudentId');
+  const acList = document.getElementById('studentAutocomplete');
+  // student data injected from the controller (id + name)
+  const STUDENTS = @json($students->map(fn ($s) => ['id' => $s->Student_Id, 'name' => $s->Student_Name_Eng]));
+  let acIndex = -1; // highlighted item index
 
-  // clear display-only block when selection changes, then look the student up
-  fStudentId.addEventListener('change', () => {
+  function acFilter(q) {
+    q = q.trim().toUpperCase();
+    if (!q) return STUDENTS; // empty -> all students
+    return STUDENTS.filter(s => s.id.toUpperCase().startsWith(q));
+  }
+
+  function acShow() {
+    const items = acFilter(fStudentId.value);
+    acList.innerHTML = '';
+    if (!items.length) {
+      const d = document.createElement('div');
+      d.className = 'ac-empty';
+      d.textContent = 'No matching Student Id';
+      acList.appendChild(d);
+    } else {
+      items.slice(0, 100).forEach((s, i) => {
+        const d = document.createElement('div');
+        d.className = 'ac-item' + (i === acIndex ? ' active' : '');
+        d.dataset.id = s.id;
+        const idSpan = document.createElement('span');
+        idSpan.className = 'ac-id';
+        idSpan.textContent = s.id;
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'ac-name';
+        nameSpan.textContent = s.name || '';
+        d.append(idSpan, nameSpan);
+        d.addEventListener('mousedown', (e) => {
+          e.preventDefault(); // keep focus on the input
+          acPick(s.id);
+        });
+        acList.appendChild(d);
+      });
+    }
+    acList.style.display = 'block';
+  }
+
+  function acHide() {
+    acList.style.display = 'none';
+    acIndex = -1;
+  }
+
+  function acPick(id) {
+    fStudentId.value = id;
+    acHide();
     studentValid = false;
     resetDisplayOnly();
     lookupStudent();
+  }
+
+  // typing -> filter the list (prefix match)
+  fStudentId.addEventListener('input', () => {
+    acIndex = -1;
+    studentValid = false;
+    resetDisplayOnly();
+    acShow();
+  });
+
+  // empty field + click/focus -> show all students
+  fStudentId.addEventListener('focus', () => {
+    acIndex = -1;
+    acShow();
+  });
+
+  // keyboard navigation: Up/Down move, Enter picks (or validates typed value), Esc closes
+  fStudentId.addEventListener('keydown', (e) => {
+    const items = acList.querySelectorAll('.ac-item');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (items.length) {
+        acIndex = (acIndex + 1) % items.length;
+        items.forEach((el, i) => el.classList.toggle('active', i === acIndex));
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (items.length) {
+        acIndex = (acIndex - 1 + items.length) % items.length;
+        items.forEach((el, i) => el.classList.toggle('active', i === acIndex));
+      }
+    } else if (e.key === 'Enter') {
+      if (items.length && acIndex >= 0 && items[acIndex]) {
+        e.preventDefault();
+        acPick(items[acIndex].dataset.id);
+      } else if (fStudentId.value.trim()) {
+        // no highlight: validate whatever was typed
+        e.preventDefault();
+        studentValid = false;
+        resetDisplayOnly();
+        lookupStudent();
+      }
+    } else if (e.key === 'Escape') {
+      acHide();
+    }
+  });
+
+  // clicking away closes the dropdown; validate a fully-typed Id on blur
+  fStudentId.addEventListener('blur', () => {
+    setTimeout(() => {
+      acHide();
+      const v = fStudentId.value.trim();
+      if (v && !studentValid) {
+        resetDisplayOnly();
+        lookupStudent();
+      }
+    }, 150);
   });
 
   async function lookupStudent() {
@@ -651,10 +780,13 @@
       document.getElementById('dProgSubCode').value = s.prog_sub_code ?? '';
       document.getElementById('dProgTitle').value = s.prog_title ?? '';
       document.getElementById('dFundType').value = s.fund_type_code ?? '';
-      document.getElementById('dStatus').value = s.student_status ?? '';
-      fillList('dTeachers', json.subject_teachers);
-      fillList('dAdvisors', json.academic_advisors);
-      fillList('dSubjects', json.subjects);
+      fillTextArea('dTeachers', json.subject_teachers);
+      fillTextArea('dAdvisors', json.academic_advisors);
+      fillTextArea('dSubjects', json.subjects);
+      // Programme Leader(s): display ALL PROG_LEADER advisors of this student (one per line)
+      document.getElementById('fPL').value = (json.programme_leaders || [])
+        .map(p => p.label || p.id)
+        .join('\n');
       toast('✅ Student found: ' + (s.student_name_eng || sid));
     } catch (err) {
       toast('❌ Lookup failed: ' + err.message);
@@ -662,12 +794,13 @@
   }
 
   function resetDisplayOnly() {
-    ['dNameEng','dNameChn','dFaculty','dDepartment','dProgSubCode','dProgTitle','dFundType','dStatus'].forEach(id => {
+    ['dNameEng','dNameChn','dFaculty','dDepartment','dProgSubCode','dProgTitle','dFundType'].forEach(id => {
       document.getElementById(id).value = '';
     });
-    fillList('dTeachers', []);
-    fillList('dAdvisors', []);
-    fillList('dSubjects', []);
+    document.getElementById('fPL').value = '';
+    fillTextArea('dTeachers', []);
+    fillTextArea('dAdvisors', []);
+    fillTextArea('dSubjects', []);
   }
 
   /* ---------- Save ---------- */

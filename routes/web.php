@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\CreateSenController;
 use App\Http\Controllers\Admin\SenSearchController;
 use App\Http\Controllers\Admin\SenTypeListController;
 use App\Http\Controllers\Admin\EmailTemplateListController;
+use App\Http\Controllers\Admin\TemporarySpecialSupportListController;
 use App\Http\Controllers\Admin\ImportController;
 use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +65,9 @@ Route::middleware('auth')->group(function () {
 
     // Admin: Academic Year Semester
     Route::get('/admin/academic-year-semester-list', [AcademicYearSemesterListController::class, 'index'])->name('admin.academic-year-semester-list');
+
+    // Admin: Temporary Special Support
+    Route::get('/admin/temporary-special-support-list', [TemporarySpecialSupportListController::class, 'index'])->name('admin.temporary-special-support-list');
 
     // Admin: Advisor List
     Route::get('/admin/advisor-list', [AdvisorListController::class, 'index'])->name('admin.advisor-list');

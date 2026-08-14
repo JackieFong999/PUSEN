@@ -15,14 +15,15 @@ class SenSearchController extends Controller
     /**
      * Staff roles shown as selection boxes in the search criteria.
      * key = form input, value = tblStaff Target_User_Id filter.
-     * NOTE: status is intentionally NOT filtered — SEN data may reference
+     * NOTE: Programme Leader is NOT here — it is derived from each student's
+     * PROG_LEADER advisor (tblAdvisor_Student) since tblSEN no longer stores it.
+     * NOTE: SEN Officer removed (2026-08-14, Jackie) — column dropped from tblSEN.
+     * status is intentionally NOT filtered — SEN data may reference
      * staff that have since been disabled (Jackie's decision).
      */
     private const STAFF_ROLES = [
-        'programme_leader'                      => 'PL',
         'department_admin_staff'                => 'DA',
         'counsellor'                            => 'C',
-        'sen_officer'                           => 'SO',
         'undergraduate_studies_support_officer' => 'USSO',
     ];
 
@@ -41,11 +42,18 @@ class SenSearchController extends Controller
                 ->get(['Staff_Id', 'Staff_Name']);
         }
 
+        // Programme Leader dropdown: staff with Target_User_Id='PL' (filters students
+        // by their PROG_LEADER advisor — see search())
+        $plStaff = $conn->table('tblStaff')
+            ->where('Target_User_Id', 'PL')
+            ->orderBy('Staff_Id')
+            ->get(['Staff_Id', 'Staff_Name']);
+
         $senTypes = $conn->table('tblSEN_Type')
             ->orderBy('SEN_Type')
             ->pluck('SEN_Type');
 
-        return view('admin.sen-search', compact('staff', 'senTypes'));
+        return view('admin.sen-search', compact('staff', 'plStaff', 'senTypes'));
     }
 
     /**
@@ -96,6 +104,18 @@ class SenSearchController extends Controller
                 $q->where($this->colName($key), $val);
             }
         }
+        // Programme Leader: not stored in tblSEN anymore — resolve to student ids
+        // whose PROG_LEADER advisor matches the selected staff
+        if ($pl = trim((string) $request->input('programme_leader'))) {
+            $plStudentIds = $conn->table('tblAdvisor_Student')
+                ->where('Advisor_Type', 'PROG_LEADER')
+                ->where('Advisor_Id', $pl)
+                ->pluck('Student_No');
+            if ($plStudentIds->isEmpty()) {
+                return collect(); // no student has this programme leader -> no SEN rows
+            }
+            $q->whereIn('Student_Id', $plStudentIds->all());
+        }
         if ($senType = trim((string) $request->input('sen_type'))) {
             $q->where('SEN_Type', $senType);
         }
@@ -111,7 +131,7 @@ class SenSearchController extends Controller
             ? $conn->table('tblStudent')->whereIn('Student_Id', $studentIds)->get()->keyBy('Student_Id')
             : collect();
 
-        // --- staff display-name map
+        // --- staff display-name map (only for roles still stored on tblSEN)
         $staffIds = collect();
         foreach (self::STAFF_ROLES as $key => $_) {
             $staffIds = $staffIds->merge($rows->pluck($this->colName($key))->filter());
@@ -120,6 +140,26 @@ class SenSearchController extends Controller
         $staffMap = $staffIds
             ? $conn->table('tblStaff')->whereIn('Staff_Id', $staffIds)->get()->keyBy('Staff_Id')
             : collect();
+
+        // --- programme leader per student (derived from PROG_LEADER advisors)
+        $plStudentIds = $rows->pluck('Student_Id')->unique()->filter()->all();
+        $plByStudent = collect();
+        if ($plStudentIds) {
+            $plRows = $conn->table('tblAdvisor_Student')
+                ->whereIn('Student_No', $plStudentIds)
+                ->where('Advisor_Type', 'PROG_LEADER')
+                ->get(['Student_No', 'Advisor_Id']);
+            $plStaffIds = $plRows->pluck('Advisor_Id')->unique()->filter()->all();
+            $plStaffMap = $plStaffIds
+                ? $conn->table('tblStaff')->whereIn('Staff_Id', $plStaffIds)->get()->keyBy('Staff_Id')
+                : collect();
+            foreach ($plRows as $p) {
+                $s = $plStaffMap->get($p->Advisor_Id);
+                $plByStudent[$p->Student_No] = $s
+                    ? ($s->Staff_Display_Name ?: ($s->Staff_Name ?: $p->Advisor_Id))
+                    : $p->Advisor_Id;
+            }
+        }
 
         $displayName = function ($staffId) use ($staffMap) {
             if (! $staffId) {
@@ -132,17 +172,16 @@ class SenSearchController extends Controller
             return $s->Staff_Display_Name ?: ($s->Staff_Name ?: $staffId);
         };
 
-        return $rows->map(function ($r) use ($students, $displayName) {
+        return $rows->map(function ($r) use ($students, $displayName, $plByStudent) {
             $st = $students->get($r->Student_Id);
             return [
                 'sen_id'          => $r->SEN_Id,
                 'student_id'      => $r->Student_Id,
                 'student_name_eng'=> $st->Student_Name_Eng ?? '—',
                 'student_name_chn'=> $st->Student_Name_Chn ?? '—',
-                'programme_leader'=> $displayName($r->Programme_Leader),
+                'programme_leader'=> $plByStudent->get($r->Student_Id, ''),
                 'department_admin_staff'          => $displayName($r->Department_Admin_Staff),
                 'counsellor'                      => $displayName($r->Counsellor),
-                'sen_officer'                     => $displayName($r->SEN_Officer),
                 'undergraduate_studies_support_officer' => $displayName($r->Undergraduate_Studies_Support_Officer),
                 'sen_type'         => $r->SEN_Type,
                 'sen_detail'       => $r->SEN_Detail,
@@ -169,7 +208,6 @@ class SenSearchController extends Controller
             'programme_leader'=> 'Programme Leader',
             'department_admin_staff'          => 'Dept Admin',
             'counsellor'                      => 'Counsellor',
-            'sen_officer'                     => 'SEN Officer',
             'undergraduate_studies_support_officer' => 'USSO',
             'sen_type'        => 'SEN Type',
             'sen_detail'      => 'SEN Detail',
@@ -219,9 +257,8 @@ class SenSearchController extends Controller
         ])->deleteFileAfterSend(true);
     }
 
-    /** form input key -> tblSEN column name (SEN_Officer is the only non-ucwords case) */
+    /** form input key -> tblSEN column name */
     private function colName(string $key): string
     {
-        return $key === 'sen_officer' ? 'SEN_Officer' : ucwords($key, '_');
-    }
-}
+        return ucwords($key, '_');
+    }}

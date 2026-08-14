@@ -101,7 +101,7 @@
       <label class="form-label" for="fPL">Programme Leader</label>
       <select class="form-select" id="fPL" name="programme_leader">
         <option value="">-- Select --</option>
-        @foreach ($staff['programme_leader'] as $s)
+        @foreach ($plStaff as $s)
           <option value="{{ $s->Staff_Id }}">{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
         @endforeach
       </select>
@@ -120,15 +120,6 @@
       <select class="form-select" id="fC" name="counsellor">
         <option value="">-- Select --</option>
         @foreach ($staff['counsellor'] as $s)
-          <option value="{{ $s->Staff_Id }}">{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
-        @endforeach
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label" for="fSO">SEN Officer</label>
-      <select class="form-select" id="fSO" name="sen_officer">
-        <option value="">-- Select --</option>
-        @foreach ($staff['sen_officer'] as $s)
           <option value="{{ $s->Staff_Id }}">{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
         @endforeach
       </select>
@@ -191,7 +182,6 @@
       { field: 'programme_leader',        headerName: 'Programme Leader', width: 130 },
       { field: 'department_admin_staff',  headerName: 'Dept Admin',     width: 115 },
       { field: 'counsellor',              headerName: 'Counsellor',     width: 115 },
-      { field: 'sen_officer',             headerName: 'SEN Officer',    width: 115 },
       { field: 'undergraduate_studies_support_officer', headerName: 'USSO', width: 120 },
       { field: 'sen_type',                headerName: 'SEN Type',       width: 150 },
       { field: 'sen_detail',              headerName: 'SEN Detail',     flex: 1, minWidth: 140 },
