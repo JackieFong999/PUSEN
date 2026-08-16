@@ -37,6 +37,9 @@
   .btn-import:disabled { opacity: .45; filter: none; }
   .result-count { font-size: .95rem; }
   .result-count .num { font-weight: 800; font-size: 1.05rem; }
+  /* wider confirm dialog so long filenames fit on one line */
+  .modal-dialog-filename { max-width: 560px; }
+  .modal-dialog-filename .modal-body { overflow-wrap: anywhere; }
   .num-insert { color: var(--success); }
   .num-update { color: var(--accent); }
   .num-dup    { color: #fbbf24; }
@@ -72,38 +75,39 @@
         </tr>
       </thead>
       <tbody>
-        {{-- Subject / Lecture List (active) --}}
-        <tr>
-          <td>
-            <div class="fw-semibold">Subject / Lecture List</div>
-            <div class="text-muted" style="font-size:.75rem;">tblSubject — composite key: Academic Year + Semester + Subject Code</div>
-          </td>
-          <td>
-            <button type="button" class="btn btn-import btn-sm" id="subjectImportBtn"
-                    @disabled(! $subjectFileReady)>
-              <i class="bi bi-download me-1"></i>Import
-            </button>
-          </td>
-          <td>
-            @if ($subjectFileReady)
-              <span class="import-file"><i class="bi bi-file-earmark-text me-1"></i>{{ $subjectFile }}</span>
-            @else
-              <span class="import-file text-muted">
-                <i class="bi bi-dash-lg me-1"></i>
-                No new file in upload/
-              </span>
-              @if ($lastImported)
-                <div class="text-muted mt-1" style="font-size:.72rem;">
-                  Last imported: <span class="import-file">{{ $lastImported }}</span>
-                </div>
+        {{-- Active import functions --}}
+        @foreach ($functions as $fn)
+          <tr>
+            <td>
+              <div class="fw-semibold">{{ $fn['label'] }}</div>
+              <div class="text-muted" style="font-size:.75rem;">{{ $fn['desc'] }}</div>
+            </td>
+            <td>
+              <button type="button" class="btn btn-import btn-sm" data-type="{{ $fn['type'] }}"
+                      @disabled(! $fn['ready'])>
+                <i class="bi bi-download me-1"></i>Import
+              </button>
+            </td>
+            <td>
+              @if ($fn['ready'])
+                <span class="import-file"><i class="bi bi-file-earmark-text me-1"></i>{{ $fn['file'] }}</span>
+              @else
+                <span class="import-file text-muted">
+                  <i class="bi bi-dash-lg me-1"></i>
+                  No new file in upload/
+                </span>
+                @if ($fn['last'])
+                  <div class="text-muted mt-1" style="font-size:.72rem;">
+                    Last imported: <span class="import-file">{{ $fn['last'] }}</span>
+                  </div>
+                @endif
               @endif
-            @endif
-          </td>
-        </tr>
+            </td>
+          </tr>
+        @endforeach
 
         {{-- Coming soon rows --}}
         @foreach ([
-            ['Staff List', 'tblStaff'],
             ['Advisor List', '—'],
             ['Student List', 'tblStudent'],
             ['Student Registration', '—'],
@@ -130,7 +134,7 @@
 
 {{-- ============ CONFIRM DIALOG ============ --}}
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-sm">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-filename">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
         <h5 class="modal-title" id="confirmModalTitle">Confirm</h5>
@@ -163,7 +167,7 @@
 
 <script>
   const CSRF = '{{ csrf_token() }}';
-  const subjectFile = @json($subjectFile);
+  const functions = @json($functions);
 
   const confirmModalEl = document.getElementById('confirmModal');
   const resultModalEl  = document.getElementById('resultModal');
@@ -197,13 +201,14 @@
     }[c]));
   }
 
-  async function runImport() {
-    if (!subjectFile) return;
+  async function runImport(type) {
+    const fn = functions.find(f => f.type === type);
+    if (!fn || !fn.file) return;
 
-    const ok = await askConfirm('Import Subject Data', `Import "${subjectFile}"? This will validate every row and then insert/update tblSubject in one transaction.`);
+    const ok = await askConfirm('Import Data', `Import "${fn.file}"?\n\n${fn.confirm}`);
     if (!ok) return;
 
-    const btn = document.getElementById('subjectImportBtn');
+    const btn = document.querySelector(`.btn-import[data-type="${type}"]`);
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Importing…';
 
@@ -215,7 +220,7 @@
           'X-CSRF-TOKEN': CSRF,
           'Accept': 'application/json',
         },
-        body: JSON.stringify({ file: subjectFile }),
+        body: JSON.stringify({ type, file: fn.file }),
       });
       const data = await res.json();
 
@@ -227,7 +232,7 @@
             <div><span class="num num-dup">${data.duplicated}</span> record(s) duplicated</div>
           </div>
           <div class="text-muted mt-2" style="font-size:.78rem;">
-            <i class="bi bi-check-circle me-1"></i>${data.archive_moved ? 'File archived to processed/' : 'File NOT archived (check server)'}
+            <i class="bi bi-check-circle me-1"></i>${data.archive_moved ? `File archived to processed/ as ${esc(data.archive_name ?? fn.file)}` : 'File NOT archived (check server)'}
           </div>
         `);
         // refresh the page so the file column updates (file moved to processed/)
@@ -261,7 +266,9 @@
     }
   }
 
-  document.getElementById('subjectImportBtn').addEventListener('click', runImport);
+  document.querySelectorAll('.btn-import[data-type]').forEach(btn =>
+    btn.addEventListener('click', () => runImport(btn.dataset.type))
+  );
 </script>
 
 @endsection

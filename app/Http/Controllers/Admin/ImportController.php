@@ -3,40 +3,64 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\StaffImportService;
 use App\Services\SubjectImportService;
 use Illuminate\Http\Request;
 
 class ImportController extends Controller
 {
-    public function __construct(private SubjectImportService $importService)
-    {
+    public function __construct(
+        private SubjectImportService $importService,
+        private StaffImportService $staffImportService,
+    ) {
     }
 
     /**
-     * Data Import screen: shows the import table (Subject active first).
+     * Data Import screen: shows the import table (Subject + Staff active).
      */
     public function index()
     {
-        $latest = $this->importService->latestFile();
+        $subject = $this->importService->latestFile();
+        $staff   = $this->staffImportService->latestFile();
 
         return view('admin.data-import', [
-            'subjectFile'      => $latest['filename'],
-            'subjectFileReady' => $latest['exists'],
-            'sftpError'        => $latest['error'],
-            'lastImported'     => $this->importService->lastImportedFile(),
+            'sftpError' => $subject['error'] ?? $staff['error'],
+            'functions' => [
+                [
+                    'type'    => 'subject',
+                    'label'   => 'Subject / Lecture List',
+                    'desc'    => 'tblSubject — composite key: Academic Year + Semester + Subject Code',
+                    'file'    => $subject['filename'],
+                    'ready'   => $subject['exists'],
+                    'last'    => $this->importService->lastImportedFile(),
+                    'confirm' => 'This will validate every row and then insert/update tblSubject in one transaction.',
+                ],
+                [
+                    'type'    => 'staff',
+                    'label'   => 'Staff List',
+                    'desc'    => 'tblStaff — key: Staff_Id',
+                    'file'    => $staff['filename'],
+                    'ready'   => $staff['exists'],
+                    'last'    => $this->staffImportService->lastImportedFile(),
+                    'confirm' => 'This will validate every row and then insert/update tblStaff in one transaction.',
+                ],
+            ],
         ]);
     }
 
     /**
-     * Run the subject import for the given file (POST).
+     * Run an import for the given type + file (POST).
      */
     public function import(Request $request)
     {
-        $request->validate([
-            'file' => 'required|string|max:60',
+        $data = $request->validate([
+            'type' => 'required|string|in:subject,staff',
+            'file' => 'required|string|max:80',
         ]);
 
-        $result = $this->importService->import($request->input('file'));
+        $result = $data['type'] === 'staff'
+            ? $this->staffImportService->import($data['file'])
+            : $this->importService->import($data['file']);
 
         return response()->json($result);
     }
