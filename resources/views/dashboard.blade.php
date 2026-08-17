@@ -30,18 +30,44 @@
   }
   .table tbody tr:last-child td { border-bottom: 0; }
   .table-hover tbody tr:hover { background: var(--accent-soft); }
+
+  .filter-btn {
+    display: inline-flex; align-items: center; gap: .35rem;
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    color: var(--text-muted);
+    font-size: .8rem; font-weight: 600;
+    border-radius: 10px;
+    padding: .4rem .9rem;
+    text-decoration: none;
+    transition: all .15s;
+  }
+  .filter-btn:hover { color: var(--accent); border-color: rgba(var(--accent-rgb), .4); }
+  .filter-btn.active { background: #2563eb; border-color: #1e40af; color: #fff; }
+  .filter-btn.active:hover { background: #16a34a; border-color: #15803d; color: #fff; }
 </style>
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
     <div>
         <h1 class="mb-0" style="font-size:1.25rem;">Dashboard</h1>
     </div>
+    <div class="d-flex gap-2">
+        <a href="{{ route('dashboard') }}" class="filter-btn {{ $status ? '' : 'active' }}">
+            <i class="bi bi-list-ul"></i> Show All
+        </a>
+        <a href="{{ route('dashboard', ['status' => 'success']) }}" class="filter-btn {{ $status === 'success' ? 'active' : '' }}">
+            <i class="bi bi-check-circle"></i> Success
+        </a>
+        <a href="{{ route('dashboard', ['status' => 'failure']) }}" class="filter-btn {{ $status === 'failure' ? 'active' : '' }}">
+            <i class="bi bi-x-octagon"></i> Failure
+        </a>
+    </div>
 </div>
 
-{{-- ============ SUBJECT IMPORT LOGGING ============ --}}
+{{-- ============ IMPORT LOGGING (ALL TYPES) ============ --}}
 <div class="stat-card p-0 overflow-hidden">
   <div class="d-flex align-items-center justify-content-between px-3 pt-3 pb-2">
-    <span style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#000;">Subject Logging</span>
+    <span style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#000;">Import Logging</span>
     <span style="font-size:.75rem; color:var(--text-faint);">Latest 50</span>
   </div>
   <div class="table-responsive">
@@ -61,7 +87,7 @@
         </tr>
       </thead>
       <tbody>
-        @forelse ($subjectLogs as $log)
+        @forelse ($importLogs as $log)
           <tr>
             <td>{{ $log->created_at ? \Carbon\Carbon::parse($log->created_at)->format('Y-m-d H:i') : '—' }}</td>
             <td>{{ $log->File_Name }}</td>
@@ -76,7 +102,7 @@
           </tr>
         @empty
           <tr>
-            <td colspan="10" class="text-muted" style="font-size:.85rem;">No subject import logs yet.</td>
+            <td colspan="10" class="text-muted" style="font-size:.85rem;">No import logs yet.</td>
           </tr>
         @endforelse
       </tbody>

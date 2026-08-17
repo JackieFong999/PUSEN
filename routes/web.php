@@ -32,14 +32,21 @@ Route::middleware('auth')->group(function () {
     // Root -> dashboard
     Route::get('/', fn () => redirect()->route('dashboard'));
 
-    // Dashboard: subject import log (per-file summary, latest 50)
+    // Dashboard: import log for all types (per-file summary, latest 50, filterable)
     Route::get('/dashboard', function () {
-        $subjectLogs = DB::connection('pusen')->table('tblImport_Log')
-            ->where('FileType', 'SUBJECT')
-            ->orderByDesc('Id')
+        $status = request()->query('status');
+        $status = in_array($status, ['success', 'failure'], true) ? $status : null;
+
+        $query = DB::connection('pusen')->table('tblImport_Log');
+        if ($status === 'success') {
+            $query->where('Import_Status', 'Success');
+        } elseif ($status === 'failure') {
+            $query->where('Import_Status', 'Failure');
+        }
+        $importLogs = $query->orderByDesc('Id')
             ->limit(50)
             ->get(['created_at', 'File_Name', 'FileType', 'Import_Status', 'CSV_Row_Count', 'Import_Count', 'Updated_Count', 'Duplicated_Count', 'Error_Count', 'created_by']);
-        return view('dashboard', compact('subjectLogs'));
+        return view('dashboard', compact('importLogs', 'status'));
     })->name('dashboard');
 
     // Admin: Role List
