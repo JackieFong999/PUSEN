@@ -1,18 +1,10 @@
 @php $title = 'Login'; @endphp
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en" data-bs-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login — {{ config('app.name', 'Pusen01') }}</title>
-<script>
-  // Apply saved theme before first paint (avoids flash)
-  (function () {
-    var t = localStorage.getItem('pusen-theme');
-    document.documentElement.setAttribute('data-bs-theme', t || 'dark');
-  })();
-</script>
-
 <!-- Bootstrap 5.3 + Icons + Inter font -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -120,10 +112,6 @@
     background: var(--bg-soft);
     color: var(--text);
   }
-  [data-bs-theme="dark"] .form-control { background: #ffffff; color: #111111; border-color: #c9cfdc; }
-  [data-bs-theme="dark"] .form-control:focus { background: #ffffff; color: #111111; border-color: rgba(var(--accent-rgb), .6); }
-  [data-bs-theme="dark"] .form-control::placeholder { color: #8b93a7; }
-
   .input-icon-wrap { position: relative; }
   .input-icon-wrap > i { /* left icon only (direct child) */
     position: absolute; left: .85rem; top: 50%; transform: translateY(-50%);
@@ -152,17 +140,6 @@
 
   .login-foot { text-align: center; margin-top: 1.25rem; font-size: .75rem; color: var(--text-faint); }
 
-  .theme-btn {
-    position: fixed; top: 1rem; right: 1rem;
-    width: 38px; height: 38px; border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--card-bg);
-    color: var(--text-muted);
-    display: grid; place-items: center;
-    font-size: 1.05rem;
-  }
-  .theme-btn:hover { color: var(--accent); border-color: rgba(var(--accent-rgb), .4); }
-
   .password-toggle {
     position: absolute; right: .55rem; top: 50%; transform: translateY(-50%);
     border: 0; background: transparent;
@@ -181,10 +158,6 @@
 </style>
 </head>
 <body>
-
-<button class="theme-btn" id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">
-  <i class="bi bi-moon-stars-fill"></i>
-</button>
 
 <div class="login-wrap">
   <a class="brand" href="{{ url('/login') }}">
@@ -238,19 +211,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // ---------- Theme toggle ----------
-  const themeToggle = document.getElementById('themeToggle');
-  const themeIcon = themeToggle.querySelector('i');
-  function applyTheme(theme) {
-    document.documentElement.setAttribute('data-bs-theme', theme);
-    localStorage.setItem('pusen-theme', theme);
-    themeIcon.className = theme === 'dark' ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
-  }
-  themeToggle.addEventListener('click', () => {
-    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-    applyTheme(isDark ? 'light' : 'dark');
-  });
-
   // ---------- Show / hide password ----------
   const pwInput = document.getElementById('password');
   const togglePw = document.getElementById('togglePw');
