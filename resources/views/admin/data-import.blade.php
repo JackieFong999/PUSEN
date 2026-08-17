@@ -106,26 +106,7 @@
           </tr>
         @endforeach
 
-        {{-- Coming soon rows --}}
-        @foreach ([
-            ['Advisor List', '—'],
-            ['Student Registration', '—'],
-        ] as [$label, $table])
-          <tr class="opacity-50">
-            <td>
-              <div class="fw-semibold">{{ $label }}</div>
-              <div class="text-muted" style="font-size:.75rem;">{{ $table }}</div>
-            </td>
-            <td>
-              <button type="button" class="btn btn-import btn-sm" disabled>
-                <i class="bi bi-download me-1"></i>Import
-              </button>
-            </td>
-            <td>
-              <span class="badge-soon"><i class="bi bi-hourglass-split me-1"></i>Coming soon</span>
-            </td>
-          </tr>
-        @endforeach
+        {{-- All import functions are now active; no coming-soon rows remain. --}}
       </tbody>
     </table>
   </div>

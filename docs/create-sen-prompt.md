@@ -39,7 +39,7 @@ All staff dropdowns display **Staff_Id + Staff_Name** (e.g. `alex01 — Alex Won
   Prog_Sub_Code, Prog_Title, Fund_Type_Code, Student_Status
 - **Subject_Teacher**: list box — path `tblStudent.Student_Id → tblStudent_Reg.Subject_Code →
   tblSubject.Teacher_Staff_Id`; display **Staff_Id + staff name** (join `tblStaff.Staff_Id`)
-- **Academic_Advisor**: list box — `tblAdvisor_Student.Advisor_Id` WHERE `Student_No = Student_Id`;
+- **Academic_Advisor**: list box — `tblAdvisor_Student.Advisor_Id` WHERE `Student_Id = Student_Id`;
   display **Advisor_Id + staff name** (join `tblStaff.Staff_Id`)
 - **Subject**: list box — `Subject_Code` from `tblStudent_Reg` WHERE `Student_Id = Student_Id`
   (a student can have multiple subjects)
@@ -70,6 +70,6 @@ All staff dropdowns display **Staff_Id + Staff_Name** (e.g. `alex01 — Alex Won
   `status` 0 = Enable, 1 = Disable.
 - `tblSubject`: Academic_Year, Semester, Subject_Code, Teacher_Staff_Id, Subject_Type.
 - `tblStudent_Reg`: Student_Id → Subject_Code (7 rows).
-- `tblAdvisor_Student`: Advisor_Id, Student_No, Advisor_Type (PROG_LEADER / PRIMARY), Start/End_Date.
+- `tblAdvisor_Student`: Advisor_Id, Student_Id, Advisor_Type (PROG_LEADER / PRIMARY), Start/End_Date.
 - `tblSEN_Type`: single column `SEN_Type` (9 rows).
 - DB connection: `pusen`.
