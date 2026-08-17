@@ -109,7 +109,6 @@
         {{-- Coming soon rows --}}
         @foreach ([
             ['Advisor List', '—'],
-            ['Student List', 'tblStudent'],
             ['Student Registration', '—'],
         ] as [$label, $table])
           <tr class="opacity-50">

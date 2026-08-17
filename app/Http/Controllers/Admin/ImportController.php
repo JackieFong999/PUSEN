@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\StaffImportService;
+use App\Services\StudentImportService;
 use App\Services\SubjectImportService;
 use Illuminate\Http\Request;
 
@@ -12,19 +13,21 @@ class ImportController extends Controller
     public function __construct(
         private SubjectImportService $importService,
         private StaffImportService $staffImportService,
+        private StudentImportService $studentImportService,
     ) {
     }
 
     /**
-     * Data Import screen: shows the import table (Subject + Staff active).
+     * Data Import screen: shows the import table (Subject + Staff + Student active).
      */
     public function index()
     {
         $subject = $this->importService->latestFile();
         $staff   = $this->staffImportService->latestFile();
+        $student = $this->studentImportService->latestFile();
 
         return view('admin.data-import', [
-            'sftpError' => $subject['error'] ?? $staff['error'],
+            'sftpError' => $subject['error'] ?? $staff['error'] ?? $student['error'],
             'functions' => [
                 [
                     'type'    => 'subject',
@@ -44,6 +47,15 @@ class ImportController extends Controller
                     'last'    => $this->staffImportService->lastImportedFile(),
                     'confirm' => 'This will validate every row and then insert/update tblStaff in one transaction.',
                 ],
+                [
+                    'type'    => 'student',
+                    'label'   => 'Student List',
+                    'desc'    => 'tblStudent — key: Student_Id',
+                    'file'    => $student['filename'],
+                    'ready'   => $student['exists'],
+                    'last'    => $this->studentImportService->lastImportedFile(),
+                    'confirm' => 'This will validate every row and then insert/update tblStudent in one transaction.',
+                ],
             ],
         ]);
     }
@@ -54,13 +66,15 @@ class ImportController extends Controller
     public function import(Request $request)
     {
         $data = $request->validate([
-            'type' => 'required|string|in:subject,staff',
+            'type' => 'required|string|in:subject,staff,student',
             'file' => 'required|string|max:80',
         ]);
 
-        $result = $data['type'] === 'staff'
-            ? $this->staffImportService->import($data['file'])
-            : $this->importService->import($data['file']);
+        $result = match ($data['type']) {
+            'staff'   => $this->staffImportService->import($data['file']),
+            'student' => $this->studentImportService->import($data['file']),
+            default   => $this->importService->import($data['file']),
+        };
 
         return response()->json($result);
     }
