@@ -110,7 +110,7 @@ class SenSearchController extends Controller
             $plStudentIds = $conn->table('tblAdvisor_Student')
                 ->where('Advisor_Type', 'PROG_LEADER')
                 ->where('Advisor_Id', $pl)
-                ->pluck('Student_No');
+                ->pluck('Student_Id');
             if ($plStudentIds->isEmpty()) {
                 return collect(); // no student has this programme leader -> no SEN rows
             }
@@ -146,16 +146,16 @@ class SenSearchController extends Controller
         $plByStudent = collect();
         if ($plStudentIds) {
             $plRows = $conn->table('tblAdvisor_Student')
-                ->whereIn('Student_No', $plStudentIds)
+                ->whereIn('Student_Id', $plStudentIds)
                 ->where('Advisor_Type', 'PROG_LEADER')
-                ->get(['Student_No', 'Advisor_Id']);
+                ->get(['Student_Id', 'Advisor_Id']);
             $plStaffIds = $plRows->pluck('Advisor_Id')->unique()->filter()->all();
             $plStaffMap = $plStaffIds
                 ? $conn->table('tblStaff')->whereIn('Staff_Id', $plStaffIds)->get()->keyBy('Staff_Id')
                 : collect();
             foreach ($plRows as $p) {
                 $s = $plStaffMap->get($p->Advisor_Id);
-                $plByStudent[$p->Student_No] = $s
+                $plByStudent[$p->Student_Id] = $s
                     ? ($s->Staff_Display_Name ?: ($s->Staff_Name ?: $p->Advisor_Id))
                     : $p->Advisor_Id;
             }

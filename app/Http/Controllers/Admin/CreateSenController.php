@@ -104,7 +104,7 @@ class CreateSenController extends Controller
         $editPlLabels = [];
         if ($isEdit && $editSen->Student_Id) {
             $plRows = $conn->table('tblAdvisor_Student')
-                ->where('Student_No', $editSen->Student_Id)
+                ->where('Student_Id', $editSen->Student_Id)
                 ->where('Advisor_Type', 'PROG_LEADER')
                 ->whereDate('Start_Date', '<=', now()->toDateString())
                 ->whereDate('End_Date', '>=', now()->toDateString())
@@ -163,7 +163,7 @@ class CreateSenController extends Controller
         // --- academic advisors: PRIMARY advisors of this student whose
         // date range (Start_Date .. End_Date) covers today
         $advisorRows = $conn->table('tblAdvisor_Student')
-            ->where('Student_No', $studentId)
+            ->where('Student_Id', $studentId)
             ->where('Advisor_Type', 'PRIMARY')
             ->whereDate('Start_Date', '<=', now()->toDateString())
             ->whereDate('End_Date', '>=', now()->toDateString())
@@ -184,7 +184,7 @@ class CreateSenController extends Controller
         // --- programme leaders: ALL PROG_LEADER advisors of this student whose
         // date range (Start_Date .. End_Date) covers today
         $plRows = $conn->table('tblAdvisor_Student')
-            ->where('Student_No', $studentId)
+            ->where('Student_Id', $studentId)
             ->where('Advisor_Type', 'PROG_LEADER')
             ->whereDate('Start_Date', '<=', now()->toDateString())
             ->whereDate('End_Date', '>=', now()->toDateString())

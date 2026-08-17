@@ -48,7 +48,7 @@
           <tr>
             <td class="text-muted">{{ $a->Id }}</td>
             <td>{{ $a->Advisor_Id }}</td>
-            <td>{{ $a->Student_No }}</td>
+            <td>{{ $a->Student_Id }}</td>
             <td><span class="tag">{{ $a->Advisor_Type }}</span></td>
             <td>{{ $a->Start_Date }}</td>
             <td>{{ $a->End_Date }}</td>

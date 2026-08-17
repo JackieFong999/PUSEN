@@ -15,7 +15,7 @@ class AdvisorListController extends Controller
         $advisors = DB::connection('pusen')
             ->table('tblAdvisor_Student')
             ->orderBy('Advisor_Id')
-            ->orderBy('Student_No')
+            ->orderBy('Student_Id')
             ->get();
 
         return view('admin.advisor-list', ['advisors' => $advisors]);
