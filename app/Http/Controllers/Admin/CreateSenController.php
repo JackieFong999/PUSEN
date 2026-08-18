@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CreateSenController extends Controller
@@ -53,6 +54,13 @@ class CreateSenController extends Controller
 
         // view mode only makes sense on an existing case
         $isView = $request->input('mode') === 'view' && $isEdit;
+
+        // Restricted roles (KS etc.): a case is only viewable when its student is
+        // currently advised by this staff member (same rule as SEN Search).
+        // Guards against URL manipulation (e.g. changing ?sen_id=).
+        if ($isEdit && $this->isRestrictedUser() && ! $this->canViewStudent($editSen->Student_Id)) {
+            return response()->view('errors.access-denied', [], 403);
+        }
 
         $staff = [];
         foreach (self::STAFF_ROLES as $key => $targetUserId) {
@@ -143,6 +151,12 @@ class CreateSenController extends Controller
 
         $student = $conn->table('tblStudent')->where('Student_Id', $studentId)->first();
         if (! $student) {
+            return response()->json(['found' => false]);
+        }
+
+        // Restricted roles (KS etc.): student info is only served for students
+        // this staff member currently advises (same rule as SEN Search).
+        if ($this->isRestrictedUser() && ! $this->canViewStudent($studentId)) {
             return response()->json(['found' => false]);
         }
 
@@ -331,6 +345,19 @@ class CreateSenController extends Controller
     public function previewDoc(Request $request, string $filename)
     {
         $filename = basename($filename);
+
+        // Restricted roles (KS etc.): only documents of cases the user may view
+        // (student currently advised by this staff member).
+        if ($this->isRestrictedUser()) {
+            $senId = preg_match('/^(SEN-\d+)_/', $filename, $m) ? $m[1] : null;
+            $studentId = $senId
+                ? DB::connection('pusen')->table('tblSEN')->where('SEN_Id', $senId)->value('Student_Id')
+                : null;
+            if (! $studentId || ! $this->canViewStudent($studentId)) {
+                return response()->view('errors.access-denied', [], 403);
+            }
+        }
+
         $candidates = [
             $this->finalDocDir() . '/' . $filename,
             $this->stagingDir() . '/' . $filename,
@@ -375,6 +402,42 @@ class CreateSenController extends Controller
     private function colName(string $key): string
     {
         return $key === 'sen_officer' ? 'SEN_Officer' : ucwords($key, '_');
+    }
+
+    /** Restricted roles (KS etc.) are scoped to students they currently advise. */
+    private function isRestrictedUser(): bool
+    {
+        $user = Auth::user();
+        return $user && ! in_array($user->Role_Id, ['SA', 'AU'], true);
+    }
+
+    /**
+     * Can this (restricted) user see data of the given student?
+     * Advisor_Id = login Staff_Id AND today within Start_Date..End_Date
+     * AND the student record is ACTIVE.
+     */
+    private function canViewStudent(?string $studentId): bool
+    {
+        if ($studentId === null || $studentId === '') {
+            return false;
+        }
+        $today = now()->toDateString();
+        $conn = DB::connection('pusen');
+
+        $advised = $conn->table('tblAdvisor_Student')
+            ->where('Advisor_Id', Auth::user()->Staff_Id)
+            ->where('Student_Id', $studentId)
+            ->whereDate('Start_Date', '<=', $today)
+            ->whereDate('End_Date', '>=', $today)
+            ->exists();
+        if (! $advised) {
+            return false;
+        }
+
+        return $conn->table('tblStudent')
+            ->where('Student_Id', $studentId)
+            ->where('Student_Status', 'ACTIVE')
+            ->exists();
     }
 
     private function nullable($value): ?string

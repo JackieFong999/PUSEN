@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -91,6 +92,30 @@ class SenSearchController extends Controller
 
         // --- tblSEN criteria
         $q = $conn->table('tblSEN');
+
+        // Restricted roles (KS etc.): only SEN cases of students this staff
+        // currently advises (tblAdvisor_Student, Advisor_Id = login Staff_Id,
+        // today within Start_Date..End_Date) AND whose student record is ACTIVE.
+        // A student may have more than one advisor - the filter is by student.
+        $user = Auth::user();
+        if ($user && ! in_array($user->Role_Id, ['SA', 'AU'], true)) {
+            $advisedIds = $conn->table('tblAdvisor_Student')
+                ->where('Advisor_Id', $user->Staff_Id)
+                ->whereDate('Start_Date', '<=', now()->toDateString())
+                ->whereDate('End_Date', '>=', now()->toDateString())
+                ->pluck('Student_Id')
+                ->unique();
+
+            $activeIds = $advisedIds->isNotEmpty()
+                ? $conn->table('tblStudent')
+                    ->whereIn('Student_Id', $advisedIds->all())
+                    ->where('Student_Status', 'ACTIVE')
+                    ->pluck('Student_Id')
+                : collect();
+
+            // empty set -> no student matches -> no SEN rows (whereIn([]) = 0=1)
+            $q->whereIn('Student_Id', $activeIds->all());
+        }
 
         if ($sid = trim((string) $request->input('student_id'))) {
             $q->where('Student_Id', $sid); // exact match
