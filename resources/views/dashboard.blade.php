@@ -110,4 +110,74 @@
   </div>
 </div>
 
+{{-- ============ LOGIN STATISTIC (LAST 10 DAYS) ============ --}}
+<div class="stat-card p-3 mt-4">
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <span style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint);">Login Statistic</span>
+    <span style="font-size:.75rem; color:var(--text-faint);">Recent 10 days</span>
+  </div>
+  <div style="height: 300px; position: relative;">
+    <canvas id="loginChart"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const ctx = document.getElementById('loginChart');
+    const stats = @json($loginStats);
+    if (!ctx || typeof Chart === 'undefined') return;
+
+    function chartColors() {
+      const dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+      return {
+        grid: dark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.06)',
+        tick: dark ? '#8b93a7' : '#5d6679',
+        success: '#16a34a',
+        failure: '#f87171',
+      };
+    }
+
+    let chart = null;
+    function renderChart() {
+      const c = chartColors();
+      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const cfg = {
+        type: 'bar',
+        data: {
+          labels: stats.map(s => {
+            const [, m, d] = s.date.split('-').map(Number);
+            return monthNames[m - 1] + ' ' + String(d).padStart(2, '0'); // e.g. Aug 09
+          }),
+          datasets: [
+            { label: 'Login Success', data: stats.map(s => s.success), backgroundColor: c.success, borderRadius: 4, maxBarThickness: 26, barPercentage: 1 },
+            { label: 'Login Failure', data: stats.map(s => s.failure), backgroundColor: c.failure, borderRadius: 4, maxBarThickness: 26, barPercentage: 1 },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: c.tick, boxWidth: 12, font: { size: 12 } } },
+            tooltip: {
+              callbacks: {
+                title: items => items[0]?.label ? stats[items[0].dataIndex].date : '',
+              },
+            },
+          },
+          scales: {
+            x: { ticks: { color: c.tick }, grid: { color: c.grid } },
+            y: { beginAtZero: true, ticks: { color: c.tick, stepSize: 1 }, grid: { color: c.grid } },
+          },
+        },
+      };
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, cfg);
+    }
+
+    renderChart();
+    document.getElementById('themeToggle')?.addEventListener('click', () => setTimeout(renderChart, 60));
+  });
+</script>
+
 @endsection

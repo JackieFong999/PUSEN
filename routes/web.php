@@ -46,7 +46,31 @@ Route::middleware(['auth', 'role.access'])->group(function () {
         $importLogs = $query->orderByDesc('Id')
             ->limit(50)
             ->get(['created_at', 'File_Name', 'FileType', 'Import_Status', 'CSV_Row_Count', 'Import_Count', 'Updated_Count', 'Duplicated_Count', 'Error_Count', 'created_by']);
-        return view('dashboard', compact('importLogs', 'status'));
+
+        // Login statistic: last 10 days (HK local date), success (Y) vs failure (N)
+        // Login_Time is stored in UTC; group by Asia/Hong_Kong calendar date.
+        $loginRows = DB::connection('pusen')->table('tblLogin_Log')
+            ->where('Login_Time', '>=', now()->subDays(12))
+            ->get(['Login_Time', 'Status']);
+
+        $days = [];
+        for ($i = 9; $i >= 0; $i--) {
+            $d = now('Asia/Hong_Kong')->subDays($i)->toDateString();
+            $days[$d] = ['date' => $d, 'success' => 0, 'failure' => 0];
+        }
+        foreach ($loginRows as $row) {
+            $local = \Carbon\Carbon::parse($row->Login_Time, 'UTC')->setTimezone('Asia/Hong_Kong')->toDateString();
+            if (isset($days[$local])) {
+                if ($row->Status === 'Y') {
+                    $days[$local]['success']++;
+                } else {
+                    $days[$local]['failure']++;
+                }
+            }
+        }
+        $loginStats = array_values($days);
+
+        return view('dashboard', compact('importLogs', 'status', 'loginStats'));
     })->name('dashboard');
 
     // Admin: Role List
@@ -98,6 +122,8 @@ Route::middleware(['auth', 'role.access'])->group(function () {
 
     // Admin: SEN Type
     Route::get('/admin/sen-type-list', [SenTypeListController::class, 'index'])->name('admin.sen-type-list');
+    Route::post('/admin/sen-type-list/store', [SenTypeListController::class, 'store'])->name('admin.sen-type-list.store');
+    Route::post('/admin/sen-type-list/delete', [SenTypeListController::class, 'destroy'])->name('admin.sen-type-list.delete');
 
     // Admin: SEN Search (AG Grid + search, edit opens Create SEN in edit mode)
     Route::get('/admin/sen-search', [SenSearchController::class, 'index'])->name('admin.sen-search');

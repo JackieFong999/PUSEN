@@ -74,7 +74,7 @@
 
   .btn-edit { border: 1px solid #1e40af; color: #fff; background: #2563eb; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
   .btn-edit:hover { background: #16a34a; border-color: #15803d; color: #fff; }
-  .btn-edit-sm { font-size: .78rem; padding: .38rem .75rem; border-radius: 8px; white-space: nowrap; }
+  .btn-edit-sm { font-size: .78rem; padding: .38rem .9rem; border-radius: 10px; line-height: 1.4; white-space: nowrap; }
 </style>
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
