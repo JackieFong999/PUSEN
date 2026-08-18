@@ -26,8 +26,8 @@ return [
             'show_label' => false,
             'items' => [
                 ['label' => 'Dashboards',       'icon' => 'bi-speedometer2',          'color' => 'ic-blue',   'href' => '/dashboard'],
-                ['label' => 'Create SEN',  'icon' => 'bi-window-sidebar',        'color' => 'ic-green',  'href' => '/admin/create-sen'],
                 ['label' => 'SEN Search',        'icon' => 'bi-layout-sidebar-inset',  'color' => 'ic-pink',   'href' => '/admin/sen-search'],
+                ['label' => 'Create SEN',  'icon' => 'bi-window-sidebar',        'color' => 'ic-green',  'href' => '/admin/create-sen'],
                 // Hidden 2026-08-12 (requested by Jackie):
                 // ['label' => 'User Management',       'icon' => 'bi-star',          'color' => 'ic-yellow', 'href' => '#'],
                 ['label' => 'Data Import', 'icon' => 'bi-clock-history', 'color' => 'ic-cyan',   'href' => '/admin/data-import'],

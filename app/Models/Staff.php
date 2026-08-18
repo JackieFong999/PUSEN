@@ -39,6 +39,14 @@ class Staff extends Model implements AuthenticatableContract
         'Password',
     ];
 
+    /**
+     * Role assigned to this staff member (tblRole lookup via Role_Id).
+     */
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'Role_Id', 'Role_Id');
+    }
+
     public function getAuthIdentifierName(): string
     {
         return 'Staff_Id';
