@@ -34,8 +34,8 @@
     --bg: #f4f6fb;
     --bg-soft: #ffffff;
     --card-bg: #ffffff;
-    --card-border: #e6e9f2;
-    --border: #e3e7f0;
+    --card-border: #98a2b8;
+    --border: #6f7d96;
     --text: #171b26;
     --text-muted: #5d6679;
     --text-faint: #9aa2b5;
@@ -143,14 +143,14 @@
   .password-toggle {
     position: absolute; right: .55rem; top: 50%; transform: translateY(-50%);
     border: 0; background: transparent;
-    color: #fdd835; /* lemon yellow */
+    color: #2563eb; /* blue eye icon */
     font-size: 2rem; /* double size */
     line-height: 1;
     padding: .25rem .3rem;
     cursor: pointer;
     display: grid; place-items: center;
   }
-  .password-toggle:hover { color: #ffe135; }
+  .password-toggle:hover { color: #1d4ed8; }
   /* the eye <i> must inherit the button's size/color (not the lock-icon rule) */
   .password-toggle i { color: inherit; font-size: inherit; line-height: inherit; }
   /* keep typed text from sliding under the (bigger) toggle icon */
