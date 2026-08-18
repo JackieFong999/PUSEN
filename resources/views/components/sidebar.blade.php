@@ -4,6 +4,12 @@
     // Auto-detect active item from the current URL (matches on href).
     $currentPath = request()->path();
     $isActive = fn (?string $href) => $href && $href !== '#' && ltrim($href, '/') === $currentPath;
+
+    // Role-based visibility: an item is shown when it has no 'roles' key or
+    // the logged-in staff's Role_Id is in the list (see config/nav.php).
+    $roleId = Auth::user()?->Role_Id;
+    $canSee = fn (array $item) => empty($item['roles']) || in_array($roleId, $item['roles'], true);
+
     $sections = config('nav.sections');
 @endphp
 
@@ -21,6 +27,9 @@
             @endif
             <nav>
                 @foreach ($section['items'] as $item)
+                    @if (! $canSee($item))
+                        @continue
+                    @endif
                     @if (! empty($item['children']))
                         {{-- collapsible group --}}
                         @php
@@ -36,6 +45,9 @@
                             </a>
                             <div class="side-sub">
                                 @foreach ($item['children'] as $child)
+                                    @if (! $canSee($child))
+                                        @continue
+                                    @endif
                                     <a class="side-link {{ $isActive($child['href'] ?? null) ? 'active' : '' }}"
                                        href="{{ $child['href'] ?? '#' }}">
                                         <i class="bi {{ $child['icon'] }} {{ $child['color'] }}"></i>

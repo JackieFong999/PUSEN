@@ -480,13 +480,20 @@
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
   <div class="offcanvas-body p-3">
+    @php $mobileRoleId = Auth::user()?->Role_Id; @endphp
     @foreach (config('nav.sections') as $label => $section)
       @if (! empty($section['show_label']))
         <div class="side-label">{{ $label }}</div>
       @endif
       @foreach ($section['items'] as $item)
+        @if (! empty($item['roles']) && ! in_array($mobileRoleId, $item['roles'], true))
+          @continue
+        @endif
         @if (! empty($item['children']))
           @foreach ($item['children'] as $child)
+            @if (! empty($child['roles']) && ! in_array($mobileRoleId, $child['roles'], true))
+              @continue
+            @endif
             <a class="side-link" href="{{ $child['href'] ?? '#' }}">
               <i class="bi {{ $child['icon'] }} {{ $child['color'] }}"></i>
               <span class="txt">{{ $child['label'] }}</span>

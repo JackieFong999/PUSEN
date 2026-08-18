@@ -27,7 +27,7 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // ===================== APPLICATION (login required) =====================
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'role.access'])->group(function () {
 
     // Root -> dashboard
     Route::get('/', fn () => redirect()->route('dashboard'));

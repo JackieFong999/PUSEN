@@ -9,12 +9,25 @@ use Illuminate\Support\Facades\Auth;
 class LoginController extends Controller
 {
     /**
+     * Home path after login: KS (Key Staff) only has SEN Search access.
+     */
+    protected function homePath(): string
+    {
+        $user = Auth::user();
+        if ($user && $user->Role_Id === 'KS') {
+            return '/admin/sen-search';
+        }
+
+        return '/dashboard';
+    }
+
+    /**
      * Show the login form (redirects away when already logged in).
      */
     public function showLoginForm()
     {
         if (Auth::check()) {
-            return redirect()->intended('/dashboard');
+            return redirect()->intended($this->homePath());
         }
 
         return response(view('auth.login'))
@@ -48,7 +61,7 @@ class LoginController extends Controller
         // protect against session fixation
         $request->session()->regenerate();
 
-        return redirect()->intended('/dashboard');
+        return redirect()->intended($this->homePath());
     }
 
     /**
