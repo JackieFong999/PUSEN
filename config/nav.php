@@ -30,9 +30,9 @@ return [
                 ['label' => 'Create SEN',  'icon' => 'bi-window-sidebar',        'color' => 'ic-green',  'href' => '/admin/create-sen', 'roles' => ['SA', 'AU']],
                 // Hidden 2026-08-12 (requested by Jackie):
                 // ['label' => 'User Management',       'icon' => 'bi-star',          'color' => 'ic-yellow', 'href' => '#'],
-                ['label' => 'Data Import', 'icon' => 'bi-clock-history', 'color' => 'ic-cyan',   'href' => '/admin/data-import', 'roles' => ['SA', 'AU']],
+                ['label' => 'Data Import', 'icon' => 'bi-clock-history', 'color' => 'ic-cyan',   'href' => '/admin/data-import', 'roles' => ['SA']],
                 [
-                    'label' => 'Admin', 'icon' => 'bi-collection', 'color' => 'ic-yellow', 'roles' => ['SA', 'AU'],
+                    'label' => 'Admin', 'icon' => 'bi-collection', 'color' => 'ic-yellow', 'roles' => ['SA'],
                     'children' => [
                         ['label' => 'Staff List',     'icon' => 'bi-signpost-split',  'color' => 'ic-purple', 'href' => '/admin/staff-list'],
                         ['label' => 'Student List',    'icon' => 'bi-people',          'color' => 'ic-blue',   'href' => '/admin/student-list'],
@@ -52,7 +52,7 @@ return [
                         ['label' => 'Temporary Special Support',     'icon' => 'bi-heart-pulse',  'color' => 'ic-pink', 'href' => '/admin/temporary-special-support-list'],
                     ],
                 ],
-                ['label' => 'Housekeeping',           'icon' => 'bi-bookmark',      'color' => 'ic-purple',   'href' => '#', 'roles' => ['SA', 'AU']],
+                ['label' => 'Housekeeping',           'icon' => 'bi-bookmark',      'color' => 'ic-purple',   'href' => '#', 'roles' => ['SA']],
             ],
         ],
 

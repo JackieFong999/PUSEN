@@ -9,18 +9,23 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Restrict application access by tblStaff.Role_Id.
  *
- * - SA (Super Administrator) and AU (Admin User): full access.
- * - KS (Key Staff) and any other role: SEN Search only. Visiting any other
- *   module renders the "Access Deny" dialog and bounces back to SEN Search.
+ * - SA (Super Administrator): full access.
+ * - AU (Admin User): Dashboards, SEN Search, Create SEN only.
+ * - KS (Key Staff) and any other role: SEN Search only.
+ *
+ * Visiting any other module renders the "Access Deny" dialog and bounces
+ * back to the SEN Search screen.
  */
 class CheckRoleAccess
 {
-    /** Roles with full access to every module. */
-    public const FULL_ACCESS_ROLES = ['SA', 'AU'];
-
-    /** Route prefixes allowed for restricted roles (KS etc.). */
-    public const RESTRICTED_ALLOWED_PREFIXES = [
-        'admin/sen-search',
+    /**
+     * Allowed paths per role. '*' = full access.
+     * A request path matches when it equals an entry or starts with "entry/".
+     */
+    public const ROLE_ACCESS = [
+        'SA' => ['*'],
+        'AU' => ['/', 'dashboard', 'admin/sen-search', 'admin/create-sen', 'admin/sen-doc'],
+        'KS' => ['admin/sen-search'],
     ];
 
     /**
@@ -29,15 +34,18 @@ class CheckRoleAccess
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
+        $role = $user?->Role_Id;
 
-        if ($user && in_array($user->Role_Id, self::FULL_ACCESS_ROLES, true)) {
+        // Unknown roles fall back to the most restricted set (KS).
+        $allowed = self::ROLE_ACCESS[$role] ?? self::ROLE_ACCESS['KS'];
+
+        if (in_array('*', $allowed, true)) {
             return $next($request);
         }
 
-        // Restricted role (KS or unknown): SEN Search only.
         $path = $request->path();
-        foreach (self::RESTRICTED_ALLOWED_PREFIXES as $prefix) {
-            if ($path === $prefix || str_starts_with($path, $prefix.'/')) {
+        foreach ($allowed as $entry) {
+            if ($path === $entry || str_starts_with($path, $entry.'/')) {
                 return $next($request);
             }
         }
