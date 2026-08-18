@@ -74,6 +74,7 @@
 
   .btn-edit { border: 1px solid #1e40af; color: #fff; background: #2563eb; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
   .btn-edit:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-edit-sm { font-size: .78rem; padding: .38rem .75rem; border-radius: 8px; white-space: nowrap; }
 </style>
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
@@ -173,6 +174,9 @@
   }
 
   /* ---------- AG Grid ---------- */
+  @php $canEditSen = in_array(Auth::user()?->Role_Id, ['SA', 'AU'], true); @endphp
+  const CAN_EDIT_SEN = {{ $canEditSen ? 'true' : 'false' }};
+
   const gridOptions = {
     columnDefs: [
       { field: 'sen_id',                  headerName: 'SEN Id',       width: 95 },
@@ -191,16 +195,34 @@
       {
         field: 'sen_id',
         headerName: 'Actions',
-        width: 100,
+        width: 175,
         sortable: false,
+        pinned: 'right',
         cellRenderer: params => {
-          const btn = document.createElement('button');
-          btn.className = 'btn-edit';
-          btn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Edit';
-          btn.addEventListener('click', () => {
-            window.location.href = '/admin/create-sen?sen_id=' + encodeURIComponent(params.value);
+          const wrap = document.createElement('div');
+          wrap.className = 'd-flex gap-1';
+
+          // Edit is only shown to roles that may actually edit (SA/AU);
+          // restricted roles (KS etc.) get View only.
+          if (CAN_EDIT_SEN) {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn-edit btn-edit-sm';
+            editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Edit';
+            editBtn.addEventListener('click', () => {
+              window.location.href = '/admin/create-sen?sen_id=' + encodeURIComponent(params.value);
+            });
+            wrap.appendChild(editBtn);
+          }
+
+          const viewBtn = document.createElement('button');
+          viewBtn.className = 'btn-edit btn-edit-sm';
+          viewBtn.innerHTML = '<i class="bi bi-eye me-1"></i>View';
+          viewBtn.addEventListener('click', () => {
+            window.location.href = '/admin/create-sen?sen_id=' + encodeURIComponent(params.value) + '&mode=view';
           });
-          return btn;
+
+          wrap.appendChild(viewBtn);
+          return wrap;
         },
       },
     ],

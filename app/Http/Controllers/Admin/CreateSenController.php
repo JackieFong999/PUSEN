@@ -27,12 +27,14 @@ class CreateSenController extends Controller
     /**
      * Create SEN page: form + dropdown data (staff by role, SEN types, next SEN_Id).
      * When ?sen_id= is given, renders in EDIT mode (loads the SEN record + its docs).
+     * When ?sen_id= + &mode=view is given, renders in VIEW mode (read-only, docs view-only).
      */
     public function index(Request $request)
     {
         $conn = DB::connection('pusen');
 
         $isEdit  = false;
+        $isView  = false;
         $editSen = null;
         $editDocs = collect();
 
@@ -48,6 +50,9 @@ class CreateSenController extends Controller
                 ->orderBy('Doc_Seq')
                 ->get();
         }
+
+        // view mode only makes sense on an existing case
+        $isView = $request->input('mode') === 'view' && $isEdit;
 
         $staff = [];
         foreach (self::STAFF_ROLES as $key => $targetUserId) {
@@ -121,7 +126,7 @@ class CreateSenController extends Controller
 
         $nextSenId = $isEdit ? $editSen->SEN_Id : $this->nextSenId();
 
-        return view('admin.create-sen', compact('staff', 'senTypes', 'tempSupports', 'students', 'nextSenId', 'isEdit', 'editSen', 'editDocs', 'editPlLabels'));
+        return view('admin.create-sen', compact('staff', 'senTypes', 'tempSupports', 'students', 'nextSenId', 'isEdit', 'isView', 'editSen', 'editDocs', 'editPlLabels'));
     }
 
     /**

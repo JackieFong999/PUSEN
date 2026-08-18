@@ -160,12 +160,12 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
   <div>
-    <h1 class="mb-0" style="font-size:1.25rem;">{{ $isEdit ? 'Edit SEN' : 'Create SEN' }}</h1>
+    <h1 class="mb-0" style="font-size:1.25rem;">{{ $isView ? 'View SEN' : ($isEdit ? 'Edit SEN' : 'Create SEN') }}</h1>
   </div>
 </div>
 
-{{-- ============ CREATE BUTTON (hidden in edit mode) ============ --}}
-@if (! $isEdit)
+{{-- ============ CREATE BUTTON (hidden in edit/view mode) ============ --}}
+@if (! $isEdit && ! $isView)
   <div class="mb-3">
     <button type="button" id="createCaseBtn" class="btn btn-create"><i class="bi bi-plus-lg me-1"></i>Create SEN Case</button>
   </div>
@@ -269,13 +269,15 @@
 
   {{-- ============ DOCUMENT UPLOAD ============ --}}
   <div class="form-card mb-3">
-    <div class="card-head">Documents <span class="text-muted" style="text-transform:none;letter-spacing:0;">(upload)</span> <span class="badge-soft" id="docCountLabel">0 / 20</span></div>
+    <div class="card-head">Documents @if (! $isView)<span class="text-muted" style="text-transform:none;letter-spacing:0;">(upload)</span>@endif <span class="badge-soft" id="docCountLabel">0 / 20</span></div>
     <div class="card-body">
+      @if (! $isView)
       <div class="d-flex align-items-center gap-2 mb-2">
         <button type="button" id="chooseFilesBtn" class="btn btn-cancel"><i class="bi bi-paperclip me-1"></i>Choose Files</button>
         <span class="text-muted" style="font-size:.75rem;">Any file except executables (.exe, .js, etc.) &middot; max 10 MB each</span>
       </div>
       <input type="file" id="docFileInput" multiple hidden>
+      @endif
       <div class="table-responsive" style="max-height:230px; overflow-y:auto;">
         <table class="table table-hover align-middle mb-0" id="docTable" style="min-width:460px;">
           <tbody id="docTableBody">
@@ -331,10 +333,16 @@
   </div>
 
   {{-- ============ ACTIONS ============ --}}
-  <div class="d-flex gap-2">
-    <button type="button" id="saveBtn" class="btn btn-search"><i class="bi bi-check-lg me-1"></i>Save</button>
-    <button type="button" id="cancelBtn" class="btn btn-cancel"><i class="bi bi-x-lg me-1"></i>Cancel</button>
-  </div>
+  @if ($isView)
+    <div class="d-flex gap-2">
+      <button type="button" id="backBtn" class="btn btn-cancel"><i class="bi bi-x-lg me-1"></i>Close</button>
+    </div>
+  @else
+    <div class="d-flex gap-2">
+      <button type="button" id="saveBtn" class="btn btn-search"><i class="bi bi-check-lg me-1"></i>Save</button>
+      <button type="button" id="cancelBtn" class="btn btn-cancel"><i class="bi bi-x-lg me-1"></i>Cancel</button>
+    </div>
+  @endif
 </form>
 
 {{-- ============ CONFIRM DIALOG ============ --}}
@@ -378,6 +386,7 @@
   let studentValid = false;
   let nextSenId = '{{ $nextSenId }}'; // advanced locally after each save
   const IS_EDIT = {{ $isEdit ? 'true' : 'false' }};
+  const IS_VIEW = {{ $isView ? 'true' : 'false' }};
   const EDIT_SEN_ID = '{{ $isEdit ? $editSen->SEN_Id : '' }}';
   let removedDocs = []; // saved docs marked for deletion (edit mode, applied on Save)
   let savedDocNames = []; // storage filenames that exist in tblSEN_Doc (edit mode)
@@ -392,17 +401,23 @@
     ['input', 'change'].forEach(ev => el.addEventListener(ev, () => { formDirty = true; }));
   });
   // uploading / removing documents also counts as an unsaved change
-  document.getElementById('docFileInput').addEventListener('change', () => {
-    if (document.getElementById('docFileInput').files.length) formDirty = true;
-  });
+  const docFileInputEl = document.getElementById('docFileInput');
+  if (docFileInputEl) {
+    docFileInputEl.addEventListener('change', () => {
+      if (docFileInputEl.files.length) formDirty = true;
+    });
+  }
   // the layout script (runs after this one) picks this up to guard sidebar navigation
   window.PUSEN_DIRTY_FN = () => formDirty;
 
   function setFormDisabled(disabled) {
     document.querySelectorAll(editableSelectors).forEach(el => el.disabled = disabled);
-    document.getElementById('saveBtn').disabled = disabled;
-    document.getElementById('cancelBtn').disabled = disabled;
-    document.getElementById('chooseFilesBtn').disabled = disabled;
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const chooseFilesBtn = document.getElementById('chooseFilesBtn');
+    if (saveBtn) saveBtn.disabled = disabled;
+    if (cancelBtn) cancelBtn.disabled = disabled;
+    if (chooseFilesBtn) chooseFilesBtn.disabled = disabled;
     renderDocTable(currentVisibleDocs); // re-render doc rows with the locked state
   }
 
@@ -416,7 +431,8 @@
     fillTextArea('dSubjects', []);
     refreshDocList([]);
     document.getElementById('docCountLabel').textContent = '0 / 20';
-    document.getElementById('docFileInput').value = '';
+    const fileInput = document.getElementById('docFileInput');
+    if (fileInput) fileInput.value = '';
     studentValid = false;
     formDirty = false;
   }
@@ -469,9 +485,10 @@
   let formLocked = false;      // true while the whole form is disabled (e.g. after Save)
   let currentVisibleDocs = []; // last rendered doc list (for re-render on lock/unlock)
 
-  document.getElementById('chooseFilesBtn').addEventListener('click', () => docFileInput.click());
+  const chooseFilesBtn = document.getElementById('chooseFilesBtn');
+  if (chooseFilesBtn) chooseFilesBtn.addEventListener('click', () => docFileInput.click());
 
-  docFileInput.addEventListener('change', async () => {
+  if (docFileInput) docFileInput.addEventListener('change', async () => {
     const files = [...docFileInput.files];
     if (!files.length) return;
     const senId = document.getElementById('fSenId').value;
@@ -533,6 +550,7 @@
   }
 
   // render the document list table: [View] [X] filename per row
+  // view mode: [View] [Download] filename only (no remove, nothing disabled)
   function renderDocTable(files) {
     currentVisibleDocs = files.slice();
     docTableBody.innerHTML = '';
@@ -563,20 +581,20 @@
       bView.type = 'button'; bView.className = 'row-btn';
       bView.dataset.view = name;
       bView.title = 'View ' + shown;
-      bView.disabled = formLocked;
+      bView.disabled = formLocked && !IS_VIEW;
       bView.innerHTML = '<i class="bi bi-eye"></i>';
 
       const bDl = document.createElement('button');
       bDl.type = 'button'; bDl.className = 'row-btn btn-dl';
       bDl.dataset.download = name;
       bDl.title = 'Download ' + shown;
-      bDl.disabled = formLocked;
+      bDl.disabled = formLocked && !IS_VIEW;
       bDl.innerHTML = '<i class="bi bi-download"></i>';
 
       actions.append(bView, bDl);
       tdActions.appendChild(actions);
 
-      // filename cell: original filename grows, delete X sits at the right end
+      // filename cell: original filename grows, delete X sits at the right end (not in view mode)
       const tdName = document.createElement('td');
       tdName.style.padding = '.45rem .3rem';
       const nameRow = document.createElement('div');
@@ -585,14 +603,17 @@
       nameSpan.className = 'doc-name-text';
       nameSpan.textContent = shown;
 
-      const bX = document.createElement('button');
-      bX.type = 'button'; bX.className = 'row-btn btn-x';
-      bX.dataset.remove = name;
-      bX.title = 'Remove ' + shown;
-      bX.disabled = formLocked;
-      bX.innerHTML = '<i class="bi bi-x-lg"></i>';
+      nameRow.append(nameSpan);
+      if (!IS_VIEW) {
+        const bX = document.createElement('button');
+        bX.type = 'button'; bX.className = 'row-btn btn-x';
+        bX.dataset.remove = name;
+        bX.title = 'Remove ' + shown;
+        bX.disabled = formLocked;
+        bX.innerHTML = '<i class="bi bi-x-lg"></i>';
+        nameRow.appendChild(bX);
+      }
 
-      nameRow.append(nameSpan, bX);
       tdName.appendChild(nameRow);
 
       tr.append(tdActions, tdName);
@@ -804,7 +825,8 @@
   }
 
   /* ---------- Save ---------- */
-  document.getElementById('saveBtn').addEventListener('click', async () => {
+  const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) saveBtn.addEventListener('click', async () => {
     const sid = fStudentId.value.trim();
     if (!sid) { toast('⚠️ Student Id is required'); fStudentId.focus(); return; }
     if (!studentValid) {
@@ -855,8 +877,14 @@
     }
   });
 
-  /* ---------- Cancel ---------- */
-  document.getElementById('cancelBtn').addEventListener('click', async () => {
+  /* ---------- Cancel / Back ---------- */
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => { window.location.href = '/admin/sen-search'; });
+  }
+
+  const cancelBtn = document.getElementById('cancelBtn');
+  if (cancelBtn) cancelBtn.addEventListener('click', async () => {
     const ok = await askConfirm('Cancel', IS_EDIT ? 'Discard all changes and go back to SEN Search?' : 'Discard all changes and reset the form?');
     if (!ok) return;
     // delete staged uploads from the server too
@@ -877,22 +905,27 @@
     toast('Form reset');
   });
 
-  /* ---------- edit mode: prefill docs + enable form ---------- */
-  if (IS_EDIT) {
+  /* ---------- edit / view mode: prefill docs + populate data ---------- */
+  if (IS_EDIT || IS_VIEW) {
     // saved docs from tblSEN_Doc
     savedDocNames = @json($editDocs->pluck('Doc_Filename'));
     savedOriginalMap = @json($editDocs->mapWithKeys(fn($d) => [$d->Doc_Filename => $d->Doc_Filename_Original])->filter()->all());
     refreshDocList([]);
-    // enable the form, but keep Student Id disabled (not changeable)
-    setFormDisabled(false);
     fStudentId.disabled = true;
+    if (IS_VIEW) {
+      // view mode: keep the whole form locked, docs are view-only
+      setFormDisabled(true);
+    } else {
+      // edit mode: enable the form (Student Id stays disabled - not changeable)
+      setFormDisabled(false);
+    }
     // populate the display-only student block + lists
     lookupStudent();
   }
 
   /* ---------- initial state ---------- */
   setFormDisabled(true);
-  if (IS_EDIT) { setFormDisabled(false); fStudentId.disabled = true; }
+  if (IS_EDIT && !IS_VIEW) { setFormDisabled(false); fStudentId.disabled = true; }
 </script>
 
 @endsection
