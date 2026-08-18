@@ -81,6 +81,7 @@ Route::middleware(['auth', 'role.access'])->group(function () {
 
     // Admin: Subject/Lecture List
     Route::get('/admin/subject-list', [SubjectListController::class, 'index'])->name('admin.subject-list');
+    Route::get('/admin/subject-list/search', [SubjectListController::class, 'search'])->name('admin.subject-list.search');
 
     // Admin: Fund Type
     Route::get('/admin/fund-type-list', [FundTypeListController::class, 'index'])->name('admin.fund-type-list');
@@ -104,9 +105,11 @@ Route::middleware(['auth', 'role.access'])->group(function () {
 
     // Admin: Advisor List
     Route::get('/admin/advisor-list', [AdvisorListController::class, 'index'])->name('admin.advisor-list');
+    Route::get('/admin/advisor-list/search', [AdvisorListController::class, 'search'])->name('admin.advisor-list.search');
 
     // Admin: Student Registration
     Route::get('/admin/student-registration-list', [StudentRegistrationListController::class, 'index'])->name('admin.student-registration-list');
+    Route::get('/admin/student-registration-list/search', [StudentRegistrationListController::class, 'search'])->name('admin.student-registration-list.search');
 
     // Admin: Staff List (AG Grid + search + status update)
     Route::get('/admin/staff-list', [StaffListController::class, 'index'])->name('admin.staff-list');
