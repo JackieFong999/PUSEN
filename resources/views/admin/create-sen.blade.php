@@ -156,6 +156,34 @@
   .modal-content { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; }
   .modal-content .modal-title { font-size: 1rem; font-weight: 600; color: var(--text); }
   .modal-content .modal-body { font-size: .88rem; color: var(--text); }
+
+  /* save-preview summary table */
+  .preview-table td {
+    padding: .45rem .7rem;
+    font-size: .85rem;
+    color: var(--text);
+    border-color: var(--border);
+    vertical-align: top;
+  }
+  .preview-table td.pkey {
+    width: 34%;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .preview-table td:last-child { white-space: pre-line; }
+  .preview-docs { margin-top: .5rem; }
+  .preview-docs .preview-docs-label {
+    font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--text-faint); margin-bottom: .35rem;
+  }
+  .preview-doc {
+    display: inline-flex; align-items: center; gap: .35rem;
+    font-size: .8rem; color: var(--text);
+    background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 8px; padding: .3rem .6rem; margin: 0 .35rem .35rem 0;
+  }
+  .preview-doc i { color: var(--accent); }
 </style>
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
@@ -362,6 +390,31 @@
   </div>
 </div>
 
+{{-- ============ SAVE PREVIEW DIALOG (review before saving) ============ --}}
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title"><i class="bi bi-eye me-1" style="color:var(--accent);"></i>Preview SEN</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:.8rem;color:var(--text-faint);margin-bottom:.6rem;">Review the SEN details below, then Save or Cancel.</div>
+        <div class="table-responsive" style="max-height:52vh;overflow-y:auto;">
+          <table class="table table-sm preview-table mb-2">
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+        <div id="previewDocs" class="preview-docs"></div>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-cancel" id="previewCancel"><i class="bi bi-x-lg me-1"></i>Cancel</button>
+        <button type="button" class="btn btn-search" id="previewSave"><i class="bi bi-check-lg me-1"></i>Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   const confirmModalEl = document.getElementById('confirmModal');
   let confirmResolve = null;
@@ -381,6 +434,76 @@
   document.getElementById('confirmYes').addEventListener('click', () => closeConfirm(true));
   document.getElementById('confirmNo').addEventListener('click', () => closeConfirm(false));
   confirmModalEl.addEventListener('hidden.bs.modal', () => { if (confirmResolve) { confirmResolve(false); confirmResolve = null; } });
+
+  /* ---------- Save preview modal (review before saving) ---------- */
+  const previewModalEl = document.getElementById('previewModal');
+  let previewResolve = null;
+
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // read a form field for the preview: select -> selected option text, else value
+  function previewFieldVal(id) {
+    const el = document.getElementById(id);
+    if (!el) return '';
+    if (el.tagName === 'SELECT') {
+      const opt = el.options[el.selectedIndex];
+      return opt && opt.value !== '' ? opt.text : '';
+    }
+    return el.value.trim();
+  }
+
+  function buildPreview() {
+    const rows = [
+      ['SEN Id', document.getElementById('fSenId').value],
+      ['Student Id', previewFieldVal('fStudentId')],
+      ['Student Name (Eng)', previewFieldVal('dNameEng')],
+      ['Student Name (Chn)', previewFieldVal('dNameChn')],
+      ['Faculty', previewFieldVal('dFaculty')],
+      ['Department', previewFieldVal('dDepartment')],
+      ['Prog Sub Code', previewFieldVal('dProgSubCode')],
+      ['Prog Title', previewFieldVal('dProgTitle')],
+      ['Fund Type', previewFieldVal('dFundType')],
+      ['Programme Leader', previewFieldVal('fPL')],
+      ['Department Admin Staff', previewFieldVal('fDA')],
+      ['Counsellor', previewFieldVal('fC')],
+      ['Undergraduate Studies Support Officer', previewFieldVal('fUSSO')],
+      ['Subject Teacher', previewFieldVal('dTeachers')],
+      ['Academic Advisor', previewFieldVal('dAdvisors')],
+      ['SEN Type', previewFieldVal('fSenType')],
+      ['SEN Detail', previewFieldVal('fDetail')],
+      ['Special Support Required', previewFieldVal('fSupport')],
+      ['Special Examination Arrangement', previewFieldVal('fExam')],
+      ['Temporary Special Support', previewFieldVal('fTemp')],
+      ['Subject', previewFieldVal('dSubjects')],
+    ];
+    document.getElementById('previewBody').innerHTML = rows
+      .map(([k, v]) => '<tr><td class="pkey">' + escapeHtml(k) + '</td><td>' + (v ? escapeHtml(v) : '<span class="text-muted">—</span>') + '</td></tr>')
+      .join('');
+
+    const docs = currentVisibleDocs.map(displayName);
+    document.getElementById('previewDocs').innerHTML = docs.length
+      ? '<div class="preview-docs-label">Documents</div>' + docs
+          .map(d => '<span class="preview-doc"><i class="bi bi-file-earmark-text"></i>' + escapeHtml(d) + '</span>')
+          .join('')
+      : '<div class="text-muted" style="font-size:.85rem;">No documents</div>';
+  }
+
+  function askPreview() {
+    return new Promise(resolve => {
+      previewResolve = resolve;
+      buildPreview();
+      bootstrap.Modal.getOrCreateInstance(previewModalEl).show();
+    });
+  }
+  function closePreview(answer) {
+    bootstrap.Modal.getOrCreateInstance(previewModalEl).hide();
+    if (previewResolve) { previewResolve(answer); previewResolve = null; }
+  }
+  document.getElementById('previewSave').addEventListener('click', () => closePreview(true));
+  document.getElementById('previewCancel').addEventListener('click', () => closePreview(false));
+  previewModalEl.addEventListener('hidden.bs.modal', () => { if (previewResolve) { previewResolve(false); previewResolve = null; } });
 
   /* ---------- state ---------- */
   let studentValid = false;
@@ -834,6 +957,10 @@
       fStudentId.focus();
       return;
     }
+
+    // review the SEN details first; only save when the user confirms
+    const confirmed = await askPreview();
+    if (!confirmed) return;
 
     const fd = new FormData(document.getElementById('senForm'));
     const payload = {};
