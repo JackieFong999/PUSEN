@@ -41,7 +41,7 @@ Connection settings are not hard-coded — read from `tblConfig_SFTP` (single ac
 
 | Col | Field | Mapping | Notes |
 |---|---|---|---|
-| 1 | Student Id | tblStudent.Student_Id | 8 digits + a letter (D/R/G), e.g. `25000001G` |
+| 1 | Student Id | tblStudent.Student_Id | 8 digits + one letter (A-Z), e.g. `25000001G` |
 | 2 | English Name | tblStudent.Student_Name_Eng | varchar(30) |
 | 3 | Chinese name | tblStudent.Student_Name_Chn | varchar(5) |
 | 4 | Faculty | tblStudent.Faculty | varchar(10) |
@@ -79,7 +79,7 @@ Primary key: `Student_Id` (Primary Key on tblStudent).
 | a | Column count ≠ 9 | Failure | Incorrect number of columns |
 | b | Any of the 8 used fields empty (cols 1,2,3,4,5,6,8,9) | Failure | One or more fields is empty |
 | c | Any used field longer than its target column width | Failure | Field length exceeds column width (count characters via mb_strlen, not bytes) |
-| d | Student Id not `^\d{8}[DRG]$` (case-insensitive) | Failure | Student Id must be 8 digits + D/R/G only; legacy 7-digit IDs are excluded by design |
+| d | Student Id not `^\d{8}[A-Z]$` (case-insensitive) | Failure | Student Id must be 8 digits + one letter (A-Z); legacy 7-digit IDs are excluded by design |
 | e | Key already seen earlier in this file | Failure | Duplicated record in the same CSV file |
 | f | Fund Type code not in tblFund_Type (CI) | Failure | Fund Type code not exist in tblFund_Type master table |
 | g | Key exists + other fields identical | Duplicated | Same data already exists, no update occurred |

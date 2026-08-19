@@ -22,6 +22,9 @@ abstract class AbstractImportService
     /** @var object|null tblConfig_SFTP row */
     protected $config;
 
+    /** @var string|null reason for the last failed connect() */
+    protected $lastError;
+
     /** @var SFTP|null */
     protected $sftp;
 
@@ -89,7 +92,7 @@ abstract class AbstractImportService
         }
 
         if (! $this->connect()) {
-            return ['filename' => null, 'exists' => false, 'error' => 'Cannot connect to SFTP server.'];
+            return ['filename' => null, 'exists' => false, 'error' => $this->connectError()];
         }
 
         try {
@@ -152,7 +155,7 @@ abstract class AbstractImportService
             return $this->result('error', $filename, 'Filename does not match the naming convention.');
         }
         if (! $this->connect()) {
-            return $this->result('error', $filename, 'Cannot connect to SFTP server.');
+            return $this->result('error', $filename, $this->connectError());
         }
 
         $conn = DB::connection('pusen');
@@ -253,14 +256,23 @@ abstract class AbstractImportService
         try {
             $this->sftp = new SFTP($this->config->Host, (int) $this->config->Port);
             if (! $this->sftp->login($this->config->Username, $this->config->Password)) {
+                $this->lastError = 'SFTP login failed (check Username/Password in tblConfig_SFTP)';
                 $this->sftp = null;
                 return false;
             }
+            $this->lastError = null;
             return true;
         } catch (\Throwable $e) {
+            $this->lastError = $e->getMessage();
             $this->sftp = null;
             return false;
         }
+    }
+
+    /** Human-readable reason for the last failed connect (generic fallback). */
+    protected function connectError(): string
+    {
+        return $this->lastError ?: 'Cannot connect to SFTP server.';
     }
 
     protected function disconnect(): void

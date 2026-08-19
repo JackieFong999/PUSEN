@@ -8,8 +8,8 @@ namespace App\Services;
  * Spec: docs/pusen01-import-spec-student.md
  *
  * Differences from Subject: 9-column CSV (col 7 ignored), tblStudent target
- * keyed by Student_Id, strict Student_Id format (8 digits + D/R/G, legacy
- * 7-digit IDs excluded), Student_Status handled by the table default
+ * keyed by Student_Id, strict Student_Id format (8 digits + one letter A-Z,
+ * legacy 7-digit IDs excluded), Student_Status handled by the table default
  * ('ACTIVE' on insert, never touched on update).
  */
 class StudentImportService extends AbstractImportService
@@ -29,8 +29,8 @@ class StudentImportService extends AbstractImportService
     public const MAX_PROG_TITLE   = 60;   // Prog_Title varchar(60)
     public const MAX_FUND_TYPE    = 1;    // Fund_Type_Code char(1)
 
-    /** Student_Id format: exactly 8 digits then D, R or G (case-insensitive). */
-    public const STUDENT_ID_PATTERN = '/^\d{8}[drg]$/i';
+    /** Student_Id format: exactly 8 digits then one letter A-Z (case-insensitive). */
+    public const STUDENT_ID_PATTERN = '/^\d{8}[a-z]$/i';
 
     protected function fileNamePattern(): string
     {
@@ -139,10 +139,10 @@ class StudentImportService extends AbstractImportService
                     $status  = 'Failure';
                     $remarks = 'field exceeds max length';
                 }
-                // d. Student_Id format: 8 digits + D/R/G only (legacy 7-digit IDs excluded)
+                // d. Student_Id format: 8 digits + one letter A-Z (legacy 7-digit IDs excluded)
                 elseif (! preg_match(self::STUDENT_ID_PATTERN, $idRaw)) {
                     $status  = 'Failure';
-                    $remarks = 'Student Id must be 8 digits + a letter (D/R/G)';
+                    $remarks = 'Student Id must be 8 digits + a letter (A-Z)';
                 } else {
                     $idNorm = strtoupper($idRaw); // letter -> uppercase
                     $key    = strtolower($idNorm);
