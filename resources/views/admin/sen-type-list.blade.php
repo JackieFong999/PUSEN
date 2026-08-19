@@ -14,6 +14,7 @@
     white-space: nowrap;
   }
   .btn-del:hover { background: #d04553; border-color: #a02d38; color: #fff; }
+  .btn-del i { color: #fff; }
   .btn-add {
     border: 1px solid #7d1d29; color: #fff; background: #9B2331;
     font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem;
@@ -50,7 +51,7 @@
     --ag-foreground-color: var(--text);
     --ag-border-color: var(--card-border);
     --ag-header-background-color: color-mix(in srgb, var(--bg-soft) 70%, transparent);
-    --ag-header-foreground-color: var(--text-faint);
+    --ag-header-foreground-color: #000;
     --ag-row-hover-color: var(--accent-soft);
     --ag-selected-row-background-color: var(--accent-soft);
     --ag-odd-row-background-color: transparent;

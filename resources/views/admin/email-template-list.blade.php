@@ -56,7 +56,7 @@
     --ag-foreground-color: var(--text);
     --ag-border-color: var(--card-border);
     --ag-header-background-color: color-mix(in srgb, var(--bg-soft) 70%, transparent);
-    --ag-header-foreground-color: var(--text-faint);
+    --ag-header-foreground-color: #000;
     --ag-row-hover-color: var(--accent-soft);
     --ag-selected-row-background-color: var(--accent-soft);
     --ag-odd-row-background-color: transparent;

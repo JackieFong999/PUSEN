@@ -49,7 +49,7 @@
     --ag-foreground-color: var(--text);
     --ag-border-color: var(--card-border);
     --ag-header-background-color: color-mix(in srgb, var(--bg-soft) 70%, transparent);
-    --ag-header-foreground-color: var(--text-faint);
+    --ag-header-foreground-color: #000;
     --ag-row-hover-color: var(--accent-soft);
     --ag-selected-row-background-color: var(--accent-soft);
     --ag-odd-row-background-color: transparent;
@@ -160,6 +160,26 @@
 {{-- ============ AG GRID ============ --}}
 <div id="senGrid" class="ag-theme-alpine-dark"></div>
 
+{{-- ============ NO RESULT DIALOG ============ --}}
+<div class="modal fade" id="noResultModal" tabindex="-1" aria-labelledby="noResultModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+    <div class="modal-content">
+      <div class="modal-body" style="padding:1.4rem 1.5rem;">
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-search" style="font-size:1.5rem;color:var(--accent-solid);"></i>
+          <div>
+            <div style="font-weight:700;color:var(--text);font-size:.95rem;">No records found</div>
+            <div style="font-size:.82rem;color:var(--text-muted);margin-top:.15rem;">No SEN cases match your search criteria. Please try different keywords.</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="border-top:1px solid var(--card-border);padding:.7rem 1.5rem;">
+        <button type="button" class="btn btn-save" data-bs-dismiss="modal" style="min-width:90px;">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31/dist/ag-grid-community.min.js"></script>
 <script>
   /* ---------- loading overlay component (must be defined before gridOptions) ---------- */
@@ -265,6 +285,10 @@
       const rows = await res.json();
       lastResultCount = rows.length;
       gridApi.setGridOption('rowData', rows);
+      // no data -> dialog with an OK button (2026-08-19)
+      if (!rows.length) {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('noResultModal')).show();
+      }
     } catch (err) {
       toast('❌ Search failed: ' + err.message);
     } finally {
