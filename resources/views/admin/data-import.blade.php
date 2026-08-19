@@ -32,8 +32,8 @@
     border-radius: 99px; padding: .2rem .6rem;
     background: transparent;
   }
-  .btn-import { background: #2563eb; border: 1px solid #1e40af; color: #fff; font-weight: 600; font-size: .85rem; border-radius: 10px; padding: .5rem 1.2rem; }
-  .btn-import:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-import { background: #9B2331; border: 1px solid #7d1d29; color: #fff; font-weight: 600; font-size: .85rem; border-radius: 10px; padding: .5rem 1.2rem; }
+  .btn-import:hover { background: #d04553; border-color: #a02d38; color: #fff; }
   .btn-import:disabled { opacity: .45; filter: none; }
   .result-count { font-size: .95rem; }
   .result-count .num { font-weight: 800; font-size: 1.05rem; }

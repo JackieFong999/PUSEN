@@ -17,14 +17,16 @@
     --bg: #0e1016;
     --bg-soft: #131722;
     --card-bg: #181d2b;
-    --card-border: #242b3d;
-    --border: #222939;
+    --card-border: #595959;
+    --border: #595959;
+    --bs-border-color: #595959;
+    --bs-border-color-translucent: #595959;
     --text: #e8eaf0;
     --text-muted: #8b93a7;
     --text-faint: #5c6478;
     --accent: #6d8dff;
     --accent-rgb: 109, 141, 255;
-    --accent-grad: linear-gradient(135deg, #6d8dff, #8f6dff);
+    --accent-solid: #9B2331;
     --danger: #f87171;
     --radius: 14px;
     --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
@@ -34,8 +36,10 @@
     --bg: #f4f6fb;
     --bg-soft: #ffffff;
     --card-bg: #ffffff;
-    --card-border: #98a2b8;
-    --border: #6f7d96;
+    --card-border: #595959;
+    --border: #595959;
+    --bs-border-color: #595959;
+    --bs-border-color-translucent: #595959;
     --text: #171b26;
     --text-muted: #5d6679;
     --text-faint: #9aa2b5;
@@ -78,7 +82,7 @@
   }
   .brand-mark {
     width: 38px; height: 38px; border-radius: 10px;
-    background: var(--accent-grad);
+    background: var(--accent-solid);
     display: grid; place-items: center;
     color: #fff; font-size: 1.2rem;
     box-shadow: 0 4px 14px rgba(109, 141, 255, .35);
@@ -121,13 +125,13 @@
 
   .btn-login {
     width: 100%;
-    background: #2563eb;
+    background: #9B2331;
     color: #fff; font-weight: 700; font-size: .9rem;
-    border: 1px solid #1e40af; border-radius: 10px; padding: .7rem 1rem;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, .3);
+    border: 1px solid #7d1d29; border-radius: 10px; padding: .7rem 1rem;
+    box-shadow: 0 4px 14px rgba(155, 35, 49, .3);
     transition: filter .15s;
   }
-  .btn-login:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-login:hover { background: #d04553; border-color: #a02d38; color: #fff; }
   .btn-login:disabled { background: #e5e7eb !important; border-color: #d1d5db !important; color: #000 !important; opacity: 1; cursor: not-allowed; }
 
   .alert-danger {

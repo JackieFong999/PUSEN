@@ -25,25 +25,27 @@
   .form-control[readonly], .form-control:disabled { opacity: .6; }
 
   .btn-search {
-    background: #2563eb;
+    background: #9B2331;
     color: #fff; font-weight: 600; font-size: .85rem;
-    border: 1px solid #1e40af; border-radius: 10px; padding: .5rem 1.2rem;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, .3);
+    border: 1px solid #7d1d29; border-radius: 10px; padding: .5rem 1.2rem;
+    box-shadow: 0 4px 14px rgba(155, 35, 49, .3);
   }
-  .btn-search:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-search:hover { background: #d04553; border-color: #a02d38; color: #fff; }
   .btn-search i { color: #fff; }
 
-  .btn-cancel { border: 1px solid #1e40af; color: #fff; background: #2563eb; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
-  .btn-cancel:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-cancel { border: 1px solid #7d1d29; color: #fff; background: #9B2331; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
+  .btn-cancel:hover { background: #d04553; border-color: #a02d38; color: #fff; }
   .btn-cancel i { color: #fff; }
   .btn-cancel:hover i { color: #fff; }
 
-  .btn-add { background: #2563eb; color: #fff; font-weight: 600; font-size: .85rem; border: 1px solid #1e40af; border-radius: 10px; padding: .5rem 1.2rem; box-shadow: 0 4px 14px rgba(37, 99, 235, .3); }
-  .btn-add:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-add { background: #9B2331; color: #fff; font-weight: 600; font-size: .85rem; border: 1px solid #7d1d29; border-radius: 10px; padding: .5rem 1.2rem; box-shadow: 0 4px 14px rgba(155, 35, 49, .3); }
+  .btn-add:hover { background: #d04553; border-color: #a02d38; color: #fff; }
   .btn-add i { color: #fff; }
 
-  .btn-edit { border: 1px solid #1e40af; color: #fff; background: #2563eb; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
-  .btn-edit:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-edit { border: 1px solid #7d1d29; color: #fff; background: #9B2331; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
+  .btn-edit:hover { background: #d04553; border-color: #a02d38; color: #fff; }
+
+  #emailGrid .ag-root-wrapper { border: none; }
 
   #emailGrid {
     height: 52vh;

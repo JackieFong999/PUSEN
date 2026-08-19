@@ -22,15 +22,17 @@
     --sidebar-bg: #ffffff;
     --sidebar-bg-collapsed: #fbfcfe;
     --card-bg: #ffffff;
-    --card-border: #e6e9f2;
-    --border: #e3e7f0;
+    --card-border: #595959;
+    --border: #595959;
+    --bs-border-color: #595959;
+    --bs-border-color-translucent: #595959;
     --text: #171b26;
     --text-muted: #5d6679;
     --text-faint: #9aa2b5;
     --accent: #6d8dff;
     --accent-rgb: 109, 141, 255;
     --accent-soft: rgba(109, 141, 255, 0.22);
-    --accent-grad: linear-gradient(135deg, #6d8dff, #8f6dff);
+    --accent-solid: #9B2331;
     --success: #34d399;
     --danger: #f87171;
     --radius: 12px;
@@ -76,7 +78,7 @@
   }
   .brand-mark {
     width: 32px; height: 32px; border-radius: 9px;
-    background: var(--accent-grad);
+    background: var(--accent-solid);
     display: grid; place-items: center;
     color: #fff; font-size: 1.05rem;
     box-shadow: 0 4px 12px rgba(109, 141, 255, .35);
@@ -111,7 +113,7 @@
   }
   .avatar {
     width: 34px; height: 34px; border-radius: 50%;
-    background: var(--accent-grad);
+    background: var(--accent-solid);
     color: #fff; font-weight: 700; font-size: .8rem;
     display: grid; place-items: center;
     cursor: pointer;
@@ -164,7 +166,7 @@
   .side-search input::placeholder { color: var(--text-faint); }
   .side-search kbd {
     font-size: .65rem; background: var(--card-border);
-    color: var(--text-faint); border-radius: 5px; padding: 2px 5px;
+    color: #fff; border-radius: 5px; padding: 2px 5px;
   }
 
   .side-label {
@@ -193,14 +195,14 @@
   .side-link i { font-size: 1.05rem; width: 22px; text-align: center; flex-shrink: 0; }
   .side-link .txt { flex: 1; overflow: hidden; text-overflow: ellipsis; }
   .side-link .badge-soft {
-    background: var(--card-border); color: var(--text-muted);
+    background: var(--card-border); color: #fff;
     font-size: .66rem; font-weight: 600;
     border-radius: 20px; padding: 2px 8px;
   }
-  .side-link:hover:not(.active) { color: var(--text); background: var(--accent-soft); border-color: #8f6dff; }
+  .side-link:hover:not(.active) { color: var(--text); background: var(--accent-soft); border-color: #9B2331; }
   .side-link.active {
     color: #fff;
-    background: var(--accent-grad);
+    background: var(--accent-solid);
     box-shadow: 0 6px 16px rgba(var(--accent-rgb), .3);
   }
   .side-link.active .badge-soft { background: rgba(255,255,255,.2); color: #fff; }
@@ -211,7 +213,7 @@
   .ic-green  { color: #22a55c; }
   .ic-pink   { color: #e11d6d; }
   .ic-yellow { color: #eab308; }
-  .ic-purple { color: #8b5cf6; }
+  .ic-purple { color: #9B2331; }
   .ic-cyan   { color: #06b6d4; }
   .ic-orange { color: #ff9a5c; }
   .side-link.active i { color: #fff; }
@@ -255,7 +257,7 @@
   }
   .chip:hover { color: var(--text); border-color: rgba(var(--accent-rgb), .5); }
   .chip.active {
-    background: var(--accent-grad); border-color: transparent; color: #fff;
+    background: var(--accent-solid); border-color: transparent; color: #fff;
     box-shadow: 0 4px 14px rgba(var(--accent-rgb), .3);
   }
 
@@ -391,14 +393,14 @@
 
   /* generic action buttons + modal used by confirm dialogs (incl. nav guard) */
   .btn-search {
-    background: #2563eb;
+    background: #9B2331;
     color: #fff; font-weight: 600; font-size: .85rem;
-    border: 1px solid #1e40af; border-radius: 10px; padding: .5rem 1.2rem;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, .3);
+    border: 1px solid #7d1d29; border-radius: 10px; padding: .5rem 1.2rem;
+    box-shadow: 0 4px 14px rgba(155, 35, 49, .3);
   }
-  .btn-search:hover { background: #16a34a; border-color: #15803d; color: #fff; }
-  .btn-cancel { border: 1px solid #1e40af; color: #fff; background: #2563eb; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
-  .btn-cancel:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-search:hover { background: #d04553; border-color: #a02d38; color: #fff; }
+  .btn-cancel { border: 1px solid #7d1d29; color: #fff; background: #9B2331; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
+  .btn-cancel:hover { background: #d04553; border-color: #a02d38; color: #fff; }
 
   /* disabled state: gray with black text (applies to every standardized button) */
   .btn-search:disabled, .btn-cancel:disabled, .btn-create:disabled, .btn-add:disabled,

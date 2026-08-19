@@ -43,8 +43,8 @@
     transition: all .15s;
   }
   .filter-btn:hover { color: var(--accent); border-color: rgba(var(--accent-rgb), .4); }
-  .filter-btn.active { background: #2563eb; border-color: #1e40af; color: #fff; }
-  .filter-btn.active:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .filter-btn.active { background: #9B2331; border-color: #7d1d29; color: #fff; }
+  .filter-btn.active:hover { background: #d04553; border-color: #a02d38; color: #fff; }
 </style>
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">

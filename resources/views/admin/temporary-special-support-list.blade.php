@@ -7,19 +7,19 @@
 
 <style>
   .btn-del {
-    border: 1px solid #1e40af; color: #fff; background: #2563eb;
+    border: 1px solid #7d1d29; color: #fff; background: #9B2331;
     font-size: .78rem; font-weight: 600;
     border-radius: 10px; padding: .38rem .9rem;
     line-height: 1.4; /* stop AG Grid cell line-height from inflating the button */
     white-space: nowrap;
   }
-  .btn-del:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-del:hover { background: #d04553; border-color: #a02d38; color: #fff; }
   .btn-add {
-    border: 1px solid #1e40af; color: #fff; background: #2563eb;
+    border: 1px solid #7d1d29; color: #fff; background: #9B2331;
     font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, .3);
+    box-shadow: 0 4px 14px rgba(155, 35, 49, .3);
   }
-  .btn-add:hover { background: #16a34a; border-color: #15803d; color: #fff; }
+  .btn-add:hover { background: #d04553; border-color: #a02d38; color: #fff; }
   .btn-add i { color: #fff; }
   .form-control, .form-select {
     background: var(--bg-soft);
@@ -39,6 +39,8 @@
   .modal-content .modal-body { font-size: .88rem; color: var(--text); }
 
   /* ---------- AG Grid: same look as the SEN Search grid ---------- */
+  #supportGrid .ag-root-wrapper { border: none; }
+
   #supportGrid {
     height: 520px;
     border: 1px solid var(--card-border);

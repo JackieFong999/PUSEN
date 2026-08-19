@@ -29,8 +29,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 // ===================== APPLICATION (login required) =====================
 Route::middleware(['auth', 'role.access'])->group(function () {
 
-    // Root -> dashboard
-    Route::get('/', fn () => redirect()->route('dashboard'));
+    // Root -> SEN Search (Dashboard temporarily hidden for demo, 2026-08-19)
+    Route::get('/', fn () => redirect()->route('admin.sen-search'));
 
     // Dashboard: import log for all types (per-file summary, latest 50, filterable)
     Route::get('/dashboard', function () {

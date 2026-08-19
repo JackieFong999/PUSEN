@@ -10,16 +10,15 @@ use Illuminate\Support\Facades\DB;
 class LoginController extends Controller
 {
     /**
-     * Home path after login: KS (Key Staff) only has SEN Search access.
+     * Home path after login.
+     *
+     * 2026-08-19 (demo): Dashboard is temporarily hidden from the menu, so
+     * every role lands on SEN Search. Restore the role split ('/dashboard'
+     * for SA/AU) when the Dashboards item is unhidden.
      */
     protected function homePath(): string
     {
-        $user = Auth::user();
-        if ($user && $user->Role_Id === 'KS') {
-            return '/admin/sen-search';
-        }
-
-        return '/dashboard';
+        return '/admin/sen-search';
     }
 
     /**

@@ -25,7 +25,8 @@ return [
         'Browse' => [
             'show_label' => false,
             'items' => [
-                ['label' => 'Dashboards',       'icon' => 'bi-speedometer2',          'color' => 'ic-blue',   'href' => '/dashboard', 'roles' => ['SA', 'AU']],
+                // Hidden 2026-08-19 (demo purpose; restore in future):
+                // ['label' => 'Dashboards',       'icon' => 'bi-speedometer2',          'color' => 'ic-blue',   'href' => '/dashboard', 'roles' => ['SA', 'AU']],
                 ['label' => 'SEN Search',        'icon' => 'bi-layout-sidebar-inset',  'color' => 'ic-pink',   'href' => '/admin/sen-search', 'roles' => ['SA', 'AU', 'KS']],
                 ['label' => 'Create SEN',  'icon' => 'bi-window-sidebar',        'color' => 'ic-green',  'href' => '/admin/create-sen', 'roles' => ['SA', 'AU']],
                 // Hidden 2026-08-12 (requested by Jackie):
