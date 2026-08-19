@@ -2,6 +2,15 @@
 
 @section('content')
 
+@php
+    // label for a staff autocomplete prefill (id + name), falls back to the id
+    $staffLabelOf = function (string $key, ?string $id): string {
+        if (! $id) return '';
+        $s = collect($staff[$key] ?? [])->firstWhere('Staff_Id', $id);
+        return $s ? trim($s->Staff_Id . ' — ' . $s->Staff_Name) : $id;
+    };
+@endphp
+
 <style>
   .form-label { font-size: .78rem; font-weight: 600; color: var(--text-muted); margin-bottom: .35rem; }
   .form-control, .form-select, .form-check-input {
@@ -228,30 +237,30 @@
         </div>
         <div class="col-md-4">
           <label class="form-label" for="fDA">Department Admin Staff</label>
-          <select class="form-select" id="fDA" name="department_admin_staff" disabled>
-            <option value="">-- Select --</option>
-            @foreach ($staff['department_admin_staff'] as $s)
-              <option value="{{ $s->Staff_Id }}" @selected($isEdit && $editSen->Department_Admin_Staff === $s->Staff_Id)>{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
-            @endforeach
-          </select>
+          <div class="position-relative">
+            <input type="text" class="form-control" id="fDA" placeholder="Type Staff Id / name to search…" autocomplete="off"
+                   value="{{ $isEdit ? $staffLabelOf('department_admin_staff', $editSen->Department_Admin_Staff) : '' }}" disabled>
+            <input type="hidden" name="department_admin_staff" id="fDA_h" value="{{ $isEdit ? $editSen->Department_Admin_Staff : '' }}">
+            <div class="student-autocomplete" id="fDA_ac" style="display:none;"></div>
+          </div>
         </div>
         <div class="col-md-4">
           <label class="form-label" for="fC">Counsellor</label>
-          <select class="form-select" id="fC" name="counsellor" disabled>
-            <option value="">-- Select --</option>
-            @foreach ($staff['counsellor'] as $s)
-              <option value="{{ $s->Staff_Id }}" @selected($isEdit && $editSen->Counsellor === $s->Staff_Id)>{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
-            @endforeach
-          </select>
+          <div class="position-relative">
+            <input type="text" class="form-control" id="fC" placeholder="Type Staff Id / name to search…" autocomplete="off"
+                   value="{{ $isEdit ? $staffLabelOf('counsellor', $editSen->Counsellor) : '' }}" disabled>
+            <input type="hidden" name="counsellor" id="fC_h" value="{{ $isEdit ? $editSen->Counsellor : '' }}">
+            <div class="student-autocomplete" id="fC_ac" style="display:none;"></div>
+          </div>
         </div>
         <div class="col-md-4">
           <label class="form-label" for="fUSSO">Undergraduate Studies Support Officer</label>
-          <select class="form-select" id="fUSSO" name="undergraduate_studies_support_officer" disabled>
-            <option value="">-- Select --</option>
-            @foreach ($staff['undergraduate_studies_support_officer'] as $s)
-              <option value="{{ $s->Staff_Id }}" @selected($isEdit && $editSen->Undergraduate_Studies_Support_Officer === $s->Staff_Id)>{{ $s->Staff_Id }} — {{ $s->Staff_Name }}</option>
-            @endforeach
-          </select>
+          <div class="position-relative">
+            <input type="text" class="form-control" id="fUSSO" placeholder="Type Staff Id / name to search…" autocomplete="off"
+                   value="{{ $isEdit ? $staffLabelOf('undergraduate_studies_support_officer', $editSen->Undergraduate_Studies_Support_Officer) : '' }}" disabled>
+            <input type="hidden" name="undergraduate_studies_support_officer" id="fUSSO_h" value="{{ $isEdit ? $editSen->Undergraduate_Studies_Support_Officer : '' }}">
+            <div class="student-autocomplete" id="fUSSO_ac" style="display:none;"></div>
+          </div>
         </div>
         <div class="col-md-4">
           <label class="form-label" for="dTeachers">Subject Teacher</label>
@@ -546,6 +555,7 @@
 
   function resetAll() {
     document.getElementById('senForm').reset();
+    (window.__staffAcSync || []).forEach(fn => fn()); // staff autocomplete: resync defaults
     ['dNameEng','dNameChn','dFaculty','dDepartment','dProgSubCode','dProgTitle','dFundType'].forEach(id => {
       document.getElementById(id).value = '';
     });
@@ -792,6 +802,109 @@
   // student data injected from the controller (id + name)
   const STUDENTS = @json($students->map(fn ($s) => ['id' => $s->Student_Id, 'name' => $s->Student_Name_Eng]));
   let acIndex = -1; // highlighted item index
+
+  /* ---------- Staff autocomplete (Department Admin / Counsellor / USSO) ---------- */
+  const STAFF_POOLS = {
+    fDA:   @json($staff['department_admin_staff']->map(fn ($s) => ['id' => $s->Staff_Id, 'name' => $s->Staff_Name])->values()->all()),
+    fC:    @json($staff['counsellor']->map(fn ($s) => ['id' => $s->Staff_Id, 'name' => $s->Staff_Name])->values()->all()),
+    fUSSO: @json($staff['undergraduate_studies_support_officer']->map(fn ($s) => ['id' => $s->Staff_Id, 'name' => $s->Staff_Name])->values()->all()),
+  };
+
+  // generic combobox: type to filter, pick from the dropdown, commit exact text on blur/Enter
+  function attachStaffAc(inputId, pool) {
+    const input = document.getElementById(inputId);
+    const hidden = document.getElementById(inputId + '_h');
+    const ac = document.getElementById(inputId + '_ac');
+    let acIndex = -1;
+    let lastValid = input.value;
+
+    function filter(q) {
+      q = q.trim().toLowerCase();
+      if (!q) return pool;
+      return pool.filter(s =>
+        s.id.toLowerCase().startsWith(q) ||
+        (s.name || '').toLowerCase().includes(q));
+    }
+    function show() {
+      const items = filter(input.value);
+      ac.innerHTML = '';
+      if (!items.length) {
+        const d = document.createElement('div');
+        d.className = 'ac-empty';
+        d.textContent = 'No matching staff';
+        ac.appendChild(d);
+      } else {
+        items.slice(0, 100).forEach((s, i) => {
+          const d = document.createElement('div');
+          d.className = 'ac-item' + (i === acIndex ? ' active' : '');
+          d.dataset.id = s.id;
+          const idSpan = document.createElement('span');
+          idSpan.className = 'ac-id';
+          idSpan.textContent = s.id;
+          const nameSpan = document.createElement('span');
+          nameSpan.className = 'ac-name';
+          nameSpan.textContent = s.name || '';
+          d.append(idSpan, nameSpan);
+          d.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // keep focus on the input
+            pick(s.id);
+          });
+          ac.appendChild(d);
+        });
+      }
+      ac.style.display = 'block';
+    }
+    function hide() { ac.style.display = 'none'; acIndex = -1; }
+    function pick(id) {
+      const s = pool.find(x => x.id === id) || { id, name: '' };
+      input.value = s.name ? (s.id + ' — ' + s.name) : s.id;
+      hidden.value = s.id;
+      lastValid = input.value;
+      hide();
+      input.dispatchEvent(new Event('change', { bubbles: true })); // mark dirty
+    }
+    function commitTyped() {
+      const v = input.value.trim();
+      if (!v) { hidden.value = ''; lastValid = ''; return; }
+      const hit = pool.find(s =>
+        s.id.toUpperCase() === v.toUpperCase() ||
+        (s.id + ' — ' + (s.name || '')).toUpperCase() === v.toUpperCase());
+      if (hit) { hidden.value = hit.id; lastValid = input.value.trim(); }
+      else { hidden.value = ''; input.value = lastValid; } // not a valid staff -> revert
+    }
+
+    input.addEventListener('input', () => { acIndex = -1; show(); });
+    input.addEventListener('focus', () => { acIndex = -1; show(); });
+    input.addEventListener('keydown', (e) => {
+      const items = ac.querySelectorAll('.ac-item');
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (items.length) {
+          acIndex = (acIndex + 1) % items.length;
+          items.forEach((el, i) => el.classList.toggle('active', i === acIndex));
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (items.length) {
+          acIndex = (acIndex - 1 + items.length) % items.length;
+          items.forEach((el, i) => el.classList.toggle('active', i === acIndex));
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (items.length && acIndex >= 0 && items[acIndex]) pick(items[acIndex].dataset.id);
+        else { commitTyped(); hide(); }
+      } else if (e.key === 'Escape') {
+        hide();
+      }
+    });
+    input.addEventListener('blur', () => setTimeout(() => { hide(); commitTyped(); }, 150));
+
+    // after form reset the defaults may differ from lastValid -> resync
+    window.__staffAcSync = window.__staffAcSync || [];
+    window.__staffAcSync.push(() => { lastValid = input.value; });
+  }
+
+  ['fDA', 'fC', 'fUSSO'].forEach(id => attachStaffAc(id, STAFF_POOLS[id]));
 
   function acFilter(q) {
     q = q.trim().toUpperCase();
