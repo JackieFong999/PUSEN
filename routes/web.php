@@ -19,12 +19,18 @@ use App\Http\Controllers\Admin\EmailTemplateListController;
 use App\Http\Controllers\Admin\TemporarySpecialSupportListController;
 use App\Http\Controllers\Admin\ImportController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\SsoLoginController;
 use Illuminate\Support\Facades\Route;
 
 // ===================== AUTH (public) =====================
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// ===================== SSO (public, SAML 2.0) =====================
+Route::get('/login/sso', [SsoLoginController::class, 'redirectToIdp'])->name('login.sso');
+Route::post('/login/sso/callback', [SsoLoginController::class, 'callback'])->name('login.sso.callback');
+Route::get('/login/sso/metadata', [SsoLoginController::class, 'metadata'])->name('login.sso.metadata');
 
 // ===================== APPLICATION (login required) =====================
 Route::middleware(['auth', 'role.access'])->group(function () {

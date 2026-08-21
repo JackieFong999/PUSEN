@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role.access' => \App\Http\Middleware\CheckRoleAccess::class,
         ]);
+        // The SAML ACS endpoint receives POSTs from the IdP (third party) —
+        // it can't carry a CSRF token, so exclude it (standard for SSO).
+        $middleware->validateCsrfTokens(except: [
+            'login/sso/callback',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

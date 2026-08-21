@@ -134,6 +134,30 @@
   .btn-login:hover { background: #d04553; border-color: #a02d38; color: #fff; }
   .btn-login:disabled { background: #e5e7eb !important; border-color: #d1d5db !important; color: #000 !important; opacity: 1; cursor: not-allowed; }
 
+  .divider {
+    display: flex; align-items: center; gap: .75rem;
+    margin: 1.25rem 0 .9rem;
+    color: var(--text-faint); font-size: .72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .08em;
+  }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .btn-sso {
+    width: 100%;
+    background: var(--bg-soft);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: .7rem 1rem;
+    font-weight: 600; font-size: .9rem;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .btn-sso:hover {
+    border-color: rgba(var(--accent-rgb), .55);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .12);
+    color: var(--text);
+  }
+
   .alert-danger {
     background: rgba(248, 113, 113, .1);
     border: 1px solid rgba(248, 113, 113, .35);
@@ -171,7 +195,7 @@
 
   <div class="login-card">
     <h1>Welcome back</h1>
-    <p class="sub">Sign in with your Staff ID and password.</p>
+    <p class="sub">Sign in with your Staff ID and password @if(config('sso.enabled')) , or use SSO @endif.</p>
 
     @if ($errors->any())
       <div class="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
@@ -208,6 +232,13 @@
         <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
       </button>
     </form>
+
+    @if (config('sso.enabled'))
+      <div class="divider"><span>or</span></div>
+      <a href="{{ route('login.sso') }}" class="btn btn-sso">
+        <i class="bi bi-shield-lock me-1"></i>Sign in with SSO
+      </a>
+    @endif
   </div>
 
   <div class="login-foot">Internal use only &middot; {{ config('app.name', 'Pusen01') }} &middot; <span style="color:#fdd835;font-weight:600;">v1.2</span></div>

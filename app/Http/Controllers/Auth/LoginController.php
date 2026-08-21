@@ -73,8 +73,9 @@ class LoginController extends Controller
      * Write a login attempt to tblLogin_Log (audit trail).
      * Status: 'Y' = success, 'N' = failed attempt. Remarks holds the
      * failure reason for failed attempts ('' on success).
+     * Method: LOCAL (Staff ID + password) or SSO.
      */
-    private function logLogin(string $staffId, string $status, Request $request, string $remarks = ''): void
+    protected function logLogin(string $staffId, string $status, Request $request, string $remarks = '', string $method = 'LOCAL'): void
     {
         try {
             DB::connection('pusen')->table('tblLogin_Log')->insert([
@@ -83,6 +84,7 @@ class LoginController extends Controller
                 'Status'     => $status,
                 'IP'         => $request->ip(),
                 'Browser'    => $this->browserName($request->userAgent()),
+                'Method'     => $method,
                 'Remarks'    => $remarks,
             ]);
         } catch (\Throwable $e) {

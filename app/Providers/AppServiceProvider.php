@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Auth\PusenStaffUserProvider;
+use App\Services\Sso\SamlSsoProvider;
+use App\Services\Sso\SsoProviderInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 
@@ -13,7 +15,16 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // SSO provider binding: swap the implementation here (or via the
+        // SSO_PROVIDER env) when the school's protocol is confirmed.
+        $this->app->bind(SsoProviderInterface::class, function ($app) {
+            $provider = config('sso.provider', 'saml');
+
+            return match ($provider) {
+                'saml' => new SamlSsoProvider(new \OneLogin\Saml2\Auth(config('sso.saml', []))),
+                default => throw new \RuntimeException("Unsupported SSO provider: {$provider}"),
+            };
+        });
     }
 
     /**
