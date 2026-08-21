@@ -45,6 +45,17 @@
   .btn-edit { border: 1px solid #7d1d29; color: #fff; background: #9B2331; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
   .btn-edit:hover { background: #d04553; border-color: #a02d38; color: #fff; }
 
+  /* grid action button — same style as the SEN Type Delete button (.btn-del) */
+  .btn-edit-sm {
+    border: 1px solid #7d1d29; color: #fff; background: #9B2331;
+    font-size: .78rem; font-weight: 600;
+    border-radius: 10px; padding: .38rem .9rem;
+    line-height: 1.4; /* stop AG Grid cell line-height from inflating the button */
+    white-space: nowrap;
+  }
+  .btn-edit-sm:hover { background: #d04553; border-color: #a02d38; color: #fff; }
+  .btn-edit-sm i { color: #fff; }
+
   #emailGrid .ag-root-wrapper { border: none; }
 
   #emailGrid {
@@ -189,11 +200,12 @@
       {
         field: 'id',
         headerName: 'Actions',
-        width: 90,
+        width: 110,
         sortable: false,
+        pinned: 'right',
         cellRenderer: params => {
           const btn = document.createElement('button');
-          btn.className = 'btn-edit';
+          btn.className = 'btn-edit-sm';
           btn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Edit';
           btn.addEventListener('click', () => loadToForm(params.data));
           return btn;

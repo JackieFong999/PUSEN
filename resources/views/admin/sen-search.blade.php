@@ -319,7 +319,6 @@
     document.getElementById('senSearchForm').reset();
     gridApi.setGridOption('rowData', []);
     lastResultCount = 0;
-    toast('Criteria reset');
   });
 </script>
 

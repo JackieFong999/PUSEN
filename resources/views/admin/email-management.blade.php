@@ -59,8 +59,16 @@
   #emailGrid .ag-cell { display: flex; align-items: center; }
   #emailGrid .ag-paging-panel { font-size: .8rem; color: var(--text-muted); }
 
-  .btn-edit-sm { border: 1px solid var(--border); background: var(--bg-soft); color: var(--text); border-radius: 8px; font-size: .75rem; padding: .25rem .55rem; }
-  .btn-edit-sm:hover { border-color: var(--accent); color: var(--accent); }
+  /* grid delete button — same style as the SEN Type Delete button (.btn-del) */
+  .btn-del {
+    border: 1px solid #7d1d29; color: #fff; background: #9B2331;
+    font-size: .78rem; font-weight: 600;
+    border-radius: 10px; padding: .38rem .9rem;
+    line-height: 1.4; /* stop AG Grid cell line-height from inflating the button */
+    white-space: nowrap;
+  }
+  .btn-del:hover { background: #d04553; border-color: #a02d38; color: #fff; }
+  .btn-del i { color: #fff; }
 
   .dev-note {
     font-size: .75rem; color: var(--text-faint); margin-top: .3rem;
@@ -182,12 +190,12 @@
       {
         field: 'sen_id',
         headerName: 'Action',
-        width: 100,
+        width: 110,
         sortable: false,
         pinned: 'right',
         cellRenderer: params => {
           const btn = document.createElement('button');
-          btn.className = 'btn-edit-sm';
+          btn.className = 'btn-del';
           btn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete';
           btn.addEventListener('click', () => {
             gridApi.applyTransaction({ remove: [params.data] });
