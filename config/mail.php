@@ -115,4 +115,17 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Temporary demo email (fallback only)
+    |--------------------------------------------------------------------------
+    | PRIMARY source is now the tblEmail_Temp table (app\Services\TempEmail), so
+    | the demo operator can change the destination address at runtime without
+    | code or env edits. These env values are only a fallback when the table is
+    | empty/missing. Remove them in production to send to real stakeholders.
+    */
+    'dev_override_to' => env('MAIL_DEV_OVERRIDE_TO', ''),
+    'student_email_placeholder' => env('MAIL_STUDENT_EMAIL', 'hokayuen48@gmail.com'),
+    'et002_bcc' => env('MAIL_ET002_BCC', 'mintasia@gmail.com'),
+
 ];

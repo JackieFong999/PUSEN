@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\CreateSenController;
 use App\Http\Controllers\Admin\SenSearchController;
 use App\Http\Controllers\Admin\SenTypeListController;
 use App\Http\Controllers\Admin\EmailTemplateListController;
+use App\Http\Controllers\Admin\EmailManagementController;
 use App\Http\Controllers\Admin\TemporarySpecialSupportListController;
 use App\Http\Controllers\Admin\ImportController;
 use App\Http\Controllers\Auth\LoginController;
@@ -148,6 +149,14 @@ Route::get('/admin/sen-search/export', [SenSearchController::class, 'export']);
     Route::post('/admin/create-sen/upload', [CreateSenController::class, 'upload']);
     Route::post('/admin/create-sen/remove-doc', [CreateSenController::class, 'removeDoc']);
     Route::post('/admin/create-sen/clear-staged', [CreateSenController::class, 'clearStaged']);
+
+    // Admin: Email Management (SA only)
+    Route::get('/admin/email-management', [EmailManagementController::class, 'index'])->name('admin.email-management');
+    Route::get('/admin/email-management/data', [EmailManagementController::class, 'data']);
+    Route::post('/admin/email-management/data', [EmailManagementController::class, 'data']);
+    Route::get('/admin/email-management/case-search', [EmailManagementController::class, 'caseSearch']);
+    Route::get('/admin/email-management/student-search', [EmailManagementController::class, 'studentSearch']);
+    Route::post('/admin/email-management/send', [EmailManagementController::class, 'send']);
 
     // Admin: SEN document preview (serves the PDF for browser preview)
     Route::get('/admin/sen-doc/{filename}', [CreateSenController::class, 'previewDoc'])->where('filename', '.*');

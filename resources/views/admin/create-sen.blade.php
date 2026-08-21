@@ -28,6 +28,33 @@
   }
   .form-control[readonly] { background: color-mix(in srgb, var(--bg-soft) 55%, transparent); cursor: default; }
 
+  /* send-email checkbox: bigger + explicit white tick when checked */
+  #sendEmailChk.form-check-input {
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-top: 0;
+    margin-left: 0; /* override Bootstrap's -1.5em (no .form-check padding-left here) */
+    cursor: pointer;
+  }
+  #sendEmailChk.form-check-input:checked {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M3.5 8.5l3 3 6-6'/%3e%3c/svg%3e");
+    background-size: 1.05em;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  #sendEmailChk.form-check-input:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+  }
+  #sendEmailChk + .form-check-label {
+    font-size: .95rem;
+    cursor: pointer;
+    user-select: none;
+    margin-left: .5rem;
+  }
+
   /* display-only fields: gray to distinguish from editable fields */
   .form-control.display-only, .form-select.display-only {
     background: color-mix(in srgb, var(--text-muted) 16%, var(--card-bg));
@@ -193,6 +220,22 @@
     border-radius: 8px; padding: .3rem .6rem; margin: 0 .35rem .35rem 0;
   }
   .preview-doc i { color: var(--accent); }
+  /* email banner inside the save-preview dialog */
+  .preview-email-box {
+    background: rgba(var(--accent-rgb, 13, 110, 253), .08);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: .6rem .8rem;
+    margin-bottom: .7rem;
+  }
+  .preview-email-title {
+    font-size: .8rem; font-weight: 700; color: var(--accent);
+    margin-bottom: .35rem;
+  }
+  .preview-email-list {
+    font-size: .82rem; color: var(--text); line-height: 1.55;
+  }
+  .preview-email-list .pkey { font-weight: 700; color: var(--text-muted); }
 </style>
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
@@ -214,12 +257,12 @@
   <div class="form-card mb-3">
     <div class="card-head">SEN Case</div>
     <div class="card-body">
-      <div class="row g-3">
+      <div class="row g-3 align-items-end">
         <div class="col-md-3">
           <label class="form-label" for="fSenId">SEN Id</label>
           <input type="text" class="form-control display-only" id="fSenId" value="{{ $isEdit ? $editSen->SEN_Id : $nextSenId }}" readonly disabled>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label" for="fStudentId">Student Id <span class="text-danger">*</span></label>
           <div class="position-relative">
             <input type="text" class="form-control" id="fStudentId" name="student_id"
@@ -228,6 +271,16 @@
             <div class="student-autocomplete" id="studentAutocomplete" style="display:none;"></div>
           </div>
         </div>
+        @if (!$isEdit && !$isView)
+        <div class="col-md-6">
+          <div class="d-flex align-items-center" style="min-height:38px; padding-left:.75rem;">
+            <div class="form-check" style="padding-left:0;">
+              <input class="form-check-input" type="checkbox" id="sendEmailChk" name="send_email" value="1">
+              <label class="form-check-label" for="sendEmailChk">Send email to related stakeholder</label>
+            </div>
+          </div>
+        </div>
+        @endif
       </div>
 
       <div class="row g-3 mt-1">
@@ -376,7 +429,7 @@
     </div>
   @else
     <div class="d-flex gap-2">
-      <button type="button" id="saveBtn" class="btn btn-search"><i class="bi bi-check-lg me-1"></i>Save</button>
+      <button type="button" id="saveBtn" class="btn btn-search"><i class="bi bi-arrow-right me-1"></i>Next</button>
       <button type="button" id="cancelBtn" class="btn btn-cancel"><i class="bi bi-x-lg me-1"></i>Cancel</button>
     </div>
   @endif
@@ -408,6 +461,14 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
+        <div id="previewEmailBox" class="preview-email-box" style="display:none;">
+          <div class="preview-email-title"><i class="bi bi-envelope me-1"></i>Email will be sent to the following stakeholders:</div>
+          <div id="previewEmailList" class="preview-email-list"></div>
+        </div>
+        <div id="previewCounsellorBox" class="preview-email-box" style="display:none;">
+          <div class="preview-email-title"><i class="bi bi-envelope me-1"></i>Email will be sent to the following Student:</div>
+          <div id="previewCounsellorList" class="preview-email-list"></div>
+        </div>
         <div style="font-size:.8rem;color:var(--text-faint);margin-bottom:.6rem;">Review the SEN details below, then Save or Cancel.</div>
         <div class="table-responsive" style="max-height:52vh;overflow-y:auto;">
           <table class="table table-sm preview-table mb-2">
@@ -463,7 +524,64 @@
     return el.value.trim();
   }
 
+  // parse staff ids from a display-only textarea of "Staff_Id — Name" lines
+  function staffIdsFromTextarea(areaId) {
+    return (document.getElementById(areaId).value || '')
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(l => l.split(' — ')[0].trim())
+      .filter(id => STAFF_EMAILS[id]);
+  }
+
+  // one line per stakeholder group: "Label: Name (email); Name2 (email2)"
+  // headers are ALWAYS shown (empty group -> just the label, no recipients)
+  function buildEmailList() {
+    const groups = [
+      ['Programme Leader', staffIdsFromTextarea('fPL')],
+      ['Department Admin Staff', [document.getElementById('fDA_h').value].filter(id => STAFF_EMAILS[id])],
+      ['Counsellor', [document.getElementById('fC_h').value].filter(id => STAFF_EMAILS[id])],
+      ['Undergraduate Studies Support Officer', [document.getElementById('fUSSO_h').value].filter(id => STAFF_EMAILS[id])],
+      ['Academic Advisor', staffIdsFromTextarea('dAdvisors')],
+    ];
+    return groups.map(([label, ids]) => {
+      const parts = ids.map(id => {
+        const s = STAFF_EMAILS[id];
+        return s.email ? (s.name + ' (' + s.email + ')') : s.name;
+      });
+      return '<div><span class="pkey">' + escapeHtml(label) + ':</span> ' + parts.join('; ') + '</div>';
+    }).join('');
+  }
+
   function buildPreview() {
+    // email banner: shown only when the checkbox is checked (create mode)
+    const emailBox = document.getElementById('previewEmailBox');
+    const sendEmailChk = document.getElementById('sendEmailChk');
+    if (emailBox && sendEmailChk && sendEmailChk.checked) {
+      document.getElementById('previewEmailList').innerHTML = buildEmailList();
+      emailBox.style.display = 'block';
+    } else if (emailBox) {
+      emailBox.style.display = 'none';
+    }
+
+    // ET-002 counsellor banner: shown when the counsellor triggers an email
+    // (create: counsellor filled; edit: counsellor changed AND non-empty)
+    const counsellorBox = document.getElementById('previewCounsellorBox');
+    if (counsellorBox) {
+      const counsellorId = document.getElementById('fC_h').value.trim();
+      const triggers = counsellorId !== '' && (!IS_EDIT || counsellorId !== ORIGINAL_COUNSELLOR);
+      if (triggers) {
+        const nameEng = document.getElementById('dNameEng').value.trim();
+        const nameChn = document.getElementById('dNameChn').value.trim();
+        const studentName = nameEng + (nameChn ? '(' + nameChn + ')' : '');
+        document.getElementById('previewCounsellorList').innerHTML =
+          '<div><span class="pkey">Student:</span> ' + escapeHtml(studentName) +
+          ' (' + escapeHtml(STUDENT_EMAIL) + ')</div>';
+        counsellorBox.style.display = 'block';
+      } else {
+        counsellorBox.style.display = 'none';
+      }
+    }
     const rows = [
       ['SEN Id', document.getElementById('fSenId').value],
       ['Student Id', previewFieldVal('fStudentId')],
@@ -520,12 +638,15 @@
   const IS_EDIT = {{ $isEdit ? 'true' : 'false' }};
   const IS_VIEW = {{ $isView ? 'true' : 'false' }};
   const EDIT_SEN_ID = '{{ $isEdit ? $editSen->SEN_Id : '' }}';
+  // ET-002: original counsellor (edit-mode change detection) + temporary student email
+  const ORIGINAL_COUNSELLOR = @json($originalCounsellor);
+  const STUDENT_EMAIL = @json($studentEmailPlaceholder);
   let removedDocs = []; // saved docs marked for deletion (edit mode, applied on Save)
   let savedDocNames = []; // storage filenames that exist in tblSEN_Doc (edit mode)
   let savedOriginalMap = {}; // storage filename -> original filename (loaded from DB, edit mode)
   let stagedOriginalMap = {}; // storage filename -> original filename (new uploads this session)
 
-  const editableSelectors = '#senForm .form-control, #senForm .form-select, #senForm textarea';
+  const editableSelectors = '#senForm .form-control, #senForm .form-select, #senForm textarea, #senForm .form-check-input';
 
   /* ---------- unsaved changes guard (wired to the layout's menu guard) ---------- */
   let formDirty = false;
@@ -809,6 +930,10 @@
     fC:    @json($staff['counsellor']->map(fn ($s) => ['id' => $s->Staff_Id, 'name' => $s->Staff_Name])->values()->all()),
     fUSSO: @json($staff['undergraduate_studies_support_officer']->map(fn ($s) => ['id' => $s->Staff_Id, 'name' => $s->Staff_Name])->values()->all()),
   };
+
+  // staff_id -> display name + email, used by the preview email banner
+  // (dev override: all emails replaced with MAIL_DEV_OVERRIDE_TO)
+  const STAFF_EMAILS = @json($staffEmails);
 
   // generic combobox: type to filter, pick from the dropdown, commit exact text on blur/Enter
   function attachStaffAc(inputId, pool) {
@@ -1094,7 +1219,15 @@
       });
       const json = await res.json();
       if (json.success) {
-        toast('✅ SEN case ' + json.sen_id + ' saved');
+        const emailNote =
+          json.email === 'sent'   ? ' — 📧 email sent to stakeholders'
+        : json.email === 'failed' ? ' — ⚠️ saved, but email failed (see log)'
+        : '';
+        const email2Note =
+          json.email2 === 'sent'   ? ' — 📧 counsellor-change email sent'
+        : json.email2 === 'failed' ? ' — ⚠️ saved, but counsellor email failed (see log)'
+        : '';
+        toast('✅ SEN case ' + json.sen_id + ' saved' + emailNote + email2Note);
         formDirty = false;
         if (IS_EDIT) {
           // back to SEN Search after a short beat so the toast is visible

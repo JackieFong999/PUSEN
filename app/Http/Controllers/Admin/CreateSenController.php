@@ -3,9 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\TempEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
+use Symfony\Component\Mime\Email;
 
 class CreateSenController extends Controller
 {
@@ -134,9 +139,27 @@ class CreateSenController extends Controller
 
         $nextSenId = $isEdit ? $editSen->SEN_Id : $this->nextSenId();
 
-        return view('admin.create-sen', compact('staff', 'senTypes', 'tempSupports', 'students', 'nextSenId', 'isEdit', 'isView', 'editSen', 'editDocs', 'editPlLabels'));
-    }
+        // staff_id -> display name + email for the preview email banner.
+        // Temporary demo address (tblEmail_Temp): every email becomes the temp
+        // address so no real stakeholder receives mail during development.
+        $devEmail = TempEmail::get();
+        $staffEmails = $conn->table('tblStaff')
+            ->get(['Staff_Id', 'Staff_Display_Name', 'Staff_Name', 'SSO_Email'])
+            ->mapWithKeys(fn ($s) => [
+                $s->Staff_Id => [
+                    'name'  => $s->Staff_Display_Name ?: $s->Staff_Name ?: $s->Staff_Id,
+                    'email' => $devEmail !== '' ? $devEmail : (string) $s->SSO_Email,
+                ],
+            ])
+            ->all();
 
+        // ET-002 preview box data: student email placeholder (tblStudent has no
+        // email column yet) + the original counsellor (edit mode change detection)
+        $studentEmailPlaceholder = TempEmail::get();
+        $originalCounsellor = $isEdit ? (string) ($editSen->Counsellor ?? '') : '';
+
+        return view('admin.create-sen', compact('staff', 'senTypes', 'tempSupports', 'students', 'nextSenId', 'isEdit', 'isView', 'editSen', 'editDocs', 'editPlLabels', 'staffEmails', 'studentEmailPlaceholder', 'originalCounsellor'));
+    }
     /**
      * Display-only data for an entered Student_Id:
      * student info + subject teachers + academic advisors + subjects.
@@ -267,8 +290,12 @@ class CreateSenController extends Controller
         // edit mode? (sen_id present in the payload)
         $senId = trim((string) $request->input('sen_id'));
         $isEdit = $senId !== '';
-        if ($isEdit && ! $conn->table('tblSEN')->where('SEN_Id', $senId)->exists()) {
-            return response()->json(['success' => false, 'message' => 'SEN case not found.'], 404);
+        $oldSen = null;
+        if ($isEdit) {
+            $oldSen = $conn->table('tblSEN')->where('SEN_Id', $senId)->first();
+            if (! $oldSen) {
+                return response()->json(['success' => false, 'message' => 'SEN case not found.'], 404);
+            }
         }
 
         // staff fields: optional; create mode requires an ENABLED staff (status=0),
@@ -338,7 +365,194 @@ class CreateSenController extends Controller
             }
         }
 
-        return response()->json(['success' => true, 'sen_id' => $finalSenId]);
+        // first-time creation + "send email" checkbox checked -> notify stakeholders
+        // (email failure never blocks the save; status goes back in the JSON)
+        $emailStatus = 'skipped';
+        if (! $isEdit && $request->input('send_email') === '1') {
+            $emailStatus = $this->sendStakeholderEmail($studentId, $data);
+        }
+
+        // ET-002: counsellor changed -> notify the STUDENT (temporary dev address,
+        // BCC to mintasia@gmail.com). Create: counsellor filled. Edit: counsellor
+        // changed AND non-empty (cleared -> no email; unchanged -> no email).
+        $email2Status = 'skipped';
+        $newCounsellor = $data['Counsellor'] ?? null;
+        if ($newCounsellor !== null && $newCounsellor !== '') {
+            $counsellorChanged = ! $isEdit || ($oldSen->Counsellor ?? null) !== $newCounsellor;
+            if ($counsellorChanged) {
+                $email2Status = $this->sendCounsellorEmail($studentId);
+            }
+        }
+
+        return response()->json(['success' => true, 'sen_id' => $finalSenId, 'email' => $emailStatus, 'email2' => $email2Status]);
+    }
+
+    /**
+     * ET-002: counsellor-change notification sent to the STUDENT.
+     * tblStudent has no email column yet, so the recipient is temporarily the
+     * MAIL_STUDENT_EMAIL placeholder (hokayuen48@gmail.com) until a real field
+     * is added. BCC: MAIL_ET002_BCC (mintasia@gmail.com, dev monitoring).
+     * Failure never blocks the save. Returns 'sent' | 'failed'.
+     */
+    private function sendCounsellorEmail(string $studentId): string
+    {
+        $conn = DB::connection('pusen');
+
+        $tpl = $conn->table('tblEmail_Template')->where('Template_Name', 'ET-002')->first();
+        if (! $tpl) {
+            Log::warning('sendCounsellorEmail: template ET-002 not found');
+            return 'failed';
+        }
+
+        $smtp = $conn->table('tblConfig_SMTP')->orderBy('Id')->first();
+        if (! $smtp) {
+            Log::warning('sendCounsellorEmail: no row in tblConfig_SMTP');
+            return 'failed';
+        }
+
+        try {
+            $transport = new EsmtpTransport($smtp->Host, (int) $smtp->Port, strtolower((string) $smtp->Security) === 'tls' ? 'tls' : 'ssl');
+            $transport->setUsername($smtp->Username);
+            $transport->setPassword($smtp->Password);
+            $mailer = new Mailer($transport);
+
+            $studentEmail = TempEmail::get();
+            $bcc = TempEmail::bcc();
+
+            $message = (new Email())
+                ->from($smtp->Username)
+                ->to($studentEmail)
+                ->subject(trim((string) $tpl->Template_Title) ?: 'SEN Details Updated')
+                ->text(trim((string) $tpl->Template_Content));
+            if ($bcc !== '') {
+                $message->addBcc($bcc);
+            }
+            $mailer->send($message);
+
+            Log::info('sendCounsellorEmail: sent to ' . $studentEmail . ' (bcc ' . ($bcc ?: 'none') . ') for student ' . $studentId);
+            return 'sent';
+        } catch (\Throwable $e) {
+            Log::error('sendCounsellorEmail failed: ' . $e->getMessage());
+            return 'failed';
+        }
+    }
+
+    /**
+     * Send the ET-001 stakeholder notification after a SEN case is created.
+     * Recipients: Programme Leader + Academic Advisor (current assignments in
+     * tblAdvisor_Student), Department Admin Staff, Counsellor, USSO.
+     * One email to all recipients (deduped). Failure never blocks the save.
+     * Returns 'sent' | 'skipped' (no recipients) | 'failed'.
+     */
+    private function sendStakeholderEmail(string $studentId, array $data): string
+    {
+        $conn = DB::connection('pusen');
+        $today = now()->toDateString();
+
+        // --- gather stakeholder staff ids (unique, keep order) ---
+        $ids = [];
+        $addIds = function ($v) use (&$ids) {
+            if ($v === null || $v === '') {
+                return;
+            }
+            $arr = is_array($v)
+                ? $v
+                : ($v instanceof \Traversable ? iterator_to_array($v) : [$v]);
+            foreach ($arr as $id) {
+                $id = trim((string) $id);
+                if ($id !== '' && ! in_array($id, $ids, true)) {
+                    $ids[] = $id;
+                }
+            }
+        };
+
+        // Programme Leader(s): current PROG_LEADER advisors of this student
+        $plRows = $conn->table('tblAdvisor_Student')
+            ->where('Student_Id', $studentId)
+            ->where('Advisor_Type', 'PROG_LEADER')
+            ->whereDate('Start_Date', '<=', $today)
+            ->whereDate('End_Date', '>=', $today)
+            ->pluck('Advisor_Id');
+        $addIds($plRows);
+
+        // Department Admin Staff / Counsellor / USSO from the saved SEN row
+        $addIds($data['Department_Admin_Staff'] ?? null);
+        $addIds($data['Counsellor'] ?? null);
+        $addIds($data['Undergraduate_Studies_Support_Officer'] ?? null);
+
+        // Academic Advisor(s): current PRIMARY advisors of this student
+        $advRows = $conn->table('tblAdvisor_Student')
+            ->where('Student_Id', $studentId)
+            ->where('Advisor_Type', 'PRIMARY')
+            ->whereDate('Start_Date', '<=', $today)
+            ->whereDate('End_Date', '>=', $today)
+            ->pluck('Advisor_Id');
+        $addIds($advRows);
+
+        if (! $ids) {
+            return 'skipped';
+        }
+
+        // --- resolve emails (temp demo address replaces every address) ---
+        $devEmail = TempEmail::get();
+        $staff = $conn->table('tblStaff')
+            ->whereIn('Staff_Id', $ids)
+            ->get(['Staff_Id', 'SSO_Email']);
+        // one recipient per unique staff member (dedupe by staff, NOT by email,
+        // so the dev override still sends one email per stakeholder)
+        $recipients = [];
+        foreach ($staff as $s) {
+            $email = $devEmail !== '' ? $devEmail : trim((string) $s->SSO_Email);
+            if ($email === '') {
+                continue;
+            }
+            $recipients[] = $email;
+        }
+        if (! $recipients) {
+            return 'skipped';
+        }
+
+        // --- email template ET-001 ---
+        $tpl = $conn->table('tblEmail_Template')->where('Template_Name', 'ET-001')->first();
+        if (! $tpl) {
+            Log::warning('sendStakeholderEmail: template ET-001 not found');
+            return 'failed';
+        }
+
+        // --- SMTP config ---
+        $smtp = $conn->table('tblConfig_SMTP')->orderBy('Id')->first();
+        if (! $smtp) {
+            Log::warning('sendStakeholderEmail: no row in tblConfig_SMTP');
+            return 'failed';
+        }
+
+        try {
+            $transport = new EsmtpTransport($smtp->Host, (int) $smtp->Port, strtolower((string) $smtp->Security) === 'tls' ? 'tls' : 'ssl');
+            $transport->setUsername($smtp->Username);
+            $transport->setPassword($smtp->Password);
+            $mailer = new Mailer($transport);
+
+            $sent = 0;
+            foreach ($recipients as $email) {
+                $message = (new Email())
+                    ->from($smtp->Username)
+                    ->to($email)
+                    ->subject(trim((string) $tpl->Template_Title) ?: 'SEN Details Updated')
+                    ->text(trim((string) $tpl->Template_Content));
+                try {
+                    $mailer->send($message);
+                    $sent++;
+                } catch (\Throwable $e) {
+                    Log::error('sendStakeholderEmail: failed to ' . $email . ': ' . $e->getMessage());
+                }
+            }
+
+            Log::info('sendStakeholderEmail: sent ' . $sent . '/' . count($recipients) . ' for student ' . $studentId);
+            return $sent > 0 ? 'sent' : 'failed';
+        } catch (\Throwable $e) {
+            Log::error('sendStakeholderEmail failed: ' . $e->getMessage());
+            return 'failed';
+        }
     }
 
     /** Serve a SEN document for preview / download (checks staging, then final). */
