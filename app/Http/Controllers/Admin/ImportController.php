@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\AdvisorImportService;
+use App\Services\EmailSenService;
 use App\Services\StaffImportService;
 use App\Services\StudentImportService;
 use App\Services\StudentRegImportService;
@@ -103,5 +104,20 @@ class ImportController extends Controller
         };
 
         return response()->json($result);
+    }
+
+    /**
+     * ET-002: SEN stakeholder-change email (manual button, SA only).
+     * Runs Part 1 (create jobs) -> Part 2 (recipient list) -> Part 3 (send).
+     */
+    public function sendEmail(EmailSenService $service)
+    {
+        $summary = $service->run();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Email job completed.',
+            ...$summary,
+        ]);
     }
 }

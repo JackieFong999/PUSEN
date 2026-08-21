@@ -153,12 +153,7 @@ class CreateSenController extends Controller
             ])
             ->all();
 
-        // ET-002 preview box data: student email placeholder (tblStudent has no
-        // email column yet) + the original counsellor (edit mode change detection)
-        $studentEmailPlaceholder = TempEmail::get();
-        $originalCounsellor = $isEdit ? (string) ($editSen->Counsellor ?? '') : '';
-
-        return view('admin.create-sen', compact('staff', 'senTypes', 'tempSupports', 'students', 'nextSenId', 'isEdit', 'isView', 'editSen', 'editDocs', 'editPlLabels', 'staffEmails', 'studentEmailPlaceholder', 'originalCounsellor'));
+        return view('admin.create-sen', compact('staff', 'senTypes', 'tempSupports', 'students', 'nextSenId', 'isEdit', 'isView', 'editSen', 'editDocs', 'editPlLabels', 'staffEmails'));
     }
     /**
      * Display-only data for an entered Student_Id:
@@ -290,12 +285,8 @@ class CreateSenController extends Controller
         // edit mode? (sen_id present in the payload)
         $senId = trim((string) $request->input('sen_id'));
         $isEdit = $senId !== '';
-        $oldSen = null;
-        if ($isEdit) {
-            $oldSen = $conn->table('tblSEN')->where('SEN_Id', $senId)->first();
-            if (! $oldSen) {
-                return response()->json(['success' => false, 'message' => 'SEN case not found.'], 404);
-            }
+        if ($isEdit && ! $conn->table('tblSEN')->where('SEN_Id', $senId)->exists()) {
+            return response()->json(['success' => false, 'message' => 'SEN case not found.'], 404);
         }
 
         // staff fields: optional; create mode requires an ENABLED staff (status=0),
@@ -372,69 +363,7 @@ class CreateSenController extends Controller
             $emailStatus = $this->sendStakeholderEmail($studentId, $data);
         }
 
-        // ET-002: counsellor changed -> notify the STUDENT (temporary dev address,
-        // BCC to mintasia@gmail.com). Create: counsellor filled. Edit: counsellor
-        // changed AND non-empty (cleared -> no email; unchanged -> no email).
-        $email2Status = 'skipped';
-        $newCounsellor = $data['Counsellor'] ?? null;
-        if ($newCounsellor !== null && $newCounsellor !== '') {
-            $counsellorChanged = ! $isEdit || ($oldSen->Counsellor ?? null) !== $newCounsellor;
-            if ($counsellorChanged) {
-                $email2Status = $this->sendCounsellorEmail($studentId);
-            }
-        }
-
-        return response()->json(['success' => true, 'sen_id' => $finalSenId, 'email' => $emailStatus, 'email2' => $email2Status]);
-    }
-
-    /**
-     * ET-002: counsellor-change notification sent to the STUDENT.
-     * tblStudent has no email column yet, so the recipient is temporarily the
-     * MAIL_STUDENT_EMAIL placeholder (hokayuen48@gmail.com) until a real field
-     * is added. BCC: MAIL_ET002_BCC (mintasia@gmail.com, dev monitoring).
-     * Failure never blocks the save. Returns 'sent' | 'failed'.
-     */
-    private function sendCounsellorEmail(string $studentId): string
-    {
-        $conn = DB::connection('pusen');
-
-        $tpl = $conn->table('tblEmail_Template')->where('Template_Name', 'ET-002')->first();
-        if (! $tpl) {
-            Log::warning('sendCounsellorEmail: template ET-002 not found');
-            return 'failed';
-        }
-
-        $smtp = $conn->table('tblConfig_SMTP')->orderBy('Id')->first();
-        if (! $smtp) {
-            Log::warning('sendCounsellorEmail: no row in tblConfig_SMTP');
-            return 'failed';
-        }
-
-        try {
-            $transport = new EsmtpTransport($smtp->Host, (int) $smtp->Port, strtolower((string) $smtp->Security) === 'tls' ? 'tls' : 'ssl');
-            $transport->setUsername($smtp->Username);
-            $transport->setPassword($smtp->Password);
-            $mailer = new Mailer($transport);
-
-            $studentEmail = TempEmail::get();
-            $bcc = TempEmail::bcc();
-
-            $message = (new Email())
-                ->from($smtp->Username)
-                ->to($studentEmail)
-                ->subject(trim((string) $tpl->Template_Title) ?: 'SEN Details Updated')
-                ->text(trim((string) $tpl->Template_Content));
-            if ($bcc !== '') {
-                $message->addBcc($bcc);
-            }
-            $mailer->send($message);
-
-            Log::info('sendCounsellorEmail: sent to ' . $studentEmail . ' (bcc ' . ($bcc ?: 'none') . ') for student ' . $studentId);
-            return 'sent';
-        } catch (\Throwable $e) {
-            Log::error('sendCounsellorEmail failed: ' . $e->getMessage());
-            return 'failed';
-        }
+        return response()->json(['success' => true, 'sen_id' => $finalSenId, 'email' => $emailStatus]);
     }
 
     /**

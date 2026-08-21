@@ -164,5 +164,6 @@ Route::get('/admin/sen-search/export', [SenSearchController::class, 'export']);
     // Admin: Data Import (Subject first)
     Route::get('/admin/data-import', [ImportController::class, 'index'])->name('admin.data-import');
     Route::post('/admin/data-import/import', [ImportController::class, 'import']);
+    Route::post('/admin/data-import/send-email', [ImportController::class, 'sendEmail']);
 
 });

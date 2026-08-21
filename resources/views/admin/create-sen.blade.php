@@ -465,10 +465,6 @@
           <div class="preview-email-title"><i class="bi bi-envelope me-1"></i>Email will be sent to the following stakeholders:</div>
           <div id="previewEmailList" class="preview-email-list"></div>
         </div>
-        <div id="previewCounsellorBox" class="preview-email-box" style="display:none;">
-          <div class="preview-email-title"><i class="bi bi-envelope me-1"></i>Email will be sent to the following Student:</div>
-          <div id="previewCounsellorList" class="preview-email-list"></div>
-        </div>
         <div style="font-size:.8rem;color:var(--text-faint);margin-bottom:.6rem;">Review the SEN details below, then Save or Cancel.</div>
         <div class="table-responsive" style="max-height:52vh;overflow-y:auto;">
           <table class="table table-sm preview-table mb-2">
@@ -564,24 +560,6 @@
       emailBox.style.display = 'none';
     }
 
-    // ET-002 counsellor banner: shown when the counsellor triggers an email
-    // (create: counsellor filled; edit: counsellor changed AND non-empty)
-    const counsellorBox = document.getElementById('previewCounsellorBox');
-    if (counsellorBox) {
-      const counsellorId = document.getElementById('fC_h').value.trim();
-      const triggers = counsellorId !== '' && (!IS_EDIT || counsellorId !== ORIGINAL_COUNSELLOR);
-      if (triggers) {
-        const nameEng = document.getElementById('dNameEng').value.trim();
-        const nameChn = document.getElementById('dNameChn').value.trim();
-        const studentName = nameEng + (nameChn ? '(' + nameChn + ')' : '');
-        document.getElementById('previewCounsellorList').innerHTML =
-          '<div><span class="pkey">Student:</span> ' + escapeHtml(studentName) +
-          ' (' + escapeHtml(STUDENT_EMAIL) + ')</div>';
-        counsellorBox.style.display = 'block';
-      } else {
-        counsellorBox.style.display = 'none';
-      }
-    }
     const rows = [
       ['SEN Id', document.getElementById('fSenId').value],
       ['Student Id', previewFieldVal('fStudentId')],
@@ -638,9 +616,6 @@
   const IS_EDIT = {{ $isEdit ? 'true' : 'false' }};
   const IS_VIEW = {{ $isView ? 'true' : 'false' }};
   const EDIT_SEN_ID = '{{ $isEdit ? $editSen->SEN_Id : '' }}';
-  // ET-002: original counsellor (edit-mode change detection) + temporary student email
-  const ORIGINAL_COUNSELLOR = @json($originalCounsellor);
-  const STUDENT_EMAIL = @json($studentEmailPlaceholder);
   let removedDocs = []; // saved docs marked for deletion (edit mode, applied on Save)
   let savedDocNames = []; // storage filenames that exist in tblSEN_Doc (edit mode)
   let savedOriginalMap = {}; // storage filename -> original filename (loaded from DB, edit mode)
@@ -1223,11 +1198,7 @@
           json.email === 'sent'   ? ' — 📧 email sent to stakeholders'
         : json.email === 'failed' ? ' — ⚠️ saved, but email failed (see log)'
         : '';
-        const email2Note =
-          json.email2 === 'sent'   ? ' — 📧 counsellor-change email sent'
-        : json.email2 === 'failed' ? ' — ⚠️ saved, but counsellor email failed (see log)'
-        : '';
-        toast('✅ SEN case ' + json.sen_id + ' saved' + emailNote + email2Note);
+        toast('✅ SEN case ' + json.sen_id + ' saved' + emailNote);
         formDirty = false;
         if (IS_EDIT) {
           // back to SEN Search after a short beat so the toast is visible

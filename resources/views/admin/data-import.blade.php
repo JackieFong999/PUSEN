@@ -112,6 +112,32 @@
   </div>
 </div>
 
+{{-- ============ SEND EMAIL (ET-002, SA only) ============ --}}
+<div class="d-flex justify-content-end mt-3">
+  <button type="button" id="sendEmailBtn" class="btn btn-search">
+    <i class="bi bi-send me-1"></i>Send Email for SEN Stakeholder Changes
+  </button>
+</div>
+
+{{-- ============ SEND EMAIL CONFIRM DIALOG ============ --}}
+<div class="modal fade" id="sendEmailModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title" style="font-size:.95rem;">Confirm Send Email</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="font-size:.85rem;">
+        Detect SEN stakeholder changes from today's imports and send ET-002 emails to the affected stakeholders?
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-search" id="sendEmailYes">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {{-- ============ CONFIRM DIALOG ============ --}}
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-dialog-filename">
@@ -249,6 +275,45 @@
   document.querySelectorAll('.btn-import[data-type]').forEach(btn =>
     btn.addEventListener('click', () => runImport(btn.dataset.type))
   );
+
+  /* ---------- Send Email for SEN Stakeholder Changes (ET-002) ---------- */
+  const sendEmailBtn = document.getElementById('sendEmailBtn');
+  if (sendEmailBtn) {
+    sendEmailBtn.addEventListener('click', () => {
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('sendEmailModal')).show();
+    });
+    document.getElementById('sendEmailYes').addEventListener('click', async () => {
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('sendEmailModal')).hide();
+      sendEmailBtn.disabled = true;
+      sendEmailBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending…';
+      try {
+        const res = await fetch('/admin/data-import/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showResult('Email Job Completed', `
+            <div class="result-count">
+              <div class="mb-1"><span class="num num-insert">${data.jobs_created}</span> email job(s) created</div>
+              <div class="mb-1"><span class="num num-dup">${data.jobs_skipped}</span> job(s) skipped (already PENDING)</div>
+              <div class="mb-1"><span class="num num-update">${data.recipients}</span> recipient(s) queued</div>
+              <div class="mb-1"><span class="num num-insert">${data.sent}</span> email(s) sent</div>
+              <div class="mb-1"><span class="num num-fail">${data.failed}</span> email(s) failed (see Remarks in tblEmail_List)</div>
+            </div>
+          `);
+        } else {
+          showResult('Email Job Error', `<div class="fw-semibold">${esc(data.message ?? 'Unknown error')}</div>`);
+        }
+      } catch (e) {
+        showResult('Email Job Error', `<div class="fw-semibold">Request failed: ${esc(e.message)}</div>`);
+      } finally {
+        sendEmailBtn.disabled = false;
+        sendEmailBtn.innerHTML = '<i class="bi bi-send me-1"></i>Send Email for SEN Stakeholder Changes';
+      }
+    });
+  }
 </script>
 
 @endsection
