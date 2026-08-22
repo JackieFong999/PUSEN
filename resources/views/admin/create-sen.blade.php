@@ -262,7 +262,7 @@
           <label class="form-label" for="fSenId">SEN Id</label>
           <input type="text" class="form-control display-only" id="fSenId" value="{{ $isEdit ? $editSen->SEN_Id : $nextSenId }}" readonly disabled>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
           <label class="form-label" for="fStudentId">Student Id <span class="text-danger">*</span></label>
           <div class="position-relative">
             <input type="text" class="form-control" id="fStudentId" name="student_id"
@@ -271,16 +271,6 @@
             <div class="student-autocomplete" id="studentAutocomplete" style="display:none;"></div>
           </div>
         </div>
-        @if (!$isEdit && !$isView)
-        <div class="col-md-6">
-          <div class="d-flex align-items-center" style="min-height:38px; padding-left:.75rem;">
-            <div class="form-check" style="padding-left:0;">
-              <input class="form-check-input" type="checkbox" id="sendEmailChk" name="send_email" value="1">
-              <label class="form-check-label" for="sendEmailChk">Send email to related stakeholder</label>
-            </div>
-          </div>
-        </div>
-        @endif
       </div>
 
       <div class="row g-3 mt-1">
@@ -328,7 +318,7 @@
           <select class="form-select" id="fSenType" name="sen_type" disabled>
             <option value="">-- Select --</option>
             @foreach ($senTypes as $t)
-              <option value="{{ $t }}" @selected($isEdit && $editSen->SEN_Type === $t)>{{ $t }}</option>
+              <option value="{{ $t->Id }}" @selected($isEdit && $editSen->SEN_Type_ID === $t->Id)>{{ $t->SEN_Type }}</option>
             @endforeach
           </select>
         </div>
@@ -349,7 +339,7 @@
           <select class="form-select" id="fTemp" name="temporary_special_support" disabled>
             <option value="">-- Select --</option>
             @foreach ($tempSupports as $t)
-              <option value="{{ $t }}" @selected($isEdit && $editSen->Temporary_Special_Support === $t)>{{ $t }}</option>
+              <option value="{{ $t->Id }}" @selected($isEdit && $editSen->Temporary_Special_Support_ID === $t->Id)>{{ $t->Temporary_Special_Support }}</option>
             @endforeach
           </select>
         </div>
@@ -417,6 +407,12 @@
         <div class="col-md-4">
           <label class="form-label" for="dSubjects">Subject</label>
           <textarea class="form-control display-only" id="dSubjects" rows="4" readonly disabled></textarea>
+          @if (!$isView)
+          <div class="form-check mt-3" style="padding-left:0;">
+            <input class="form-check-input" type="checkbox" id="sendEmailChk" name="send_email" value="1">
+            <label class="form-check-label" for="sendEmailChk">Send email to related stakeholder</label>
+          </div>
+          @endif
         </div>
       </div>
     </div>

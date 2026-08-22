@@ -52,7 +52,7 @@ class SenSearchController extends Controller
 
         $senTypes = $conn->table('tblSEN_Type')
             ->orderBy('SEN_Type')
-            ->pluck('SEN_Type');
+            ->get(['Id', 'SEN_Type']);
 
         return view('admin.sen-search', compact('staff', 'plStaff', 'senTypes'));
     }
@@ -142,7 +142,7 @@ class SenSearchController extends Controller
             $q->whereIn('Student_Id', $plStudentIds->all());
         }
         if ($senType = trim((string) $request->input('sen_type'))) {
-            $q->where('SEN_Type', $senType);
+            $q->where('SEN_Type_ID', (int) $senType);
         }
         if ($detail = trim((string) $request->input('sen_detail'))) {
             $q->where('SEN_Detail', 'like', "%{$detail}%");
@@ -197,7 +197,17 @@ class SenSearchController extends Controller
             return $s->Staff_Display_Name ?: ($s->Staff_Name ?: $staffId);
         };
 
-        return $rows->map(function ($r) use ($students, $displayName, $plByStudent) {
+        // --- SEN Type / Temp Support: id -> value maps (no joins, collation-safe) ---
+        $typeIds = $rows->pluck('SEN_Type_ID')->unique()->filter()->all();
+        $typeMap = $typeIds
+            ? $conn->table('tblSEN_Type')->whereIn('Id', $typeIds)->get(['Id', 'SEN_Type'])->pluck('SEN_Type', 'Id')
+            : collect();
+        $tempIds = $rows->pluck('Temporary_Special_Support_ID')->unique()->filter()->all();
+        $tempMap = $tempIds
+            ? $conn->table('tblTemporary_Special_Support')->whereIn('Id', $tempIds)->get(['Id', 'Temporary_Special_Support'])->pluck('Temporary_Special_Support', 'Id')
+            : collect();
+
+        return $rows->map(function ($r) use ($students, $displayName, $plByStudent, $typeMap, $tempMap) {
             $st = $students->get($r->Student_Id);
             return [
                 'sen_id'          => $r->SEN_Id,
@@ -208,11 +218,11 @@ class SenSearchController extends Controller
                 'department_admin_staff'          => $displayName($r->Department_Admin_Staff),
                 'counsellor'                      => $displayName($r->Counsellor),
                 'undergraduate_studies_support_officer' => $displayName($r->Undergraduate_Studies_Support_Officer),
-                'sen_type'         => $r->SEN_Type,
+                'sen_type'         => $r->SEN_Type_ID ? ($typeMap->get($r->SEN_Type_ID) ?? '—') : '—',
                 'sen_detail'       => $r->SEN_Detail,
                 'special_support_required'        => $r->Special_Support_Required,
                 'special_examination_arrangement' => $r->Special_Examination_Arrangement,
-                'temporary_special_support'       => $r->Temporary_Special_Support,
+                'temporary_special_support'       => $r->Temporary_Special_Support_ID ? ($tempMap->get($r->Temporary_Special_Support_ID) ?? '—') : '—',
             ];
         });
     }
@@ -277,7 +287,40 @@ class SenSearchController extends Controller
         $tmp = tempnam(sys_get_temp_dir(), 'sen') . '.xlsx';
         $writer->save($tmp);
 
-        return response()->download($tmp, $filename, [
+        // Password protection (2026-08-22): encrypt the workbook with the password
+        // stored in tblConfig_Password (PW_Type='EXCEL') — OOXML Agile Encryption
+        // (Excel prompts for the password on open). Requires the msoffcrypto-tool
+        // python package + scripts/encrypt_xlsx.py inside the phpdev container.
+        $excelPassword = DB::connection('pusen')
+            ->table('tblConfig_Password')
+            ->where('PW_Type', 'EXCEL')
+            ->value('Password');
+
+        if (! $excelPassword) {
+            @unlink($tmp);
+            abort(500, 'Excel export password is not configured (tblConfig_Password PW_Type=EXCEL).');
+        }
+
+        $encrypted = tempnam(sys_get_temp_dir(), 'sen') . '.xlsx';
+        // scripts/encrypt_xlsx.py ships inside the app (msoffcrypto-tool python
+        // package must be installed on the server; see Upgrade Procedure docx).
+        $script = base_path('scripts/encrypt_xlsx.py');
+        $cmd = sprintf(
+            '/usr/bin/python3 %s %s %s %s 2>&1',
+            escapeshellarg($script),
+            escapeshellarg($tmp),
+            escapeshellarg($encrypted),
+            escapeshellarg($excelPassword)
+        );
+        exec($cmd, $output, $exitCode);
+        @unlink($tmp);
+
+        if ($exitCode !== 0) {
+            @unlink($encrypted);
+            abort(500, 'Excel encryption failed: ' . implode(' ', $output));
+        }
+
+        return response()->download($encrypted, $filename, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ])->deleteFileAfterSend(true);
     }

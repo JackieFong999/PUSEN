@@ -267,7 +267,13 @@ class EmailManagementController extends Controller
             }
         }
 
-        return $rows->map(function ($r) use ($students, $teachersByStudent) {
+        // SEN Type: id -> value map (no joins, collation-safe)
+        $typeIds = $rows->pluck('SEN_Type_ID')->unique()->filter()->all();
+        $typeMap = $typeIds
+            ? $conn->table('tblSEN_Type')->whereIn('Id', $typeIds)->get(['Id', 'SEN_Type'])->pluck('SEN_Type', 'Id')
+            : collect();
+
+        return $rows->map(function ($r) use ($students, $teachersByStudent, $typeMap) {
             $st = $students->get($r->Student_Id);
             $teachers = ($teachersByStudent->get($r->Student_Id) ?? collect())->unique()->values();
 
@@ -277,7 +283,7 @@ class EmailManagementController extends Controller
                 'student_name_eng' => $st->Student_Name_Eng ?? '—',
                 'student_name_chn' => $st->Student_Name_Chn ?? '—',
                 'subject_teacher'  => $teachers->join('; '),
-                'sen_type'         => $r->SEN_Type ?: '—',
+                'sen_type'         => $r->SEN_Type_ID ? ($typeMap->get($r->SEN_Type_ID) ?? '—') : '—',
             ];
         })->values();
     }

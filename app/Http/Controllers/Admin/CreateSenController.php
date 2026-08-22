@@ -91,17 +91,20 @@ class CreateSenController extends Controller
 
         $senTypes = $conn->table('tblSEN_Type')
             ->orderBy('SEN_Type')
-            ->pluck('SEN_Type');
+            ->get(['Id', 'SEN_Type']);
 
         // Temporary Special Support options (lookup table)
         $tempSupports = $conn->table('tblTemporary_Special_Support')
             ->orderBy('Temporary_Special_Support')
-            ->pluck('Temporary_Special_Support');
+            ->get(['Id', 'Temporary_Special_Support']);
 
         // edit mode: ensure the record's current value is in the dropdown even if
         // it is not in the lookup table (legacy free-text values)
-        if ($isEdit && $editSen->Temporary_Special_Support && ! $tempSupports->contains($editSen->Temporary_Special_Support)) {
-            $tempSupports->push($editSen->Temporary_Special_Support);
+        if ($isEdit && $editSen->Temporary_Special_Support_ID && ! $tempSupports->contains('Id', $editSen->Temporary_Special_Support_ID)) {
+            $row = $conn->table('tblTemporary_Special_Support')->where('Id', $editSen->Temporary_Special_Support_ID)->first(['Id', 'Temporary_Special_Support']);
+            if ($row) {
+                $tempSupports->push($row);
+            }
         }
 
         // active students only (Student_Id selection box)
@@ -309,18 +312,32 @@ class CreateSenController extends Controller
             $data[$this->colName($key)] = $val;
         }
 
-        // SEN_Type: optional, must exist in tblSEN_Type
-        $senType = trim((string) $request->input('sen_type'));
-        if ($senType !== '' && ! $conn->table('tblSEN_Type')->where('SEN_Type', $senType)->exists()) {
-            return response()->json(['success' => false, 'message' => 'Invalid SEN Type.'], 422);
+        // SEN_Type: optional; the form posts the lookup Id
+        $senTypeId = null;
+        $senTypeRaw = trim((string) $request->input('sen_type'));
+        if ($senTypeRaw !== '') {
+            $senTypeId = (int) $senTypeRaw;
+            if (! $conn->table('tblSEN_Type')->where('Id', $senTypeId)->exists()) {
+                return response()->json(['success' => false, 'message' => 'Invalid SEN Type.'], 422);
+            }
         }
-        $data['SEN_Type'] = $senType !== '' ? $senType : null;
+        $data['SEN_Type_ID'] = $senTypeId;
 
         $data['Student_Id'] = $studentId;
         $data['SEN_Detail'] = $this->nullable($request->input('sen_detail'));
         $data['Special_Support_Required'] = $this->nullable($request->input('special_support_required'));
         $data['Special_Examination_Arrangement'] = $this->nullable($request->input('special_examination_arrangement'));
-        $data['Temporary_Special_Support'] = $this->nullable($request->input('temporary_special_support'));
+
+        // Temporary Special Support: optional; the form posts the lookup Id
+        $tempSupportId = null;
+        $tempSupportRaw = trim((string) $request->input('temporary_special_support'));
+        if ($tempSupportRaw !== '') {
+            $tempSupportId = (int) $tempSupportRaw;
+            if (! $conn->table('tblTemporary_Special_Support')->where('Id', $tempSupportId)->exists()) {
+                return response()->json(['success' => false, 'message' => 'Invalid Temporary Special Support.'], 422);
+            }
+        }
+        $data['Temporary_Special_Support_ID'] = $tempSupportId;
 
         $data['updated_at'] = now();
         $data['updated_by'] = 'system01';
@@ -356,10 +373,10 @@ class CreateSenController extends Controller
             }
         }
 
-        // first-time creation + "send email" checkbox checked -> notify stakeholders
+        // "send email" checkbox checked -> notify stakeholders (create or edit)
         // (email failure never blocks the save; status goes back in the JSON)
         $emailStatus = 'skipped';
-        if (! $isEdit && $request->input('send_email') === '1') {
+        if ($request->input('send_email') === '1') {
             $emailStatus = $this->sendStakeholderEmail($studentId, $data);
         }
 

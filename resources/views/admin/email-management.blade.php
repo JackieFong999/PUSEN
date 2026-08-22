@@ -110,7 +110,7 @@
   <div class="card-body">
     <div class="radio-group mb-3">
       <div class="form-check">
-        <input class="form-check-input" type="radio" name="caseScope" id="csAll" value="all" checked>
+        <input class="form-check-input" type="radio" name="caseScope" id="csAll" value="all">
         <label class="form-check-label" for="csAll">All SEN case</label>
       </div>
       <div class="form-check">
@@ -199,7 +199,6 @@
           btn.innerHTML = '<i class="bi bi-trash me-1"></i>Delete';
           btn.addEventListener('click', () => {
             gridApi.applyTransaction({ remove: [params.data] });
-            toast('Removed ' + params.data.sen_id + ' from the list');
           });
           return btn;
         },

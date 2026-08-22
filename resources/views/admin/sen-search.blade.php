@@ -141,7 +141,7 @@
       <select class="form-select" id="fSenType" name="sen_type">
         <option value="">-- Select --</option>
         @foreach ($senTypes as $t)
-          <option value="{{ $t }}">{{ $t }}</option>
+          <option value="{{ $t->Id }}">{{ $t->SEN_Type }}</option>
         @endforeach
       </select>
     </div>

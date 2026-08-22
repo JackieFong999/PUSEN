@@ -78,13 +78,14 @@
   <div id="supportGrid" class="ag-theme-alpine-dark"></div>
 </div>
 
-{{-- ============ ADD NEW ENTRY (below the list) ============ --}}
+{{-- ============ ADD / EDIT ENTRY (below the list) ============ --}}
 <div class="stat-card p-3 mt-4">
-  <div style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#000; margin-bottom:.6rem;">Add New Temporary Special Support</div>
+  <div style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#000; margin-bottom:.6rem;" id="entryTitle">Add New Temporary Special Support</div>
   <div class="d-flex gap-2 align-items-center">
     <input type="text" id="newSupport" class="form-control" maxlength="40"
            placeholder="Enter a new value…" style="max-width:420px;">
     <button type="button" id="addSupportBtn" class="btn btn-add"><i class="bi bi-plus-lg me-1"></i>Save</button>
+    <button type="button" id="cancelEditBtn" class="btn btn-cancel" style="display:none;">Cancel</button>
   </div>
 </div>
 
@@ -110,7 +111,7 @@
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title"><i class="bi bi-info-circle me-1" style="color:var(--danger);"></i>Cannot Delete</h5>
+        <h5 class="modal-title" id="infoModalTitle"><i class="bi bi-info-circle me-1" style="color:var(--danger);"></i>Cannot Delete</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="infoModalMsg"></div>
@@ -142,10 +143,17 @@
   document.getElementById('confirmNo').addEventListener('click', () => closeConfirm(false));
   confirmModalEl.addEventListener('hidden.bs.modal', () => { if (confirmResolve) { confirmResolve(false); confirmResolve = null; } });
 
-  /* ---------- info dialog (delete blocked, e.g. value already in use) ---------- */
+  /* ---------- info dialog (delete blocked, save result, etc.) ---------- */
   const infoModalEl = document.getElementById('infoModal');
-  function showInfo(message) {
+  function showInfo(message, title, isSuccess) {
     document.getElementById('infoModalMsg').textContent = message;
+    const titleEl = document.getElementById('infoModalTitle');
+    if (title) {
+      const icon = isSuccess
+        ? '<i class="bi bi-check-circle me-1" style="color:var(--success);"></i>'
+        : '<i class="bi bi-info-circle me-1" style="color:var(--danger);"></i>';
+      titleEl.innerHTML = icon + esc(title);
+    }
     bootstrap.Modal.getOrCreateInstance(infoModalEl).show();
   }
   document.getElementById('infoOk').addEventListener('click', () => bootstrap.Modal.getOrCreateInstance(infoModalEl).hide());
@@ -155,11 +163,17 @@
   }
 
   /* ---------- AG Grid ---------- */
-  const ROWS = @json($supports->map(fn ($v) => ['support' => $v]));
+  const ROWS = @json($supports->map(fn ($v) => ['id' => $v->Id, 'support' => $v->Temporary_Special_Support]));
   let gridApi = null;
 
   const gridOptions = {
     columnDefs: [
+      {
+        field: 'id',
+        headerName: 'Id',
+        width: 80,
+        cellRenderer: p => esc(p.value),
+      },
       {
         field: 'support',
         headerName: 'Temporary Special Support',
@@ -167,18 +181,30 @@
         cellRenderer: p => esc(p.value),
       },
       {
-        field: 'support',
+        field: 'id',
         headerName: 'Actions',
-        width: 110,
+        width: 200,
         sortable: false,
         pinned: 'right',
         cellRenderer: params => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'btn-del';
-          btn.innerHTML = '<i class="bi bi-trash3 me-1"></i>Delete';
-          btn.addEventListener('click', () => deleteSupport(params.node.data));
-          return btn;
+          const wrap = document.createElement('div');
+          wrap.className = 'd-flex gap-1';
+
+          const editBtn = document.createElement('button');
+          editBtn.type = 'button';
+          editBtn.className = 'btn-del';
+          editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Edit';
+          editBtn.addEventListener('click', () => editSupport(params.node.data));
+          wrap.appendChild(editBtn);
+
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'btn-del';
+          delBtn.innerHTML = '<i class="bi bi-trash3 me-1"></i>Delete';
+          delBtn.addEventListener('click', () => deleteSupport(params.node.data));
+          wrap.appendChild(delBtn);
+
+          return wrap;
         },
       },
     ],
@@ -187,7 +213,7 @@
     paginationPageSize: 10,
     paginationPageSizeSelector: false,
     defaultColDef: { sortable: true, resizable: true },
-    getRowId: p => p.data.support,
+    getRowId: p => String(p.data.id),
     onGridReady: p => { gridApi = p.api; },
   };
 
@@ -212,43 +238,84 @@
       const res = await fetch('/admin/temporary-special-support-list/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
-        body: JSON.stringify({ support: row.support }),
+        body: JSON.stringify({ id: row.id }),
       });
       const json = await res.json();
       if (json.success) {
         gridApi.applyTransaction({ remove: [row] });
-        toast('🗑️ Deleted: ' + row.support);
       } else {
         // blocked deletes (e.g. value still used by SEN cases) -> dialog with the message
-        showInfo(json.message || 'Delete failed');
+        showInfo(json.message || 'Delete failed', 'Cannot Delete', false);
       }
     } catch (err) {
       toast('❌ Delete failed: ' + err.message);
     }
   }
 
-  /* ---------- add new entry (unique value) ---------- */
+  /* ---------- edit mode ---------- */
+  let editingId = null; // null = add mode; set = edit mode
+
+  function setEditMode(id, support) {
+    editingId = id;
+    document.getElementById('entryTitle').textContent = 'Edit Temporary Special Support';
+    document.getElementById('addSupportBtn').innerHTML = '<i class="bi bi-check-lg me-1"></i>Save';
+    document.getElementById('cancelEditBtn').style.display = '';
+    const input = document.getElementById('newSupport');
+    input.value = support;
+    input.placeholder = 'Enter the new value…';
+    input.focus();
+  }
+
+  function resetAddMode() {
+    editingId = null;
+    document.getElementById('entryTitle').textContent = 'Add New Temporary Special Support';
+    document.getElementById('addSupportBtn').innerHTML = '<i class="bi bi-plus-lg me-1"></i>Save';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+    const input = document.getElementById('newSupport');
+    input.value = '';
+    input.placeholder = 'Enter a new value…';
+  }
+
+  function editSupport(row) {
+    setEditMode(row.id, row.support);
+  }
+
+  document.getElementById('cancelEditBtn').addEventListener('click', () => {
+    resetAddMode();
+    toast('Edit cancelled');
+  });
+
+  /* ---------- save (add new or update existing) ---------- */
   document.getElementById('addSupportBtn').addEventListener('click', async () => {
     const input = document.getElementById('newSupport');
     const value = input.value.trim();
     if (!value) { toast('⚠️ Please enter a value'); input.focus(); return; }
 
+    const isEdit = editingId !== null;
+    const url = isEdit ? '/admin/temporary-special-support-list/update' : '/admin/temporary-special-support-list/store';
+    const payload = isEdit ? { id: editingId, support: value } : { support: value };
+
     try {
-      const res = await fetch('/admin/temporary-special-support-list/store', {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
-        body: JSON.stringify({ support: value }),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (json.success) {
-        gridApi.applyTransaction({ add: [{ support: json.support }] });
-        input.value = '';
-        toast('✅ Added: ' + json.support);
+        if (isEdit) {
+          gridApi.applyTransaction({ update: [{ id: json.id, support: json.support }] });
+          showInfo('Temporary Special Support updated: ' + json.support, 'Update Completed', true);
+        } else {
+          gridApi.applyTransaction({ add: [{ id: json.id, support: json.support }] });
+          showInfo('Temporary Special Support added: ' + json.support, 'Save Completed', true);
+        }
+        resetAddMode();
       } else {
-        toast('❌ ' + (json.message || 'Save failed'));
+        showInfo(json.message || 'Save failed', 'Save Failed', false);
       }
     } catch (err) {
-      toast('❌ Save failed: ' + err.message);
+      showInfo('Save failed: ' + err.message, 'Save Failed', false);
     }
   });
 

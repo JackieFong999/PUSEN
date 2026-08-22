@@ -78,13 +78,14 @@
   <div id="senTypeGrid" class="ag-theme-alpine-dark"></div>
 </div>
 
-{{-- ============ ADD NEW ENTRY (below the list) ============ --}}
+{{-- ============ ADD / EDIT ENTRY (below the list) ============ --}}
 <div class="stat-card p-3 mt-4">
-  <div style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin-bottom:.6rem;">Add New SEN Type</div>
+  <div style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin-bottom:.6rem;" id="entryTitle">Add New SEN Type</div>
   <div class="d-flex gap-2 align-items-center">
     <input type="text" id="newSenType" class="form-control" maxlength="60"
            placeholder="Enter a new SEN Type code…" style="max-width:420px;">
     <button type="button" id="addSenTypeBtn" class="btn btn-add"><i class="bi bi-plus-lg me-1"></i>Save</button>
+    <button type="button" id="cancelEditBtn" class="btn btn-cancel" style="display:none;">Cancel</button>
   </div>
 </div>
 
@@ -110,7 +111,7 @@
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title"><i class="bi bi-info-circle me-1" style="color:var(--danger);"></i>Cannot Delete</h5>
+        <h5 class="modal-title" id="infoModalTitle"><i class="bi bi-info-circle me-1" style="color:var(--danger);"></i>Cannot Delete</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="infoModalMsg"></div>
@@ -142,10 +143,17 @@
   document.getElementById('confirmNo').addEventListener('click', () => closeConfirm(false));
   confirmModalEl.addEventListener('hidden.bs.modal', () => { if (confirmResolve) { confirmResolve(false); confirmResolve = null; } });
 
-  /* ---------- info dialog (delete blocked, e.g. code already in use) ---------- */
+  /* ---------- info dialog (delete blocked, save result, etc.) ---------- */
   const infoModalEl = document.getElementById('infoModal');
-  function showInfo(message) {
+  function showInfo(message, title, isSuccess) {
     document.getElementById('infoModalMsg').textContent = message;
+    const titleEl = document.getElementById('infoModalTitle');
+    if (title) {
+      const icon = isSuccess
+        ? '<i class="bi bi-check-circle me-1" style="color:var(--success);"></i>'
+        : '<i class="bi bi-info-circle me-1" style="color:var(--danger);"></i>';
+      titleEl.innerHTML = icon + esc(title);
+    }
     bootstrap.Modal.getOrCreateInstance(infoModalEl).show();
   }
   document.getElementById('infoOk').addEventListener('click', () => bootstrap.Modal.getOrCreateInstance(infoModalEl).hide());
@@ -155,11 +163,17 @@
   }
 
   /* ---------- AG Grid ---------- */
-  const ROWS = @json($senTypes->map(fn ($t) => ['sen_type' => $t]));
+  const ROWS = @json($senTypes->map(fn ($t) => ['id' => $t->Id, 'sen_type' => $t->SEN_Type]));
   let gridApi = null;
 
   const gridOptions = {
     columnDefs: [
+      {
+        field: 'id',
+        headerName: 'Id',
+        width: 80,
+        cellRenderer: p => esc(p.value),
+      },
       {
         field: 'sen_type',
         headerName: 'SEN Type',
@@ -168,18 +182,30 @@
         cellRenderer: p => esc(p.value),
       },
       {
-        field: 'sen_type',
+        field: 'id',
         headerName: 'Actions',
-        width: 110,
+        width: 200,
         sortable: false,
         pinned: 'right',
         cellRenderer: params => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'btn-del';
-          btn.innerHTML = '<i class="bi bi-trash3 me-1"></i>Delete';
-          btn.addEventListener('click', () => deleteSenType(params.node.data));
-          return btn;
+          const wrap = document.createElement('div');
+          wrap.className = 'd-flex gap-1';
+
+          const editBtn = document.createElement('button');
+          editBtn.type = 'button';
+          editBtn.className = 'btn-del';
+          editBtn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Edit';
+          editBtn.addEventListener('click', () => editSenType(params.node.data));
+          wrap.appendChild(editBtn);
+
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'btn-del';
+          delBtn.innerHTML = '<i class="bi bi-trash3 me-1"></i>Delete';
+          delBtn.addEventListener('click', () => deleteSenType(params.node.data));
+          wrap.appendChild(delBtn);
+
+          return wrap;
         },
       },
     ],
@@ -188,7 +214,7 @@
     paginationPageSize: 10,
     paginationPageSizeSelector: false,
     defaultColDef: { sortable: true, resizable: true },
-    getRowId: p => p.data.sen_type,
+    getRowId: p => String(p.data.id),
     onGridReady: p => { gridApi = p.api; },
   };
 
@@ -213,43 +239,85 @@
       const res = await fetch('/admin/sen-type-list/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
-        body: JSON.stringify({ sen_type: row.sen_type }),
+        body: JSON.stringify({ id: row.id }),
       });
       const json = await res.json();
       if (json.success) {
         gridApi.applyTransaction({ remove: [row] });
-        toast('🗑️ Deleted: ' + row.sen_type);
       } else {
         // blocked deletes (e.g. code still used by SEN cases) -> dialog with the message
-        showInfo(json.message || 'Delete failed');
+        showInfo(json.message || 'Delete failed', 'Cannot Delete', false);
       }
     } catch (err) {
       toast('❌ Delete failed: ' + err.message);
     }
   }
 
-  /* ---------- add new entry (unique code) ---------- */
+  /* ---------- edit mode ---------- */
+  let editingId = null; // null = add mode; set = edit mode
+
+  function setEditMode(id, senType) {
+    editingId = id;
+    document.getElementById('entryTitle').textContent = 'Edit SEN Type';
+    document.getElementById('addSenTypeBtn').innerHTML = '<i class="bi bi-check-lg me-1"></i>Save';
+    document.getElementById('cancelEditBtn').style.display = '';
+    const input = document.getElementById('newSenType');
+    input.value = senType;
+    input.placeholder = 'Enter the new SEN Type code…';
+    input.focus();
+  }
+
+  function resetAddMode() {
+    editingId = null;
+    document.getElementById('entryTitle').textContent = 'Add New SEN Type';
+    document.getElementById('addSenTypeBtn').innerHTML = '<i class="bi bi-plus-lg me-1"></i>Save';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+    const input = document.getElementById('newSenType');
+    input.value = '';
+    input.placeholder = 'Enter a new SEN Type code…';
+  }
+
+  function editSenType(row) {
+    setEditMode(row.id, row.sen_type);
+  }
+
+  document.getElementById('cancelEditBtn').addEventListener('click', () => {
+    resetAddMode();
+    toast('Edit cancelled');
+  });
+
+  /* ---------- save (add new or update existing) ---------- */
   document.getElementById('addSenTypeBtn').addEventListener('click', async () => {
     const input = document.getElementById('newSenType');
     const type = input.value.trim();
     if (!type) { toast('⚠️ Please enter a SEN Type code'); input.focus(); return; }
 
+    const isEdit = editingId !== null;
+    const url = isEdit ? '/admin/sen-type-list/update' : '/admin/sen-type-list/store';
+    const payload = isEdit ? { id: editingId, sen_type: type } : { sen_type: type };
+
     try {
-      const res = await fetch('/admin/sen-type-list/store', {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
-        body: JSON.stringify({ sen_type: type }),
+        body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (json.success) {
-        gridApi.applyTransaction({ add: [{ sen_type: json.sen_type }] });
-        input.value = '';
-        toast('✅ Added: ' + json.sen_type);
+        if (isEdit) {
+          // update the row in place (grid is keyed by id)
+          gridApi.applyTransaction({ update: [{ id: json.id, sen_type: json.sen_type }] });
+          showInfo('SEN Type updated: ' + json.sen_type, 'Update Completed', true);
+        } else {
+          gridApi.applyTransaction({ add: [{ id: json.id, sen_type: json.sen_type }] });
+          showInfo('SEN Type added: ' + json.sen_type, 'Save Completed', true);
+        }
+        resetAddMode();
       } else {
-        toast('❌ ' + (json.message || 'Save failed'));
+        showInfo(json.message || 'Save failed', 'Save Failed', false);
       }
     } catch (err) {
-      toast('❌ Save failed: ' + err.message);
+      showInfo('Save failed: ' + err.message, 'Save Failed', false);
     }
   });
 

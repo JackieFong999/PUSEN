@@ -108,6 +108,7 @@ Route::middleware(['auth', 'role.access'])->group(function () {
     // Admin: Temporary Special Support
     Route::get('/admin/temporary-special-support-list', [TemporarySpecialSupportListController::class, 'index'])->name('admin.temporary-special-support-list');
     Route::post('/admin/temporary-special-support-list/store', [TemporarySpecialSupportListController::class, 'store'])->name('admin.temporary-special-support-list.store');
+    Route::post('/admin/temporary-special-support-list/update', [TemporarySpecialSupportListController::class, 'update'])->name('admin.temporary-special-support-list.update');
     Route::post('/admin/temporary-special-support-list/delete', [TemporarySpecialSupportListController::class, 'destroy'])->name('admin.temporary-special-support-list.delete');
 
     // Admin: Advisor List
@@ -135,6 +136,7 @@ Route::middleware(['auth', 'role.access'])->group(function () {
     // Admin: SEN Type
     Route::get('/admin/sen-type-list', [SenTypeListController::class, 'index'])->name('admin.sen-type-list');
     Route::post('/admin/sen-type-list/store', [SenTypeListController::class, 'store'])->name('admin.sen-type-list.store');
+    Route::post('/admin/sen-type-list/update', [SenTypeListController::class, 'update'])->name('admin.sen-type-list.update');
     Route::post('/admin/sen-type-list/delete', [SenTypeListController::class, 'destroy'])->name('admin.sen-type-list.delete');
 
     // Admin: SEN Search (AG Grid + search, edit opens Create SEN in edit mode)
