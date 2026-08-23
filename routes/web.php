@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\EmailTemplateListController;
 use App\Http\Controllers\Admin\EmailManagementController;
 use App\Http\Controllers\Admin\TemporarySpecialSupportListController;
 use App\Http\Controllers\Admin\ImportController;
+use App\Http\Controllers\Admin\HousekeepingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\SsoLoginController;
 use Illuminate\Support\Facades\Route;
@@ -167,5 +168,10 @@ Route::get('/admin/sen-search/export', [SenSearchController::class, 'export']);
     Route::get('/admin/data-import', [ImportController::class, 'index'])->name('admin.data-import');
     Route::post('/admin/data-import/import', [ImportController::class, 'import']);
     Route::post('/admin/data-import/send-email', [ImportController::class, 'sendEmail']);
+
+    // Admin: Housekeeping (SA only — nav + role.access)
+    Route::get('/admin/housekeeping', [HousekeepingController::class, 'index'])->name('admin.housekeeping');
+    Route::post('/admin/housekeeping/student/preview', [HousekeepingController::class, 'previewStudent']);
+    Route::post('/admin/housekeeping/student/run', [HousekeepingController::class, 'runStudent']);
 
 });

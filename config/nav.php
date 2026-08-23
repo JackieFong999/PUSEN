@@ -54,7 +54,7 @@ return [
                         ['label' => 'Temporary Special Support',     'icon' => 'bi-heart-pulse',  'color' => 'ic-pink', 'href' => '/admin/temporary-special-support-list'],
                     ],
                 ],
-                ['label' => 'Housekeeping',           'icon' => 'bi-bookmark',      'color' => 'ic-purple',   'href' => '#', 'roles' => ['SA']],
+                ['label' => 'Housekeeping',           'icon' => 'bi-bookmark',      'color' => 'ic-purple',   'href' => '/admin/housekeeping', 'roles' => ['SA']],
             ],
         ],
 
