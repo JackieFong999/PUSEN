@@ -139,6 +139,7 @@ Route::middleware(['auth', 'role.access'])->group(function () {
     Route::post('/admin/sen-type-list/store', [SenTypeListController::class, 'store'])->name('admin.sen-type-list.store');
     Route::post('/admin/sen-type-list/update', [SenTypeListController::class, 'update'])->name('admin.sen-type-list.update');
     Route::post('/admin/sen-type-list/delete', [SenTypeListController::class, 'destroy'])->name('admin.sen-type-list.delete');
+Route::post('/admin/sen-type-list/reorder', [SenTypeListController::class, 'reorder'])->name('admin.sen-type-list.reorder');
 
     // Admin: SEN Search (AG Grid + search, edit opens Create SEN in edit mode)
     Route::get('/admin/sen-search', [SenSearchController::class, 'index'])->name('admin.sen-search');

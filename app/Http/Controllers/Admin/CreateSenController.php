@@ -90,7 +90,8 @@ class CreateSenController extends Controller
         }
 
         $senTypes = $conn->table('tblSEN_Type')
-            ->orderBy('SEN_Type')
+            ->orderBy('display_order_seq')
+            ->orderBy('Id')
             ->get(['Id', 'SEN_Type']);
 
         // Temporary Special Support options (lookup table)

@@ -16,7 +16,8 @@ class SenTypeListController extends Controller
     {
         $senTypes = DB::connection('pusen')
             ->table('tblSEN_Type')
-            ->orderBy('SEN_Type')
+            ->orderBy('display_order_seq')
+            ->orderBy('Id')
             ->get(['Id', 'SEN_Type']);
 
         return view('admin.sen-type-list', ['senTypes' => $senTypes]);
@@ -44,7 +45,12 @@ class SenTypeListController extends Controller
         }
 
         try {
-            $id = $conn->table('tblSEN_Type')->insertGetId(['SEN_Type' => $type]);
+            // new entries go to the end of the drag-reorder sequence
+            $seq = (int) $conn->table('tblSEN_Type')->max('display_order_seq') + 1;
+            $id = $conn->table('tblSEN_Type')->insertGetId([
+                'SEN_Type' => $type,
+                'display_order_seq' => $seq,
+            ]);
         } catch (\Throwable $e) {
             // unique-key race: another request inserted the same value in between
             if ($conn->table('tblSEN_Type')->where('SEN_Type', $type)->exists()) {
@@ -95,6 +101,33 @@ class SenTypeListController extends Controller
         ]);
 
         return response()->json(['success' => true, 'id' => $id, 'sen_type' => $type]);
+    }
+
+    /**
+     * Persist a drag-and-drop reorder: renumber display_order_seq 1..N
+     * for the ids in the order the user left them, in one transaction.
+     */
+    public function reorder(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (! is_array($ids) || empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'Invalid order list.'], 422);
+        }
+        $ids = array_values(array_filter(array_map('intval', $ids), fn ($id) => $id > 0));
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'Invalid order list.'], 422);
+        }
+
+        $conn = DB::connection('pusen');
+
+        $conn->transaction(function () use ($conn, $ids) {
+            $seq = 1;
+            foreach ($ids as $id) {
+                $conn->table('tblSEN_Type')->where('Id', $id)->update(['display_order_seq' => $seq++]);
+            }
+        });
+
+        return response()->json(['success' => true]);
     }
 
     /**

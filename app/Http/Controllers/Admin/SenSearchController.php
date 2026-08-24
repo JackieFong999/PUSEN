@@ -51,7 +51,8 @@ class SenSearchController extends Controller
             ->get(['Staff_Id', 'Staff_Name']);
 
         $senTypes = $conn->table('tblSEN_Type')
-            ->orderBy('SEN_Type')
+            ->orderBy('display_order_seq')
+            ->orderBy('Id')
             ->get(['Id', 'SEN_Type']);
 
         return view('admin.sen-search', compact('staff', 'plStaff', 'senTypes'));

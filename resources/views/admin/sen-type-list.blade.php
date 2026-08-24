@@ -169,15 +169,25 @@
   const gridOptions = {
     columnDefs: [
       {
+        // drag handle (drag to reorder — persisted to tblSEN_Type.display_order_seq)
+        width: 46,
+        pinned: 'left',
+        sortable: false,
+        resizable: false,
+        rowDrag: true,
+      },
+      {
         field: 'id',
         headerName: 'Id',
         width: 80,
+        sortable: false,
         cellRenderer: p => esc(p.value),
       },
       {
         field: 'sen_type',
         headerName: 'SEN Type',
         flex: 1,
+        sortable: false,
         // plain text, same as the SEN Search grid (black, 13px)
         cellRenderer: p => esc(p.value),
       },
@@ -210,16 +220,40 @@
       },
     ],
     rowData: ROWS,
-    pagination: true,
-    paginationPageSize: 10,
-    paginationPageSizeSelector: false,
+    // pagination removed (2026-08-24): AG Grid row-drag reorder is not
+    // supported with pagination enabled — the list is small enough without it
     defaultColDef: { sortable: true, resizable: true },
     getRowId: p => String(p.data.id),
     onGridReady: p => { gridApi = p.api; },
+    rowDragManaged: true,
+    animateRows: true,
+    onRowDragEnd: handleRowDragEnd,
   };
 
   const gridEl = document.getElementById('senTypeGrid');
   agGrid.createGrid(gridEl, gridOptions);
+
+  /* ---------- drag reorder: persist the new order ---------- */
+  async function handleRowDragEnd(params) {
+    const ids = [];
+    params.api.forEachNodeAfterFilterAndSort(n => ids.push(n.data.id));
+    try {
+      const res = await fetch('/admin/sen-type-list/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.message || 'Reorder failed');
+      // re-align the local data to the dragged order
+      const order = new Map(ids.map((id, i) => [id, i]));
+      gridApi.setGridOption('rowData', [...ROWS].sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0)));
+      toast('✅ Order saved');
+    } catch (err) {
+      toast('❌ Reorder failed: ' + err.message);
+      gridApi.setGridOption('rowData', [...ROWS]); // revert to the last saved order
+    }
+  }
 
   /* ---------- theme sync ---------- */
   function applyGridTheme() {
