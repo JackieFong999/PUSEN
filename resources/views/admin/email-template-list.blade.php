@@ -59,7 +59,7 @@
   #emailGrid .ag-root-wrapper { border: none; }
 
   #emailGrid {
-    height: 52vh;
+    height: 32vh;
     border: 1px solid var(--card-border);
     border-radius: var(--radius);
     overflow: hidden;
@@ -78,6 +78,12 @@
   #emailGrid .ag-header-cell-text { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
   #emailGrid .ag-cell { display: flex; align-items: center; }
   #emailGrid .ag-paging-panel { font-size: .8rem; color: var(--text-muted); border-top: 1px solid var(--card-border); }
+  /* tooltip (Tips): blue border instead of the default gray */
+  #emailGrid .ag-tooltip {
+    border: 2.5px solid #0d6efd !important;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(13, 110, 253, .28);
+  }
 
   /* ---------- loading overlay ---------- */
   #emailGrid .ag-overlay { background: color-mix(in srgb, var(--card-bg) 45%, transparent); }
@@ -121,7 +127,7 @@
       </div>
       <div class="col-12">
         <label class="form-label" for="fContent">Template Content <span class="text-danger">*</span></label>
-        <textarea class="form-control" id="fContent" name="template_content" rows="4" placeholder="Dear Student, ..." disabled></textarea>
+        <textarea class="form-control" id="fContent" name="template_content" rows="7" placeholder="Dear Student, ..." disabled></textarea>
       </div>
       <div class="col-12">
         <label class="form-label" for="fRemarks">Template Remarks</label>
@@ -194,9 +200,9 @@
     columnDefs: [
       { field: 'id',               headerName: 'Id',               width: 70 },
       { field: 'template_name',    headerName: 'Template Name',    width: 180 },
-      { field: 'template_title',   headerName: 'Template Title',   flex: 1, minWidth: 180 },
-      { field: 'template_content', headerName: 'Content',          flex: 1.6, minWidth: 220 },
-      { field: 'template_remarks', headerName: 'Remarks',          width: 170 },
+      { field: 'template_title',   headerName: 'Template Title',   width: 400 },
+      { field: 'template_content', headerName: 'Content',          flex: 1.6, minWidth: 320, tooltipField: 'template_content' },
+      { field: 'template_remarks', headerName: 'Remarks',          width: 600, tooltipField: 'template_remarks' },
       {
         field: 'id',
         headerName: 'Actions',
