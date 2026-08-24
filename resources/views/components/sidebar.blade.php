@@ -3,7 +3,14 @@
 @php
     // Auto-detect active item from the current URL (matches on href).
     $currentPath = request()->path();
-    $isActive = fn (?string $href) => $href && $href !== '#' && ltrim($href, '/') === $currentPath;
+    // Create SEN doubles as the Edit/View page when ?sen_id= is present —
+    // in that case keep the highlight on SEN Search instead of Create SEN.
+    $isSenEditPage = $currentPath === 'admin/create-sen' && request()->has('sen_id');
+    $isActive = fn (?string $href) => $href && $href !== '#' && (
+        $isSenEditPage
+            ? ltrim($href, '/') === 'admin/sen-search'
+            : ltrim($href, '/') === $currentPath
+    );
 
     // Role-based visibility: an item is shown when it has no 'roles' key or
     // the logged-in staff's Role_Id is in the list (see config/nav.php).
