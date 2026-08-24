@@ -18,7 +18,7 @@ class SenTypeListController extends Controller
             ->table('tblSEN_Type')
             ->orderBy('display_order_seq')
             ->orderBy('Id')
-            ->get(['Id', 'SEN_Type']);
+            ->get(['Id', 'SEN_Type', 'display_order_seq']);
 
         return view('admin.sen-type-list', ['senTypes' => $senTypes]);
     }
@@ -60,7 +60,7 @@ class SenTypeListController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to save SEN Type.'], 500);
         }
 
-        return response()->json(['success' => true, 'id' => $id, 'sen_type' => $type]);
+        return response()->json(['success' => true, 'id' => $id, 'sen_type' => $type, 'display_order_seq' => $seq]);
     }
 
     /**

@@ -163,7 +163,7 @@
   }
 
   /* ---------- AG Grid ---------- */
-  const ROWS = @json($senTypes->map(fn ($t) => ['id' => $t->Id, 'sen_type' => $t->SEN_Type]));
+  const ROWS = @json($senTypes->map(fn ($t) => ['id' => $t->Id, 'sen_type' => $t->SEN_Type, 'display_order_seq' => $t->display_order_seq]));
   let gridApi = null;
 
   const gridOptions = {
@@ -175,6 +175,13 @@
         sortable: false,
         resizable: false,
         rowDrag: true,
+      },
+      {
+        field: 'display_order_seq',
+        headerName: 'Seq',
+        width: 70,
+        sortable: false,
+        cellRenderer: p => esc(p.value),
       },
       {
         field: 'id',
@@ -245,9 +252,11 @@
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.message || 'Reorder failed');
-      // re-align the local data to the dragged order
+      // re-align the local data to the dragged order (and refresh the Seq numbers)
       const order = new Map(ids.map((id, i) => [id, i]));
-      gridApi.setGridOption('rowData', [...ROWS].sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0)));
+      gridApi.setGridOption('rowData', [...ROWS]
+        .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+        .map((r, i) => ({ ...r, display_order_seq: i + 1 })));
       toast('✅ Order saved');
     } catch (err) {
       toast('❌ Reorder failed: ' + err.message);
@@ -343,7 +352,7 @@
           gridApi.applyTransaction({ update: [{ id: json.id, sen_type: json.sen_type }] });
           showInfo('SEN Type updated: ' + json.sen_type, 'Update Completed', true);
         } else {
-          gridApi.applyTransaction({ add: [{ id: json.id, sen_type: json.sen_type }] });
+          gridApi.applyTransaction({ add: [{ id: json.id, sen_type: json.sen_type, display_order_seq: json.display_order_seq }] });
           showInfo('SEN Type added: ' + json.sen_type, 'Save Completed', true);
         }
         resetAddMode();
