@@ -96,7 +96,8 @@ class CreateSenController extends Controller
 
         // Temporary Special Support options (lookup table)
         $tempSupports = $conn->table('tblTemporary_Special_Support')
-            ->orderBy('Temporary_Special_Support')
+            ->orderBy('display_order_seq')
+            ->orderBy('Id')
             ->get(['Id', 'Temporary_Special_Support']);
 
         // edit mode: ensure the record's current value is in the dropdown even if

@@ -17,8 +17,9 @@ class TemporarySpecialSupportListController extends Controller
     {
         $supports = DB::connection('pusen')
             ->table('tblTemporary_Special_Support')
-            ->orderBy('Temporary_Special_Support')
-            ->get(['Id', 'Temporary_Special_Support']);
+            ->orderBy('display_order_seq')
+            ->orderBy('Id')
+            ->get(['Id', 'Temporary_Special_Support', 'display_order_seq']);
 
         return view('admin.temporary-special-support-list', ['supports' => $supports]);
     }
@@ -48,8 +49,11 @@ class TemporarySpecialSupportListController extends Controller
         $who = $user ? $user->Staff_Id : null;
 
         try {
+            // new entries go to the end of the drag-reorder sequence
+            $seq = (int) $conn->table('tblTemporary_Special_Support')->max('display_order_seq') + 1;
             $id = $conn->table('tblTemporary_Special_Support')->insertGetId([
                 'Temporary_Special_Support' => $value,
+                'display_order_seq' => $seq,
                 'created_by' => $who,
                 'updated_by' => $who,
                 'updated_ip' => $request->ip(),
@@ -62,7 +66,7 @@ class TemporarySpecialSupportListController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to save.'], 500);
         }
 
-        return response()->json(['success' => true, 'id' => $id, 'support' => $value]);
+        return response()->json(['success' => true, 'id' => $id, 'support' => $value, 'display_order_seq' => $seq]);
     }
 
     /**
@@ -136,6 +140,33 @@ class TemporarySpecialSupportListController extends Controller
         }
 
         $conn->table('tblTemporary_Special_Support')->where('Id', $id)->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Persist a drag-and-drop reorder: renumber display_order_seq 1..N
+     * for the ids in the order the user left them, in one transaction.
+     */
+    public function reorder(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (! is_array($ids) || empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'Invalid order list.'], 422);
+        }
+        $ids = array_values(array_filter(array_map('intval', $ids), fn ($id) => $id > 0));
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'Invalid order list.'], 422);
+        }
+
+        $conn = DB::connection('pusen');
+
+        $conn->transaction(function () use ($conn, $ids) {
+            $seq = 1;
+            foreach ($ids as $id) {
+                $conn->table('tblTemporary_Special_Support')->where('Id', $id)->update(['display_order_seq' => $seq++]);
+            }
+        });
 
         return response()->json(['success' => true]);
     }

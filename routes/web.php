@@ -111,6 +111,7 @@ Route::middleware(['auth', 'role.access'])->group(function () {
     Route::post('/admin/temporary-special-support-list/store', [TemporarySpecialSupportListController::class, 'store'])->name('admin.temporary-special-support-list.store');
     Route::post('/admin/temporary-special-support-list/update', [TemporarySpecialSupportListController::class, 'update'])->name('admin.temporary-special-support-list.update');
     Route::post('/admin/temporary-special-support-list/delete', [TemporarySpecialSupportListController::class, 'destroy'])->name('admin.temporary-special-support-list.delete');
+Route::post('/admin/temporary-special-support-list/reorder', [TemporarySpecialSupportListController::class, 'reorder'])->name('admin.temporary-special-support-list.reorder');
 
     // Admin: Advisor List
     Route::get('/admin/advisor-list', [AdvisorListController::class, 'index'])->name('admin.advisor-list');
