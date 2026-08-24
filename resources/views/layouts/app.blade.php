@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{ $title ? $title . ' — ' : '' }}{{ config('app.name', 'Pusen01') }}</title>
+<title>{{ $title ? $title . ' - ' : '' }}{{ config('app.name', 'PolyU SEN Data Bank') }}</title>
 
 <!-- Bootstrap 5.3 + Icons + Inter font -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -323,7 +323,7 @@
   .ex-card .foot a { font-size: .8rem; font-weight: 600; color: var(--accent); text-decoration: none; }
   .ex-card .foot a:hover { text-decoration: underline; }
 
-  /* sidebar bottom (profile card) — removed; profile moved to header */
+  /* sidebar bottom (profile card) - removed; profile moved to header */
 
   .side-collapse-btn {
     width: 26px; height: 26px; border-radius: 8px;
@@ -436,7 +436,7 @@
     </button>
     <a class="brand" href="{{ url('/') }}">
       <span class="brand-mark"><i class="bi bi-grid-1x2-fill"></i></span>
-      <span>{{ config('app.name', 'Pusen01') }}</span>
+      <span>{{ config('app.name', 'PolyU SEN Data Bank') }}</span>
     </a>
   </div>
 
@@ -451,7 +451,7 @@
       </div>
     </div>
     {{-- Logout --}}
-    <form method="POST" action="{{ route('logout') }}" class="m-0">
+    <form method="POST" action="{{ route('logout') }}" class="m-0" id="logoutForm">
       @csrf
       <button type="submit" class="icon-btn" aria-label="Log out" title="Log out">
         <i class="bi bi-box-arrow-right"></i>
@@ -477,7 +477,7 @@
   <div class="offcanvas-header pb-0">
     <a class="brand" href="{{ url('/') }}">
       <span class="brand-mark"><i class="bi bi-grid-1x2-fill"></i></span>
-      <span>{{ config('app.name', 'Pusen01') }}</span>
+      <span>{{ config('app.name', 'PolyU SEN Data Bank') }}</span>
     </a>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
@@ -529,6 +529,23 @@
   </div>
 </div>
 
+{{-- ============ LOGOUT CONFIRM MODAL ============ --}}
+<div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title"><i class="bi bi-box-arrow-right me-1" style="color:var(--accent);"></i>Log out</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="font-size:.88rem;color:var(--text);">Are you sure you want to log out of the system?</div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-search" id="logoutConfirmYes">Log out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- toast holder -->
 <div class="toast-holder"></div>
 
@@ -536,7 +553,7 @@
 <div id="pageLoader" class="page-loader" aria-hidden="true">
   <div class="loader-box">
     <div class="spinner-border" role="status" aria-label="Loading"></div>
-    <div class="loader-text">Loading…</div>
+    <div class="loader-text">Loading...</div>
   </div>
 </div>
 
@@ -594,7 +611,7 @@
   // ---------- Unsaved-changes navigation guard ----------
   // A page with an editable form can register a dirty checker:
   //   window.PUSEN_DIRTY_FN = () => true/false   (set from the page script, which runs
-  //   before this layout script) — or later via window.pusenSetDirtyChecker(fn).
+  //   before this layout script) - or later via window.pusenSetDirtyChecker(fn).
   let pusenDirtyChecker = typeof window.PUSEN_DIRTY_FN === 'function' ? window.PUSEN_DIRTY_FN : null;
   window.pusenSetDirtyChecker = (fn) => { pusenDirtyChecker = fn; };
 
@@ -613,6 +630,21 @@
       document.getElementById('navConfirmStay').onclick = () => finish(false);
       modalEl.addEventListener('hidden.bs.modal', () => finish(false), { once: true });
       bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+  }
+
+  // ---------- Logout confirm (styled modal; also clears the unsaved-changes guard
+  // so leaving a dirty form via logout doesn't stack a second browser dialog) ----------
+  const logoutForm = document.getElementById('logoutForm');
+  if (logoutForm) {
+    logoutForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      bootstrap.Modal.getOrCreateInstance(document.getElementById('logoutConfirmModal')).show();
+    });
+    document.getElementById('logoutConfirmYes').addEventListener('click', () => {
+      window.__pusenLogoutConfirmed = true;
+      if (typeof window.pusenSetDirtyChecker === 'function') window.pusenSetDirtyChecker(() => false);
+      logoutForm.submit(); // native submit() bypasses the submit listener -> no loop
     });
   }
 
@@ -667,7 +699,17 @@
 
   // Safety net: cover JS-driven navigation (e.g. redirect after Save) too,
   // and let ESC cancel a stuck overlay (browser-cancelled navigation).
-  window.addEventListener('beforeunload', showPageLoader);
+  // When an unsaved-changes guard blocks the unload (browser's native "Leave
+  // site?" dialog), DON'T show the overlay here - if the user cancels, it would
+  // stay stuck on screen. Instead show it on pagehide, which only fires when the
+  // page is really unloading (user picked "Leave"). (2026-08-24)
+  window.addEventListener('beforeunload', (e) => {
+    if (pusenDirtyChecker && pusenDirtyChecker()) return;
+    showPageLoader();
+  });
+  window.addEventListener('pagehide', () => {
+    if (pusenDirtyChecker && pusenDirtyChecker()) showPageLoader();
+  });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hidePageLoader(); });
 
   // Hide once the new page is fully loaded (also on back/forward cache restore).

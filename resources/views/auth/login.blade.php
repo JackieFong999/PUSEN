@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Login — {{ config('app.name', 'Pusen01') }}</title>
+<title>Login - {{ config('app.name', 'PolyU SEN Data Bank') }}</title>
 <!-- Bootstrap 5.3 + Icons + Inter font -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -190,7 +190,7 @@
 <div class="login-wrap">
   <a class="brand" href="{{ url('/login') }}">
     <span class="brand-mark"><i class="bi bi-grid-1x2-fill"></i></span>
-    <span>{{ config('app.name', 'Pusen01') }}</span>
+    <span>{{ config('app.name', 'PolyU SEN Data Bank') }}</span>
   </a>
 
   <div class="login-card">
@@ -241,7 +241,7 @@
     @endif
   </div>
 
-  <div class="login-foot">Internal use only &middot; {{ config('app.name', 'Pusen01') }} &middot; <span style="color:#fdd835;font-weight:600;">v1.2</span></div>
+  <div class="login-foot">Internal use only &middot; {{ config('app.name', 'PolyU SEN Data Bank') }} &middot; <span style="color:#fdd835;font-weight:600;">v1.2</span></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

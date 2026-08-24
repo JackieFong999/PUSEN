@@ -633,6 +633,13 @@
   }
   // the layout script (runs after this one) picks this up to guard sidebar navigation
   window.PUSEN_DIRTY_FN = () => formDirty;
+  // guard browser refresh / tab close / external navigation (reload button, F5, Ctrl+R) —
+  // the browser shows its native "Leave site?" confirm when there are unsaved changes
+  window.addEventListener('beforeunload', (e) => {
+    if (!formDirty || window.__pusenLogoutConfirmed) return;
+    e.preventDefault();
+    e.returnValue = ''; // required by Chrome/Edge to display the confirm dialog
+  });
 
   function setFormDisabled(disabled) {
     document.querySelectorAll(editableSelectors).forEach(el => el.disabled = disabled);
