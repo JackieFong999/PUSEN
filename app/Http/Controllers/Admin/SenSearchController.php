@@ -148,7 +148,7 @@ class SenSearchController extends Controller
             $q->where('SEN_Detail', 'like', "%{$detail}%");
         }
 
-        $rows = $q->orderBy('SEN_Id')->get();
+        $rows = $q->orderBy('updated_at', 'desc')->get();
 
         // --- student name map (collation-safe merge)
         $studentIds = $rows->pluck('Student_Id')->unique()->filter()->all();
@@ -223,6 +223,7 @@ class SenSearchController extends Controller
                 'special_support_required'        => $r->Special_Support_Required,
                 'special_examination_arrangement' => $r->Special_Examination_Arrangement,
                 'temporary_special_support'       => $r->Temporary_Special_Support_ID ? ($tempMap->get($r->Temporary_Special_Support_ID) ?? '—') : '—',
+                'updated_at'          => $r->updated_at,
             ];
         });
     }
@@ -249,6 +250,7 @@ class SenSearchController extends Controller
             'special_support_required'        => 'Support Required',
             'special_examination_arrangement' => 'Exam Arrangement',
             'temporary_special_support'       => 'Temp Support',
+            'updated_at'          => 'Update Date',
         ];
 
         $spreadsheet = new Spreadsheet();
@@ -272,7 +274,11 @@ class SenSearchController extends Controller
         foreach ($rows as $row) {
             $c = 1;
             foreach (array_keys($columns) as $key) {
-                $sheet->setCellValue([$c++, $r], $row[$key] ?? '');
+                $val = $row[$key] ?? '';
+                if ($key === 'updated_at' && $val !== '') {
+                    $val = \Carbon\Carbon::parse($val)->format('d/m/Y H:i');
+                }
+                $sheet->setCellValue([$c++, $r], $val);
             }
             $r++;
         }

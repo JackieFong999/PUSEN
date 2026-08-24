@@ -195,7 +195,13 @@
     getGui() { return this.eGui; }
   }
 
-  /* ---------- AG Grid ---------- */
+  /* ---------- date formatting (MySQL datetime -> dd/mm/yyyy hh:mm) ---------- */
+  function formatUpdateDate(v) {
+    if (!v) return '—';
+    const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(v));
+    if (!m) return v;
+    return m[3] + '/' + m[2] + '/' + m[1] + ' ' + m[4] + ':' + m[5];
+  }
   @php $canEditSen = in_array(Auth::user()?->Role_Id, ['SA', 'AU'], true); @endphp
   const CAN_EDIT_SEN = {{ $canEditSen ? 'true' : 'false' }};
 
@@ -214,6 +220,7 @@
       { field: 'special_support_required',        headerName: 'Support Required', flex: 1, minWidth: 140 },
       { field: 'special_examination_arrangement', headerName: 'Exam Arrangement', flex: 1, minWidth: 140 },
       { field: 'temporary_special_support',       headerName: 'Temp Support', width: 120 },
+      { field: 'updated_at', headerName: 'Update Date', width: 150, sort: 'desc', valueFormatter: p => formatUpdateDate(p.value) },
       {
         field: 'sen_id',
         headerName: 'Actions',
