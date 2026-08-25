@@ -59,7 +59,7 @@
 
 <div class="text-center mt-4">
   <span style="font-size:.78rem; color:var(--text-faint);">
-    <i class="bi bi-database me-1"></i>{{ count($targetUsers) }} record(s) from PUSENDB.tblTarget_User
+    <i class="bi bi-database me-1"></i>{{ count($targetUsers) }} record(s) from {{ config('database.connections.pusen.database') }}.tblTarget_User
   </span>
 </div>
 

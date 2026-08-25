@@ -55,7 +55,7 @@
 
 <div class="text-center mt-4">
   <span style="font-size:.78rem; color:var(--text-faint);">
-    <i class="bi bi-database me-1"></i>{{ count($subjectTypes) }} record(s) from PUSENDB.tblSubject_Type
+    <i class="bi bi-database me-1"></i>{{ count($subjectTypes) }} record(s) from {{ config('database.connections.pusen.database') }}.tblSubject_Type
   </span>
 </div>
 

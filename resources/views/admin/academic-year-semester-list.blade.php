@@ -57,7 +57,7 @@
 
 <div class="text-center mt-4">
   <span style="font-size:.78rem; color:var(--text-faint);">
-    <i class="bi bi-database me-1"></i>{{ count($years) }} record(s) from PUSENDB.tblAcademicYear_Semester
+    <i class="bi bi-database me-1"></i>{{ count($years) }} record(s) from {{ config('database.connections.pusen.database') }}.tblAcademicYear_Semester
   </span>
 </div>
 

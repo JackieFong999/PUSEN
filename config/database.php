@@ -52,13 +52,13 @@ return [
             ]) : [],
         ],
 
-        // PUSENDB (legacy application data; the default connection holds Laravel framework tables)
+        // pusen connection — same pusendev DB as the default connection (partner-identical single-DB setup since 2026-08-25; legacy PUSENDB retired)
         'pusen' => [
             'driver' => 'mysql',
             'url' => env('PUSEN_DB_URL'),
             'host' => env('PUSEN_DB_HOST', '127.0.0.1'),
             'port' => env('PUSEN_DB_PORT', '3306'),
-            'database' => env('PUSEN_DB_DATABASE', 'PUSENDB'),
+            'database' => env('PUSEN_DB_DATABASE', 'pusendev'),
             'username' => env('PUSEN_DB_USERNAME', 'root'),
             'password' => env('PUSEN_DB_PASSWORD', ''),
             'unix_socket' => env('PUSEN_DB_SOCKET', ''),
