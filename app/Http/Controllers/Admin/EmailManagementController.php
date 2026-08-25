@@ -19,7 +19,7 @@ use Symfony\Component\Mime\Email;
  *  - ET-004 -> the student (tblStudent has NO email column yet, so the
  *              recipient is the MAIL_STUDENT_EMAIL placeholder until a real
  *              field is added; MAIL_DEV_OVERRIDE_TO replaces everyone in dev)
- * Recipients are deduplicated by email address.
+ * One email per (SEN case, recipient); every attempt is logged to tblEmail_Log.
  */
 class EmailManagementController extends Controller
 {
@@ -137,7 +137,7 @@ class EmailManagementController extends Controller
             return response()->json(['success' => false, 'message' => 'Selected SEN cases not found.'], 404);
         }
 
-        // --- resolve recipient emails (deduped by address) ---
+        // --- resolve recipient emails (one entry per SEN case + recipient) ---
         $override = TempEmail::get();
         $studentEmail = TempEmail::get();
 
@@ -151,11 +151,15 @@ class EmailManagementController extends Controller
             : collect();
         $staffIds = $teacherByCode->pluck('Teacher_Staff_Id')->unique()->filter()->all();
         $staffMap = $staffIds
-            ? $conn->table('tblStaff')->whereIn('Staff_Id', $staffIds)->get(['Staff_Id', 'SSO_Email'])->keyBy('Staff_Id')
+            ? $conn->table('tblStaff')->whereIn('Staff_Id', $staffIds)->get(['Staff_Id', 'SSO_Email', 'Staff_Display_Name'])->keyBy('Staff_Id')
+            : collect();
+        $studentNameMap = $studentIds
+            ? $conn->table('tblStudent')->whereIn('Student_Id', $studentIds)->get(['Student_Id', 'Student_Name_Eng'])->keyBy('Student_Id')
             : collect();
 
         $teacherEmails = [];
         $studentEmails = [];
+        $seenTeacher = [];
         foreach ($rows as $r) {
             foreach ($regs->where('Student_Id', $r->Student_Id) as $reg) {
                 $tid = $teacherByCode->get($reg->Subject_Code)?->Teacher_Staff_Id;
@@ -164,23 +168,40 @@ class EmailManagementController extends Controller
                 }
                 $email = trim((string) ($staffMap->get($tid)->SSO_Email ?? ''));
                 $email = $override !== '' ? $override : $email;
-                if ($email !== '') {
-                    $teacherEmails[$email] = true;
+                if ($email === '') {
+                    continue;
                 }
+                // one email per (SEN case, recipient); same teacher for the same case sends once
+                $key = $r->SEN_Id . '|' . $email;
+                if (isset($seenTeacher[$key])) {
+                    continue;
+                }
+                $seenTeacher[$key] = true;
+                $teacherEmails[] = [
+                    'email'      => $email,
+                    'name'       => (string) ($staffMap->get($tid)->Staff_Display_Name ?? $tid),
+                    'sen_id'     => $r->SEN_Id,
+                    'student_id' => $r->Student_Id,
+                ];
             }
             $email = $override !== '' ? $override : $studentEmail;
             if ($email !== '') {
-                $studentEmails[$email] = true;
+                $studentEmails[] = [
+                    'email'      => $email,
+                    'name'       => (string) ($studentNameMap->get($r->Student_Id)->Student_Name_Eng ?? $r->Student_Id),
+                    'sen_id'     => $r->SEN_Id,
+                    'student_id' => $r->Student_Id,
+                ];
             }
         }
 
         // template per recipient group
         $toSend = [];
         if (in_array($type, ['subject_teacher', 'both'], true)) {
-            $toSend['ET-003'] = array_keys($teacherEmails);
+            $toSend['ET-003'] = $teacherEmails;
         }
         if (in_array($type, ['student', 'both'], true)) {
-            $toSend['ET-004'] = array_keys($studentEmails);
+            $toSend['ET-004'] = $studentEmails;
         }
         $toSend = array_filter($toSend);
 
@@ -208,21 +229,23 @@ class EmailManagementController extends Controller
             $transport->setPassword($smtp->Password);
             $mailer = new Mailer($transport);
 
-            foreach ($toSend as $tplName => $emails) {
+            foreach ($toSend as $tplName => $recipients) {
                 $tpl = $templates->get($tplName);
                 $subject = $tpl ? (trim((string) $tpl->Template_Title) ?: 'SEN Details Updated') : 'SEN Details Updated';
                 $body = $tpl ? trim((string) $tpl->Template_Content) : '';
-                foreach ($emails as $email) {
+                foreach ($recipients as $rcpt) {
                     try {
                         $mailer->send((new Email())
                             ->from($smtp->Username)
-                            ->to($email)
+                            ->to($rcpt['email'])
                             ->subject($subject)
                             ->text($body));
                         $sent++;
+                        $this->logEmail($conn, $tplName, $rcpt, 'SENT', '');
                     } catch (\Throwable $e) {
-                        Log::error("EmailManagement ({$tplName}): failed to {$email}: " . $e->getMessage());
+                        Log::error("EmailManagement ({$tplName}): failed to {$rcpt['email']}: " . $e->getMessage());
                         $failed++;
+                        $this->logEmail($conn, $tplName, $rcpt, 'FAILED', substr($e->getMessage(), 0, 97));
                     }
                 }
             }
@@ -233,6 +256,27 @@ class EmailManagementController extends Controller
 
         Log::info("EmailManagement: type={$type} cases=" . count($senIds) . " sent={$sent} failed={$failed}");
         return response()->json(['success' => true, 'sent' => $sent, 'failed' => $failed, 'recipients' => array_sum(array_map('count', $toSend))]);
+    }
+
+    /** Write one row per sent/failed email to tblEmail_Log (manual Email Management audit). */
+    private function logEmail($conn, string $template, array $rcpt, string $status, string $remark): void
+    {
+        try {
+            $conn->table('tblEmail_Log')->insert([
+                'SEN_Id'          => $rcpt['sen_id'],
+                'Student_Id'      => $rcpt['student_id'] ?? null,
+                'Recipient_Type'  => $template === 'ET-003' ? 'SUBJECT_TEACHER' : 'STUDENT',
+                'Template_Name'   => $template,
+                'Recipient_Name'  => $rcpt['name'] ?? null,
+                'Recipient_Email' => $rcpt['email'],
+                'Email_Status'    => $status,
+                'Remarks'         => $remark !== '' ? $remark : null,
+                'created_at'      => now(),
+                'created_by'      => (string) (auth()->id() ?? 'system'),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('EmailManagement: failed to write tblEmail_Log: ' . $e->getMessage());
+        }
     }
 
     /** Build grid rows: SEN no, student id, names, subject teacher(s), SEN_Type. */

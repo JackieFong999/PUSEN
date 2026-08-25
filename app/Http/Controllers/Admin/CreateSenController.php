@@ -379,7 +379,7 @@ class CreateSenController extends Controller
         // (email failure never blocks the save; status goes back in the JSON)
         $emailStatus = 'skipped';
         if ($request->input('send_email') === '1') {
-            $emailStatus = $this->sendStakeholderEmail($studentId, $data);
+            $emailStatus = $this->sendStakeholderEmail($studentId, $data, $finalSenId);
         }
 
         return response()->json(['success' => true, 'sen_id' => $finalSenId, 'email' => $emailStatus]);
@@ -389,17 +389,19 @@ class CreateSenController extends Controller
      * Send the ET-001 stakeholder notification after a SEN case is created.
      * Recipients: Programme Leader + Academic Advisor (current assignments in
      * tblAdvisor_Student), Department Admin Staff, Counsellor, USSO.
-     * One email to all recipients (deduped). Failure never blocks the save.
+     * One email per stakeholder (deduped by staff). Failure never blocks the save.
+     * Every attempt is logged to tblEmail_Log (Recipient_Type = stakeholder role).
      * Returns 'sent' | 'skipped' (no recipients) | 'failed'.
      */
-    private function sendStakeholderEmail(string $studentId, array $data): string
+    private function sendStakeholderEmail(string $studentId, array $data, string $senId): string
     {
         $conn = DB::connection('pusen');
         $today = now()->toDateString();
 
         // --- gather stakeholder staff ids (unique, keep order) ---
         $ids = [];
-        $addIds = function ($v) use (&$ids) {
+        $roleMap = [];
+        $addIds = function ($v, $role) use (&$ids, &$roleMap) {
             if ($v === null || $v === '') {
                 return;
             }
@@ -410,6 +412,7 @@ class CreateSenController extends Controller
                 $id = trim((string) $id);
                 if ($id !== '' && ! in_array($id, $ids, true)) {
                     $ids[] = $id;
+                    $roleMap[$id] = $role; // first role wins (gathering order = priority)
                 }
             }
         };
@@ -421,12 +424,12 @@ class CreateSenController extends Controller
             ->whereDate('Start_Date', '<=', $today)
             ->whereDate('End_Date', '>=', $today)
             ->pluck('Advisor_Id');
-        $addIds($plRows);
+        $addIds($plRows, 'Programme Leader');
 
         // Department Admin Staff / Counsellor / USSO from the saved SEN row
-        $addIds($data['Department_Admin_Staff'] ?? null);
-        $addIds($data['Counsellor'] ?? null);
-        $addIds($data['Undergraduate_Studies_Support_Officer'] ?? null);
+        $addIds($data['Department_Admin_Staff'] ?? null, 'Department Admin Staff');
+        $addIds($data['Counsellor'] ?? null, 'Counsellor');
+        $addIds($data['Undergraduate_Studies_Support_Officer'] ?? null, 'Undergraduate Studies Support Officer');
 
         // Academic Advisor(s): current PRIMARY advisors of this student
         $advRows = $conn->table('tblAdvisor_Student')
@@ -435,7 +438,7 @@ class CreateSenController extends Controller
             ->whereDate('Start_Date', '<=', $today)
             ->whereDate('End_Date', '>=', $today)
             ->pluck('Advisor_Id');
-        $addIds($advRows);
+        $addIds($advRows, 'Primary');
 
         if (! $ids) {
             return 'skipped';
@@ -445,7 +448,7 @@ class CreateSenController extends Controller
         $devEmail = TempEmail::get();
         $staff = $conn->table('tblStaff')
             ->whereIn('Staff_Id', $ids)
-            ->get(['Staff_Id', 'SSO_Email']);
+            ->get(['Staff_Id', 'SSO_Email', 'Staff_Display_Name']);
         // one recipient per unique staff member (dedupe by staff, NOT by email,
         // so the dev override still sends one email per stakeholder)
         $recipients = [];
@@ -454,7 +457,12 @@ class CreateSenController extends Controller
             if ($email === '') {
                 continue;
             }
-            $recipients[] = $email;
+            $recipients[] = [
+                'email'    => $email,
+                'staff_id' => $s->Staff_Id,
+                'name'     => (string) ($s->Staff_Display_Name ?? $s->Staff_Id),
+                'role'     => $roleMap[$s->Staff_Id] ?? 'Stakeholder',
+            ];
         }
         if (! $recipients) {
             return 'skipped';
@@ -481,25 +489,48 @@ class CreateSenController extends Controller
             $mailer = new Mailer($transport);
 
             $sent = 0;
-            foreach ($recipients as $email) {
+            foreach ($recipients as $rcpt) {
                 $message = (new Email())
                     ->from($smtp->Username)
-                    ->to($email)
+                    ->to($rcpt['email'])
                     ->subject(trim((string) $tpl->Template_Title) ?: 'SEN Details Updated')
                     ->text(trim((string) $tpl->Template_Content));
                 try {
                     $mailer->send($message);
                     $sent++;
+                    $this->logStakeholderEmail($conn, $senId, $studentId, $rcpt, 'SENT', '');
                 } catch (\Throwable $e) {
-                    Log::error('sendStakeholderEmail: failed to ' . $email . ': ' . $e->getMessage());
+                    Log::error('sendStakeholderEmail: failed to ' . $rcpt['email'] . ': ' . $e->getMessage());
+                    $this->logStakeholderEmail($conn, $senId, $studentId, $rcpt, 'FAILED', substr($e->getMessage(), 0, 97));
                 }
             }
 
-            Log::info('sendStakeholderEmail: sent ' . $sent . '/' . count($recipients) . ' for student ' . $studentId);
+            Log::info('sendStakeholderEmail: sent ' . $sent . '/' . count($recipients) . ' for student ' . $studentId . ' sen ' . $senId);
             return $sent > 0 ? 'sent' : 'failed';
         } catch (\Throwable $e) {
             Log::error('sendStakeholderEmail failed: ' . $e->getMessage());
             return 'failed';
+        }
+    }
+
+    /** Write one row per stakeholder email attempt to tblEmail_Log (ET-001 audit). */
+    private function logStakeholderEmail($conn, string $senId, string $studentId, array $rcpt, string $status, string $remark): void
+    {
+        try {
+            $conn->table('tblEmail_Log')->insert([
+                'SEN_Id'          => $senId,
+                'Student_Id'      => $studentId,
+                'Recipient_Type'  => $rcpt['role'],
+                'Template_Name'   => 'ET-001',
+                'Recipient_Name'  => $rcpt['name'],
+                'Recipient_Email' => $rcpt['email'],
+                'Email_Status'    => $status,
+                'Remarks'         => $remark !== '' ? $remark : null,
+                'created_at'      => now(),
+                'created_by'      => (string) (auth()->id() ?? 'system01'),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('sendStakeholderEmail: failed to write tblEmail_Log: ' . $e->getMessage());
         }
     }
 
