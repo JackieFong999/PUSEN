@@ -52,10 +52,15 @@ abstract class AbstractImportService
     /** FileType stored in tblImport_Log / tblImport_Failed_Log. */
     abstract protected function fileType(): string;
 
-    /** Name to use in processed/ after a successful import (default: original). */
+    /**
+     * Name to use in processed/ after a successful import.
+     * Timestamped so re-importing the same dated file never collides with an
+     * existing archive (phpseclib rename fails when the target exists — the
+     * file would stay in upload/ and get re-imported next time).
+     */
     protected function archiveName(string $filename): string
     {
-        return $filename;
+        return pathinfo($filename, PATHINFO_FILENAME) . '_' . now()->format('Ymd_His') . '.csv';
     }
 
     /** Parse raw CSV content into field arrays; null when there are no data rows. */

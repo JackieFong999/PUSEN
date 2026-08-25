@@ -182,6 +182,7 @@ class EmailSenService
                     $conn->table('tblEmail_List')->insert([
                         'SEN_ID'             => $job->SEN_ID,
                         'Stakeholder_Type'   => $type,
+                        'Template_Name'      => self::TEMPLATE, // ET-002 (consistent with tblEmail_Log)
                         'Staff_Id'           => $staffId,
                         'Staff_Display_Name' => $s ? ($s->Staff_Display_Name ?: ($s->Staff_Name ?: $staffId)) : $staffId,
                         'Email'              => $tempEmail !== '' ? $tempEmail : trim((string) ($s->SSO_Email ?? '')),

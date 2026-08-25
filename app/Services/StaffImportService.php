@@ -41,15 +41,6 @@ class StaffImportService extends AbstractImportService
         return self::FILE_TYPE;
     }
 
-    /**
-     * Filename is constant -> timestamp the archived copy so repeated
-     * imports never overwrite the previous archive.
-     */
-    protected function archiveName(string $filename): string
-    {
-        return pathinfo($filename, PATHINFO_FILENAME) . '_' . now()->format('Ymd_His') . '.csv';
-    }
-
     /** Rebuild the raw row for Row_Content — keep the original || format. */
     protected function rawRow(array $fields): string
     {
