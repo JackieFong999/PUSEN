@@ -1,0 +1,16 @@
+HTTP/1.1 302 Found
+Date: Tue, 25 Aug 2026 05:02:07 GMT
+Server: Apache/2.4.58 (Ubuntu)
+Cache-Control: no-cache, private
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Frame-Options: SAMEORIGIN
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+Set-Cookie: XSRF-TOKEN=eyJpdiI6ImNZRmd5aTFobno0SEZWcVlLZ2tQVFE9PSIsInZhbHVlIjoiMTZ5R1krTUpITzk1MkREWEpWY1dXMjRRdXE3TFQzRnhNY1pkUlUxejNoSUJYakcxOUZKQ2QxeWdwNGRHWGRYNWozbnlkUmpXb3pxZnJUeGM1QVpycUtFRWdCdVlXbzUzUEs2ZXJmWHplaXdBMzd6Rko5SDBxV1Fwb2hyajVpNnQiLCJtYWMiOiI0NmQ4ZTcwZjk4ZTU4ZWViMzg3NTEwODZjY2MxYzMxYmQ4MzQzYmQ2OTBlNzYwMjg0NWRlYmE5MTQwMzdkMTU3IiwidGFnIjoiIn0%3D; expires=Tue, 25 Aug 2026 07:02:07 GMT; Max-Age=7200; path=/; samesite=lax
+Set-Cookie: polyu-sen-data-bank-session=eyJpdiI6IkZWMHgxMldtb1NiOU1wM2xEaisxWlE9PSIsInZhbHVlIjoidUhidGJ1cTJ4WjFjbFR2MWhFNGRVQkhDWDhaM1E3RENHdXRQcU9may9ZQW5oTVlDYjdrdjluL05WMlV5eXJHZXVtYXpwUzJ1Z2IwendzT0poK3lRMHRtcC84RGQ1R0pHTUhoUEdlaUhxeDRDTm9NTkpDNVlSdkFjU3VxOWFSMU4iLCJtYWMiOiIxYWEzMzE0MWE0ZDQ3NThmYWEzMThmYjI3ZDU5YjkyOTJhYjU5ODA2ZTJiMzQ2YWFlNDExYjYwMGVmYjRlZWM0IiwidGFnIjoiIn0%3D; expires=Tue, 25 Aug 2026 07:02:07 GMT; Max-Age=7200; path=/; httponly; samesite=lax
+Location: http://localhost:8080/admin/sen-search
+Transfer-Encoding: chunked
+Content-Type: text/html; charset=utf-8
+
