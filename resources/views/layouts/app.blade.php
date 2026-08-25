@@ -77,11 +77,10 @@
     white-space: nowrap;
   }
   .brand-mark {
-    width: 32px; height: 32px; border-radius: 9px;
-    background: var(--accent-solid);
-    display: grid; place-items: center;
-    color: #fff; font-size: 1.05rem;
-    box-shadow: 0 4px 12px rgba(109, 141, 255, .35);
+    height: 45px; width: auto;
+    background: #fff; border-radius: 8px;
+    padding: 4px 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
   }
   .topbar .nav-link {
     color: var(--text-muted);
@@ -435,7 +434,7 @@
       <i class="bi bi-list"></i>
     </button>
     <a class="brand" href="{{ url('/') }}">
-      <span class="brand-mark"><i class="bi bi-grid-1x2-fill"></i></span>
+      <img class="brand-mark" src="{{ asset('images/polyu-logo.png') }}" alt="PolyU">
       <span>{{ config('app.name', 'PolyU SEN Data Bank') }}</span>
     </a>
   </div>
@@ -476,7 +475,7 @@
 <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
   <div class="offcanvas-header pb-0">
     <a class="brand" href="{{ url('/') }}">
-      <span class="brand-mark"><i class="bi bi-grid-1x2-fill"></i></span>
+      <img class="brand-mark" src="{{ asset('images/polyu-logo.png') }}" alt="PolyU">
       <span>{{ config('app.name', 'PolyU SEN Data Bank') }}</span>
     </a>
     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>

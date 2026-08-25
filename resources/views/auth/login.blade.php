@@ -75,17 +75,16 @@
   .login-wrap { position: relative; width: 100%; max-width: 400px; }
 
   .brand {
-    display: flex; align-items: center; justify-content: center; gap: .65rem;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .8rem;
     font-weight: 800; font-size: 1.15rem; letter-spacing: -.01em;
     color: var(--text); text-decoration: none;
     margin-bottom: 1.5rem;
   }
   .brand-mark {
-    width: 38px; height: 38px; border-radius: 10px;
-    background: var(--accent-solid);
-    display: grid; place-items: center;
-    color: #fff; font-size: 1.2rem;
-    box-shadow: 0 4px 14px rgba(109, 141, 255, .35);
+    width: 100%; height: auto;
+    background: #fff; border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
   }
 
   .login-card {
@@ -189,7 +188,7 @@
 
 <div class="login-wrap">
   <a class="brand" href="{{ url('/login') }}">
-    <span class="brand-mark"><i class="bi bi-grid-1x2-fill"></i></span>
+    <img class="brand-mark" src="{{ asset('images/polyu-logo.png') }}" alt="PolyU">
     <span>{{ config('app.name', 'PolyU SEN Data Bank') }}</span>
   </a>
 
