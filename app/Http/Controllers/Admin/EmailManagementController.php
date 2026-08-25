@@ -215,6 +215,48 @@ class EmailManagementController extends Controller
             ->get()
             ->keyBy('Template_Name');
 
+        // --- ET-004 mail-merge data (per SEN case): student info for the template placeholders ---
+        // Empty/NULL values keep the placeholder as-is (Jackie 2026-08-25).
+        $mergeData = [];
+        if (in_array($type, ['student', 'both'], true) && $studentEmails) {
+            $senIds4  = array_values(array_unique(array_column($studentEmails, 'sen_id')));
+            $senRows  = $conn->table('tblSEN')->whereIn('SEN_Id', $senIds4)
+                ->get(['SEN_Id', 'Student_Id', 'SEN_Type_ID', 'Special_Support_Required'])
+                ->keyBy('SEN_Id');
+            $studIds  = $senRows->pluck('Student_Id')->unique()->filter()->values()->all();
+            $studMap  = $studIds
+                ? $conn->table('tblStudent')->whereIn('Student_Id', $studIds)
+                    ->get(['Student_Id', 'Student_Name_Eng', 'Prog_Sub_Code', 'Prog_Title', 'Fund_Type_Code'])
+                    ->keyBy('Student_Id')
+                : collect();
+            $typeIds  = $senRows->pluck('SEN_Type_ID')->unique()->filter()->values()->all();
+            $typeMap  = $typeIds
+                ? $conn->table('tblSEN_Type')->whereIn('Id', $typeIds)->get(['Id', 'SEN_Type'])->keyBy('Id')
+                : collect();
+            $fundCodes = $studMap->pluck('Fund_Type_Code')->unique()->filter()->values()->all();
+            $fundMap  = $fundCodes
+                ? $conn->table('tblFund_Type')->whereIn('Fund_Type_Code', $fundCodes)->get(['Fund_Type_Code', 'Fund_Status'])->keyBy('Fund_Type_Code')
+                : collect();
+
+            foreach ($senRows as $sen) {
+                $stud = $studMap->get($sen->Student_Id);
+                $fundStatus = null;
+                if ($stud && $stud->Fund_Type_Code) {
+                    $fundStatus = $fundMap->get($stud->Fund_Type_Code)?->Fund_Status;
+                }
+                $mergeData[$sen->SEN_Id] = [
+                    // student ID keeps its parentheses in the output (Jackie 2026-08-25 23:52)
+                    '(student ID)'                => '(' . $sen->Student_Id . ')',
+                    '(SEN type)'                  => $sen->SEN_Type_ID ? ($typeMap->get($sen->SEN_Type_ID)?->SEN_Type) : null,
+                    '(Special support Required)'  => $sen->Special_Support_Required,
+                    '(student name)'              => $stud?->Student_Name_Eng,
+                    '(programme code)'            => $stud?->Prog_Sub_Code,
+                    '(programme name)'            => $stud?->Prog_Title,
+                    '(fund type of the programme)' => $fundStatus,
+                ];
+            }
+        }
+
         // SMTP config
         $smtp = $conn->table('tblConfig_SMTP')->orderBy('Id')->first();
         if (! $smtp) {
@@ -232,8 +274,9 @@ class EmailManagementController extends Controller
             foreach ($toSend as $tplName => $recipients) {
                 $tpl = $templates->get($tplName);
                 $subject = $tpl ? (trim((string) $tpl->Template_Title) ?: 'SEN Details Updated') : 'SEN Details Updated';
-                $body = $tpl ? trim((string) $tpl->Template_Content) : '';
+                $baseBody = $tpl ? trim((string) $tpl->Template_Content) : '';
                 foreach ($recipients as $rcpt) {
+                    $body = $this->mergeEt004Body($baseBody, $mergeData, (string) $rcpt['sen_id']);
                     try {
                         $mailer->send((new Email())
                             ->from($smtp->Username)
@@ -256,6 +299,24 @@ class EmailManagementController extends Controller
 
         Log::info("EmailManagement: type={$type} cases=" . count($senIds) . " sent={$sent} failed={$failed}");
         return response()->json(['success' => true, 'sent' => $sent, 'failed' => $failed, 'recipients' => array_sum(array_map('count', $toSend))]);
+    }
+
+    /**
+     * ET-004 mail merge: replace the parenthesised placeholder phrases with the
+     * student's real values. Empty/NULL values KEEP the placeholder as-is.
+     * Non-ET-004 templates (or unknown SEN ids) pass through unchanged.
+     */
+    private function mergeEt004Body(string $body, array $mergeData, string $senId): string
+    {
+        if (! isset($mergeData[$senId])) {
+            return $body;
+        }
+        foreach ($mergeData[$senId] as $phrase => $value) {
+            if ($value !== null && $value !== '') {
+                $body = str_replace($phrase, (string) $value, $body);
+            }
+        }
+        return $body;
     }
 
     /** Write one row per sent/failed email to tblEmail_Log (manual Email Management audit). */
