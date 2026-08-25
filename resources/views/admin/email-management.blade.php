@@ -373,7 +373,6 @@
       const rows = await res.json();
       if (!rows.length) { toast('⚠️ SEN case not found'); return; }
       gridApi.applyTransaction({ add: rows });
-      toast('Added ' + rows.length + ' case(s)');
     } catch (err) {
       toast('❌ Failed: ' + err.message);
     }
@@ -391,7 +390,7 @@
       const dup = rows.filter(r => existingIds()[r.sen_id]);
       const fresh = rows.filter(r => !existingIds()[r.sen_id]);
       if (dup.length) toast('⚠️ Already in list: ' + dup.map(r => r.sen_id).join(', '));
-      if (fresh.length) { gridApi.applyTransaction({ add: fresh }); toast('Added ' + fresh.length + ' case(s)'); }
+      if (fresh.length) { gridApi.applyTransaction({ add: fresh }); }
     } catch (err) {
       toast('❌ Failed: ' + err.message);
     }
