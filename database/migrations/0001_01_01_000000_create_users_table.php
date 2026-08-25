@@ -29,7 +29,12 @@ return new class extends Migration
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
+            // user_id is VARCHAR because auth ids are strings (tblStaff.Staff_Id)
+            // — a bigint column would reject them under MySQL strict mode (1366)
+            // and Laravel's DatabaseSessionHandler silently falls back to a no-op
+            // update, so the session would never persist (login "succeeds" but
+            // the user is bounced back to /login).
+            $table->string('user_id')->nullable()->index();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');
