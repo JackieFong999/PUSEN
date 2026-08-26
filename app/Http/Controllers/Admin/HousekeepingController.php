@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\StudentHousekeepingService;
+use App\Services\StudentNameEncryption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,13 @@ class HousekeepingController extends Controller
         $conn = DB::connection('pusen');
 
         $runs = $conn->table('tblHK_Student_Log')->orderByDesc('Id')->limit(20)->get();
+
+        // names are encrypted at rest (2026-08-26) — decrypt for display
+        $runs = $runs->map(function ($r) {
+            $r->Student_Name_Eng = StudentNameEncryption::decrypt($r->Student_Name_Eng);
+            $r->Student_Name_Chn = StudentNameEncryption::decrypt($r->Student_Name_Chn);
+            return $r;
+        });
 
         $senCounts = $conn->table('tblHK_SEN_Log')
             ->selectRaw('HK_Run_Id, COUNT(*) AS sen_count')

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\StudentNameEncryption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -53,12 +54,10 @@ class StudentListController extends Controller
 
         $q = DB::connection('pusen')->table('tblStudent as s');
 
-        if ($nameEng = trim((string) $request->input('student_name_eng'))) {
-            $q->where('s.Student_Name_Eng', 'like', "%{$nameEng}%");
-        }
-        if ($nameChn = trim((string) $request->input('student_name_chn'))) {
-            $q->where('s.Student_Name_Chn', 'like', "%{$nameChn}%");
-        }
+        // name filters are applied in PHP AFTER the SQL fetch (names are
+        // encrypted at rest since 2026-08-26 — SQL LIKE can't match ciphertext)
+        $nameEng = trim((string) $request->input('student_name_eng'));
+        $nameChn = trim((string) $request->input('student_name_chn'));
         if ($faculty = trim((string) $request->input('faculty'))) {
             $q->where('s.Faculty', $faculty);
         }
@@ -79,11 +78,24 @@ class StudentListController extends Controller
                 's.Fund_Type_Code', 's.Student_Status',
             ]);
 
+        // decrypt-then-filter for the name criteria (case-insensitive substring)
+        if ($nameEng !== '' || $nameChn !== '') {
+            $rows = $rows->filter(function ($r) use ($nameEng, $nameChn) {
+                if ($nameEng !== '' && mb_stripos((string) StudentNameEncryption::decrypt($r->Student_Name_Eng), $nameEng) === false) {
+                    return false;
+                }
+                if ($nameChn !== '' && mb_stripos((string) StudentNameEncryption::decrypt($r->Student_Name_Chn), $nameChn) === false) {
+                    return false;
+                }
+                return true;
+            })->values();
+        }
+
         return response()->json($rows->map(fn ($r) => [
             'id'               => $r->Id,
             'student_id'       => $r->Student_Id,
-            'student_name_eng' => $r->Student_Name_Eng,
-            'student_name_chn' => $r->Student_Name_Chn,
+            'student_name_eng' => StudentNameEncryption::decrypt($r->Student_Name_Eng),
+            'student_name_chn' => StudentNameEncryption::decrypt($r->Student_Name_Chn),
             'faculty'          => $r->Faculty,
             'department'       => $r->Department,
             'prog_sub_code'    => $r->Prog_Sub_Code,

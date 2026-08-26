@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\StudentNameEncryption;
 use App\Services\TempEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -109,7 +110,8 @@ class CreateSenController extends Controller
             }
         }
 
-        // active students only (Student_Id selection box)
+        // active students only (Student_Id selection box) — names decrypted
+        // for display (encrypted at rest since 2026-08-26)
         $students = $conn->table('tblStudent')
             ->where('Student_Status', 'ACTIVE')
             ->orderBy('Student_Id')
@@ -122,6 +124,11 @@ class CreateSenController extends Controller
                 $students->push($s);
             }
         }
+
+        $students = $students->map(fn ($s) => (object) [
+            'Student_Id'        => $s->Student_Id,
+            'Student_Name_Eng'  => StudentNameEncryption::decrypt($s->Student_Name_Eng),
+        ]);
 
         // Programme Leader is derived from the student's PROG_LEADER advisors (edit mode display)
         $editPlLabels = [];
@@ -255,8 +262,8 @@ class CreateSenController extends Controller
         return response()->json([
             'found' => true,
             'student' => [
-                'student_name_eng' => $student->Student_Name_Eng,
-                'student_name_chn' => $student->Student_Name_Chn,
+                'student_name_eng' => StudentNameEncryption::decrypt($student->Student_Name_Eng),
+                'student_name_chn' => StudentNameEncryption::decrypt($student->Student_Name_Chn),
                 'faculty'          => $student->Faculty,
                 'department'       => $student->Department,
                 'prog_sub_code'    => $student->Prog_Sub_Code,

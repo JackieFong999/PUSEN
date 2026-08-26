@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\StudentNameEncryption;
 use App\Services\TempEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -67,20 +68,23 @@ class EmailManagementController extends Controller
 
         $rows = $conn->table('tblStudent')
             ->whereIn('Student_Id', $idsInSen)
-            ->when($q !== '', function ($w) use ($q) {
-                $w->where(function ($w2) use ($q) {
-                    $w2->where('Student_Id', 'like', $q . '%')
-                        ->orWhere('Student_Name_Eng', 'like', '%' . $q . '%')
-                        ->orWhere('Student_Name_Chn', 'like', '%' . $q . '%');
-                });
-            })
             ->orderBy('Student_Id')
-            ->limit(50)
             ->get(['Student_Id', 'Student_Name_Eng', 'Student_Name_Chn']);
+
+        // names are encrypted at rest (2026-08-26) → decrypt-then-filter in PHP
+        if ($q !== '') {
+            $rows = $rows->filter(function ($r) use ($q) {
+                return str_starts_with(strtolower($r->Student_Id), strtolower($q))
+                    || mb_stripos((string) StudentNameEncryption::decrypt($r->Student_Name_Eng), $q) !== false
+                    || mb_stripos((string) StudentNameEncryption::decrypt($r->Student_Name_Chn), $q) !== false;
+            })->values();
+        }
+
+        $rows = $rows->take(50);
 
         return response()->json($rows->map(fn ($r) => [
             'id'    => $r->Student_Id,
-            'label' => trim($r->Student_Id . ' — ' . ($r->Student_Name_Eng ?? '') . ($r->Student_Name_Chn ? '(' . $r->Student_Name_Chn . ')' : '')),
+            'label' => trim($r->Student_Id . ' — ' . (StudentNameEncryption::decrypt($r->Student_Name_Eng) ?? '') . (StudentNameEncryption::decrypt($r->Student_Name_Chn) ? '(' . StudentNameEncryption::decrypt($r->Student_Name_Chn) . ')' : '')),
         ])->values());
     }
 
@@ -188,7 +192,7 @@ class EmailManagementController extends Controller
             if ($email !== '') {
                 $studentEmails[] = [
                     'email'      => $email,
-                    'name'       => (string) ($studentNameMap->get($r->Student_Id)->Student_Name_Eng ?? $r->Student_Id),
+                    'name'       => (string) (StudentNameEncryption::decrypt($studentNameMap->get($r->Student_Id)->Student_Name_Eng ?? '') ?: $r->Student_Id),
                     'sen_id'     => $r->SEN_Id,
                     'student_id' => $r->Student_Id,
                 ];
@@ -249,7 +253,7 @@ class EmailManagementController extends Controller
                     '(student ID)'                => '(' . $sen->Student_Id . ')',
                     '(SEN type)'                  => $sen->SEN_Type_ID ? ($typeMap->get($sen->SEN_Type_ID)?->SEN_Type) : null,
                     '(Special support Required)'  => $sen->Special_Support_Required,
-                    '(student name)'              => $stud?->Student_Name_Eng,
+                    '(student name)'              => StudentNameEncryption::decrypt($stud?->Student_Name_Eng),
                     '(programme code)'            => $stud?->Prog_Sub_Code,
                     '(programme name)'            => $stud?->Prog_Title,
                     '(fund type of the programme)' => $fundStatus,
@@ -385,8 +389,8 @@ class EmailManagementController extends Controller
             return [
                 'sen_id'           => $r->SEN_Id,
                 'student_id'       => $r->Student_Id,
-                'student_name_eng' => $st->Student_Name_Eng ?? '—',
-                'student_name_chn' => $st->Student_Name_Chn ?? '—',
+                'student_name_eng' => StudentNameEncryption::decrypt($st->Student_Name_Eng ?? '') ?: '—',
+                'student_name_chn' => StudentNameEncryption::decrypt($st->Student_Name_Chn ?? '') ?: '—',
                 'subject_teacher'  => $teachers->join('; '),
                 'sen_type'         => $r->SEN_Type_ID ? ($typeMap->get($r->SEN_Type_ID) ?? '—') : '—',
             ];

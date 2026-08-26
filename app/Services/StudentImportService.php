@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Services\StudentNameEncryption;
+
 /**
  * Student CSV import from the SFTP server.
  *
@@ -175,8 +177,8 @@ class StudentImportService extends AbstractImportService
                             $existing = $studentMap[$key] ?? null;
                             if ($existing) {
                                 $sameData = strtolower($existing->Student_Id ?? '') === strtolower($idNorm)
-                                    && strtolower($existing->Student_Name_Eng ?? '') === strtolower($engRaw)
-                                    && strtolower($existing->Student_Name_Chn ?? '') === strtolower($chnRaw)
+                                    && strtolower((string) StudentNameEncryption::decrypt($existing->Student_Name_Eng ?? '')) === strtolower($engRaw)
+                                    && strtolower((string) StudentNameEncryption::decrypt($existing->Student_Name_Chn ?? '')) === strtolower($chnRaw)
                                     && strtolower($existing->Faculty ?? '') === strtolower($facRaw)
                                     && strtolower($existing->Department ?? '') === strtolower($depRaw)
                                     && strtolower($existing->Prog_Sub_Code ?? '') === strtolower($progRaw)
@@ -241,8 +243,8 @@ class StudentImportService extends AbstractImportService
         foreach ($plan['inserts'] as $r) {
             $conn->table('tblStudent')->insert([
                 'Student_Id'       => $r['id'],
-                'Student_Name_Eng' => $r['eng'],
-                'Student_Name_Chn' => $r['chn'],
+                'Student_Name_Eng' => StudentNameEncryption::encrypt($r['eng']),
+                'Student_Name_Chn' => StudentNameEncryption::encrypt($r['chn']),
                 'Faculty'          => $r['fac'],
                 'Department'       => $r['dep'],
                 'Prog_Sub_Code'    => $r['prog'],
@@ -261,8 +263,8 @@ class StudentImportService extends AbstractImportService
             $conn->table('tblStudent')
                 ->where('Student_Id', $r['id'])
                 ->update([
-                    'Student_Name_Eng' => $r['eng'],
-                    'Student_Name_Chn' => $r['chn'],
+                    'Student_Name_Eng' => StudentNameEncryption::encrypt($r['eng']),
+                    'Student_Name_Chn' => StudentNameEncryption::encrypt($r['chn']),
                     'Faculty'          => $r['fac'],
                     'Department'       => $r['dep'],
                     'Prog_Sub_Code'    => $r['prog'],

@@ -91,8 +91,8 @@ class StudentHousekeepingService
             'students_list' => array_map(function ($s) {
                 return [
                     'student_id'    => $s->Student_Id,
-                    'name_eng'      => $s->Student_Name_Eng,
-                    'name_chn'      => $s->Student_Name_Chn,
+                    'name_eng'      => StudentNameEncryption::decrypt($s->Student_Name_Eng),
+                    'name_chn'      => StudentNameEncryption::decrypt($s->Student_Name_Chn),
                     'status'        => $s->Student_Status,
                     'updated_at'    => $s->updated_at,
                     'updated_at_hk' => $s->updated_at
@@ -138,8 +138,8 @@ class StudentHousekeepingService
             /* ---------- 5.2 log phase — committed first (the backup) ---------- */
             $runId = $conn->table('tblHK_Student_Log')->insertGetId([
                 'Student_Id'         => $student->Student_Id,
-                'Student_Name_Eng'   => $student->Student_Name_Eng,
-                'Student_Name_Chn'   => $student->Student_Name_Chn,
+                'Student_Name_Eng'   => StudentNameEncryption::encrypt($student->Student_Name_Eng),
+                'Student_Name_Chn'   => StudentNameEncryption::encrypt($student->Student_Name_Chn),
                 'Student_Status'     => $student->Student_Status,
                 'Student_created_at' => $student->created_at,
                 'Student_updated_at' => $student->updated_at,

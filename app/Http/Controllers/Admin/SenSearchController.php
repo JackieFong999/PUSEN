@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\StudentNameEncryption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -73,21 +74,28 @@ class SenSearchController extends Controller
     {
         $conn = DB::connection('pusen');
 
-        // --- student-name criteria resolve to student ids first (names live in tblStudent)
+        // --- student-name criteria resolve to student ids first (names live in
+        // tblStudent and are ENCRYPTED at rest since 2026-08-26, so the filter
+        // decrypts in PHP instead of SQL LIKE)
         $nameEng = trim((string) $request->input('student_name_eng'));
         $nameChn = trim((string) $request->input('student_name_chn'));
         $studentIdsByN = null; // null = no name filter applied
         if ($nameEng !== '' || $nameChn !== '') {
-            $q = $conn->table('tblStudent');
-            if ($nameEng !== '') {
-                $q->where('Student_Name_Eng', 'like', "%{$nameEng}%");
-            }
-            if ($nameChn !== '') {
-                $q->where('Student_Name_Chn', 'like', "%{$nameChn}%");
-            }
-            $studentIdsByN = $q->pluck('Student_Id')->all();
+            $studentIdsByN = $conn->table('tblStudent')
+                ->get(['Student_Id', 'Student_Name_Eng', 'Student_Name_Chn'])
+                ->filter(function ($s) use ($nameEng, $nameChn) {
+                    if ($nameEng !== '' && mb_stripos((string) StudentNameEncryption::decrypt($s->Student_Name_Eng), $nameEng) === false) {
+                        return false;
+                    }
+                    if ($nameChn !== '' && mb_stripos((string) StudentNameEncryption::decrypt($s->Student_Name_Chn), $nameChn) === false) {
+                        return false;
+                    }
+                    return true;
+                })
+                ->pluck('Student_Id')
+                ->all();
             if (empty($studentIdsByN)) {
-                return response()->json([]); // no student matches the name → no SEN rows
+                return collect(); // no student matches the name → no SEN rows
             }
         }
 
@@ -213,8 +221,8 @@ class SenSearchController extends Controller
             return [
                 'sen_id'          => $r->SEN_Id,
                 'student_id'      => $r->Student_Id,
-                'student_name_eng'=> $st->Student_Name_Eng ?? '—',
-                'student_name_chn'=> $st->Student_Name_Chn ?? '—',
+                'student_name_eng'=> StudentNameEncryption::decrypt($st->Student_Name_Eng ?? '') ?: '—',
+                'student_name_chn'=> StudentNameEncryption::decrypt($st->Student_Name_Chn ?? '') ?: '—',
                 'programme_leader'=> $plByStudent->get($r->Student_Id, ''),
                 'department_admin_staff'          => $displayName($r->Department_Admin_Staff),
                 'counsellor'                      => $displayName($r->Counsellor),
