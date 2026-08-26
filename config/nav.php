@@ -25,11 +25,11 @@ return [
         'Browse' => [
             'show_label' => false,
             'items' => [
-                // Hidden 2026-08-19 (demo purpose; restore in future):
-                // ['label' => 'Dashboards',       'icon' => 'bi-speedometer2',          'color' => 'ic-blue',   'href' => '/dashboard', 'roles' => ['SA', 'AU']],
+                // Restored 2026-08-26 (Jackie: enable the Dashboard):
+                ['label' => 'Dashboards',       'icon' => 'bi-speedometer2',          'color' => 'ic-blue',   'href' => '/dashboard', 'roles' => ['SA', 'AU']],
                 ['label' => 'SEN Search',        'icon' => 'bi-layout-sidebar-inset',  'color' => 'ic-pink',   'href' => '/admin/sen-search', 'roles' => ['SA', 'AU', 'KS']],
                 ['label' => 'Create SEN',  'icon' => 'bi-window-sidebar',        'color' => 'ic-green',  'href' => '/admin/create-sen', 'roles' => ['SA', 'AU']],
-                ['label' => 'Email Management', 'icon' => 'bi-envelope-paper', 'color' => 'ic-orange', 'href' => '/admin/email-management', 'roles' => ['SA']],
+                ['label' => 'Email Management', 'icon' => 'bi-envelope-paper', 'color' => 'ic-orange', 'href' => '/admin/email-management', 'roles' => ['SA', 'AU']],
                 // Hidden 2026-08-12 (requested by Jackie):
                 // ['label' => 'User Management',       'icon' => 'bi-star',          'color' => 'ic-yellow', 'href' => '#'],
                 ['label' => 'Data Import', 'icon' => 'bi-clock-history', 'color' => 'ic-cyan',   'href' => '/admin/data-import', 'roles' => ['SA']],

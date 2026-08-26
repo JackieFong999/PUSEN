@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Restrict application access by tblStaff.Role_Id.
  *
  * - SA (Super Administrator): full access.
- * - AU (Admin User): Dashboards, SEN Search, Create SEN only.
+ * - AU (Admin User): Dashboards, SEN Search, Create SEN, Email Management.
  * - KS (Key Staff) and any other role: SEN Search + read-only SEN case view.
  *   KS may open /admin/create-sen ONLY via ?mode=view (the SEN Search View
  *   button) to look at a case and its documents; create/edit/save/upload are
@@ -27,7 +27,7 @@ class CheckRoleAccess
      */
     public const ROLE_ACCESS = [
         'SA' => ['*'],
-        'AU' => ['/', 'dashboard', 'admin/sen-search', 'admin/create-sen', 'admin/sen-doc'],
+        'AU' => ['/', 'dashboard', 'admin/sen-search', 'admin/create-sen', 'admin/sen-doc', 'admin/email-management'],
         'KS' => ['admin/sen-search'],
     ];
 

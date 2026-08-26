@@ -12,7 +12,7 @@ use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 use Symfony\Component\Mime\Email;
 
 /**
- * Email Management (Super Administrator only).
+ * Email Management (Super Administrator + Admin User).
  *
  * Bulk-sends template emails for selected SEN cases:
  *  - ET-003 -> the subject teachers of the case's student
