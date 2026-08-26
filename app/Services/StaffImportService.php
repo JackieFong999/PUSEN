@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Hash;
+
 /**
  * Staff CSV import from the SFTP server.
  *
@@ -204,7 +206,7 @@ class StaffImportService extends AbstractImportService
                 'Staff_Name'         => $r['name'],
                 'Staff_Display_Name' => $r['display'],
                 'status'             => 0,                       // enable
-                'Password'           => self::DEFAULT_PASSWORD,
+                'Password'           => Hash::make(self::DEFAULT_PASSWORD),
                 'Role_Id'            => self::DEFAULT_ROLE_ID,
                 'Target_User_Id'     => '',
                 'updated_by'         => $user,

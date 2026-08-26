@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Model;
  * Staff account used for login.
  *
  * Reads from the legacy `pusen` MySQL database (tblStaff).
- * Login identifier = Staff_Id, password = Password (plain text in the legacy
- * schema — see PusenStaffUserProvider::validateCredentials()).
+ * Login identifier = Staff_Id, password = Password (bcrypt hash since
+ * 2026-08-26 — see PusenStaffUserProvider::validateCredentials()).
  *
  * status: 0 = Enable, 1 = Disable.
  */

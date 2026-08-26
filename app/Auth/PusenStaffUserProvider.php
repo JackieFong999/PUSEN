@@ -9,9 +9,9 @@ use Illuminate\Contracts\Auth\Authenticatable;
 /**
  * User provider for the legacy tblStaff table.
  *
- * tblStaff.Password is stored as plain text (varchar(10)), so credentials are
- * compared directly instead of using Hash::check(). An account is also rejected
- * when it is disabled (status = 1).
+ * tblStaff.Password stores bcrypt hashes (varchar(255)), so credentials are
+ * compared with Hash::check(). An account is also rejected when it is
+ * disabled (status = 1).
  */
 class PusenStaffUserProvider extends EloquentUserProvider
 {
@@ -22,11 +22,7 @@ class PusenStaffUserProvider extends EloquentUserProvider
     {
         $plain = $credentials['password'] ?? null;
 
-        if (! is_string($plain)) {
-            return false;
-        }
-
-        if (! hash_equals((string) $user->getAuthPassword(), $plain)) {
+        if (! is_string($plain) || ! $this->hasher->check($plain, (string) $user->getAuthPassword())) {
             return false;
         }
 
@@ -35,11 +31,22 @@ class PusenStaffUserProvider extends EloquentUserProvider
     }
 
     /**
-     * Legacy schema stores plain-text passwords (varchar(10)); never rehash or
-     * write the password back on login, otherwise the value would be truncated.
+     * Rehash the stored bcrypt hash when the configured algorithm/cost
+     * changes. Legacy plain-text values (should not exist after
+     * `php artisan staff:hash-passwords`) are left untouched, and the write
+     * targets the real 'Password' column (the parent implementation uses the
+     * lowercase 'password' attribute, which would not persist here).
      */
     public function rehashPasswordIfRequired(UserContract $user, array $credentials, bool $force = false)
     {
-        // no-op
+        $plain = $credentials['password'] ?? null;
+
+        if (! is_string($plain) || ! $this->hasher->isHashed($user->getAuthPassword())) {
+            return;
+        }
+
+        if ($force || $this->hasher->needsRehash($user->getAuthPassword())) {
+            $user->forceFill(['Password' => $this->hasher->make($plain)])->save();
+        }
     }
 }
