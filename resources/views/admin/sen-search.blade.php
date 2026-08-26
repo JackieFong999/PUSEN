@@ -211,6 +211,7 @@
       { field: 'student_id',              headerName: 'Student Id',     width: 120 },
       { field: 'student_name_eng',        headerName: 'Name (Eng)',     flex: 1, minWidth: 150 },
       { field: 'student_name_chn',        headerName: 'Name (Chn)',     width: 105 },
+      { field: 'student_status',          headerName: 'Student Status', width: 130 },
       { field: 'programme_leader',        headerName: 'Programme Leader', width: 130 },
       { field: 'department_admin_staff',  headerName: 'Dept Admin',     width: 115 },
       { field: 'counsellor',              headerName: 'Counsellor',     width: 115 },

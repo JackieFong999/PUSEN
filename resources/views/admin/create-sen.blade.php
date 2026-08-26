@@ -401,6 +401,10 @@
           <label class="form-label" for="dFundType">Fund Type</label>
           <input type="text" class="form-control display-only" id="dFundType" readonly disabled>
         </div>
+        <div class="col-md-4">
+          <label class="form-label" for="dStatus">Student Status</label>
+          <input type="text" class="form-control display-only" id="dStatus" readonly disabled>
+        </div>
       </div>
 
       <div class="row g-3 mt-1">
@@ -566,6 +570,7 @@
       ['Prog Sub Code', previewFieldVal('dProgSubCode')],
       ['Prog Title', previewFieldVal('dProgTitle')],
       ['Fund Type', previewFieldVal('dFundType')],
+      ['Student Status', previewFieldVal('dStatus')],
       ['Programme Leader', previewFieldVal('fPL')],
       ['Department Admin Staff', previewFieldVal('fDA')],
       ['Counsellor', previewFieldVal('fC')],
@@ -655,7 +660,7 @@
   function resetAll() {
     document.getElementById('senForm').reset();
     (window.__staffAcSync || []).forEach(fn => fn()); // staff autocomplete: resync defaults
-    ['dNameEng','dNameChn','dFaculty','dDepartment','dProgSubCode','dProgTitle','dFundType'].forEach(id => {
+    ['dNameEng','dNameChn','dFaculty','dDepartment','dProgSubCode','dProgTitle','dFundType','dStatus'].forEach(id => {
       document.getElementById(id).value = '';
     });
     fillTextArea('dTeachers', []);
@@ -1140,6 +1145,7 @@
       document.getElementById('dProgSubCode').value = s.prog_sub_code ?? '';
       document.getElementById('dProgTitle').value = s.prog_title ?? '';
       document.getElementById('dFundType').value = s.fund_type_code ?? '';
+    document.getElementById('dStatus').value = s.student_status ?? '';
       fillTextArea('dTeachers', json.subject_teachers);
       fillTextArea('dAdvisors', json.academic_advisors);
       fillTextArea('dSubjects', json.subjects);
@@ -1154,7 +1160,7 @@
   }
 
   function resetDisplayOnly() {
-    ['dNameEng','dNameChn','dFaculty','dDepartment','dProgSubCode','dProgTitle','dFundType'].forEach(id => {
+    ['dNameEng','dNameChn','dFaculty','dDepartment','dProgSubCode','dProgTitle','dFundType','dStatus'].forEach(id => {
       document.getElementById(id).value = '';
     });
     document.getElementById('fPL').value = '';

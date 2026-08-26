@@ -223,6 +223,7 @@ class SenSearchController extends Controller
                 'student_id'      => $r->Student_Id,
                 'student_name_eng'=> StudentNameEncryption::decrypt($st->Student_Name_Eng ?? '') ?: '—',
                 'student_name_chn'=> StudentNameEncryption::decrypt($st->Student_Name_Chn ?? '') ?: '—',
+                'student_status'   => $st->Student_Status ?? '—',
                 'programme_leader'=> $plByStudent->get($r->Student_Id, ''),
                 'department_admin_staff'          => $displayName($r->Department_Admin_Staff),
                 'counsellor'                      => $displayName($r->Counsellor),
