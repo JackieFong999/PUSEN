@@ -27,7 +27,7 @@ class CheckRoleAccess
      */
     public const ROLE_ACCESS = [
         'SA' => ['*'],
-        'AU' => ['/', 'dashboard', 'admin/sen-search', 'admin/create-sen', 'admin/sen-doc', 'admin/email-management'],
+        'AU' => ['/', 'dashboard', 'admin/sen-search', 'admin/create-sen', 'admin/sen-doc', 'admin/sen-doc-viewer', 'admin/email-management'],
         'KS' => ['admin/sen-search'],
     ];
 
@@ -64,7 +64,8 @@ class CheckRoleAccess
                 return $this->deny();
             }
 
-            if ($path === 'admin/sen-doc' || str_starts_with($path, 'admin/sen-doc/')) {
+            if ($path === 'admin/sen-doc' || str_starts_with($path, 'admin/sen-doc/')
+                || $path === 'admin/sen-doc-viewer' || str_starts_with($path, 'admin/sen-doc-viewer/')) {
                 return $next($request);
             }
         }

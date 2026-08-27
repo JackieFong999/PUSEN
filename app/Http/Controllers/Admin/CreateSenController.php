@@ -541,40 +541,173 @@ class CreateSenController extends Controller
         }
     }
 
-    /** Serve a SEN document for preview / download (checks staging, then final). */
+    /** file extensions shown inside the locked viewer (PDF via PDF.js, images natively) */
+    private const PREVIEW_IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'];
+
+    /**
+     * Serve a SEN document:
+     *  - ?dl=1  -> download. PDFs are password-encrypted first (AES-256,
+     *              password from tblConfig_Password PW_Type='PDF'), other types
+     *              are served as-is. Content-Disposition carries the ORIGINAL
+     *              filename (RFC 5987 for non-ASCII).
+     *  - ?raw=1 -> raw bytes for the locked viewer (PDF.js blob fetch).
+     *  - none   -> preview navigation: PDFs and images redirect to the locked
+     *              viewer page (no download/print), other types stay inline.
+     */
     public function previewDoc(Request $request, string $filename)
     {
         $filename = basename($filename);
 
-        // Restricted roles (KS etc.): only documents of cases the user may view
-        // (student currently advised by this staff member).
-        if ($this->isRestrictedUser()) {
-            $senId = preg_match('/^(SEN-\d+)_/', $filename, $m) ? $m[1] : null;
-            $studentId = $senId
-                ? DB::connection('pusen')->table('tblSEN')->where('SEN_Id', $senId)->value('Student_Id')
-                : null;
-            if (! $studentId || ! $this->canViewStudent($studentId)) {
-                return response()->view('errors.access-denied', [], 403);
+        if (! $this->docAllowed($filename)) {
+            return response()->view('errors.access-denied', [], 403);
+        }
+
+        $path = $this->findDoc($filename);
+        if ($path === null) {
+            abort(404, 'Document not found');
+        }
+
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $original = $this->originalNameFor($filename);
+        $safe = str_replace(['"', '\\', "\r", "\n"], '_', $original);
+
+        // ----- download: PDFs are encrypted with the PW_Type=PDF password -----
+        if ($request->boolean('dl')) {
+            if ($ext === 'pdf') {
+                $encrypted = $this->encryptPdf($path);
+                if ($encrypted === null) {
+                    abort(500, 'PDF encryption is not configured (tblConfig_Password PW_Type=PDF).');
+                }
+                return response()->download($encrypted, $original, [
+                    'Content-Type' => 'application/pdf',
+                ])->deleteFileAfterSend(true);
+            }
+
+            return response()->file($path, [
+                'Content-Disposition' => 'attachment; filename="' . $safe . '"; filename*=UTF-8\'\'' . rawurlencode($original),
+            ]);
+        }
+
+        // ----- raw bytes for the locked viewer (PDF.js fetch as blob) -----
+        if ($request->boolean('raw')) {
+            return response()->file($path, [
+                'Content-Type'           => $this->mimeFor($ext),
+                'Content-Disposition'    => 'inline; filename="' . $safe . '"',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        }
+
+        // ----- preview navigation: PDFs/images go to the locked viewer -----
+        if ($ext === 'pdf' || in_array($ext, self::PREVIEW_IMAGE_EXTS, true)) {
+            return redirect()->route('admin.sen-doc.viewer', $filename);
+        }
+
+        return response()->file($path, [
+            'Content-Disposition' => 'inline; filename="' . $safe . '"; filename*=UTF-8\'\'' . rawurlencode($original),
+        ]);
+    }
+
+    /**
+     * Locked document viewer page (PDF.js for PDFs, plain <img> for images).
+     * No download button, no print button; printing is also blocked in the page.
+     */
+    public function viewer(Request $request, string $filename)
+    {
+        $filename = basename($filename);
+
+        if (! $this->docAllowed($filename)) {
+            return response()->view('errors.access-denied', [], 403);
+        }
+        if ($this->findDoc($filename) === null) {
+            abort(404, 'Document not found');
+        }
+
+        return view('admin.sen-doc-viewer', [
+            'filename' => $filename,
+            'original' => $this->originalNameFor($filename),
+            'ext'      => strtolower(pathinfo($filename, PATHINFO_EXTENSION)),
+        ]);
+    }
+
+    /** staging or final path for a doc filename, or null when not found */
+    private function findDoc(string $filename): ?string
+    {
+        foreach ([$this->finalDocDir(), $this->stagingDir()] as $dir) {
+            $p = $dir . '/' . $filename;
+            if (is_file($p)) {
+                return $p;
             }
         }
 
-        $candidates = [
-            $this->finalDocDir() . '/' . $filename,
-            $this->stagingDir() . '/' . $filename,
-        ];
-        foreach ($candidates as $path) {
-            if (is_file($path)) {
-                // ?dl=1 forces a download; otherwise preview in-browser.
-                // Content-Disposition carries the ORIGINAL filename (RFC 5987 for non-ASCII).
-                $disposition = $request->boolean('dl') ? 'attachment' : 'inline';
-                $original = $this->originalNameFor($filename);
-                $safe = str_replace(['"', '\\', "\r", "\n"], '_', $original);
-                return response()->file($path, [
-                    'Content-Disposition' => $disposition . '; filename="' . $safe . '"; filename*=UTF-8\'\'' . rawurlencode($original),
-                ]);
-            }
+        return null;
+    }
+
+    /** Access rule shared by previewDoc + viewer (restricted roles: advised student only). */
+    private function docAllowed(string $filename): bool
+    {
+        if (! $this->isRestrictedUser()) {
+            return true;
         }
-        abort(404, 'Document not found');
+        $senId = preg_match('/^(SEN-\d+)_/', $filename, $m) ? $m[1] : null;
+        $studentId = $senId
+            ? DB::connection('pusen')->table('tblSEN')->where('SEN_Id', $senId)->value('Student_Id')
+            : null;
+
+        return $studentId !== null && $this->canViewStudent($studentId);
+    }
+
+    /** MIME type for the raw viewer fetch (PDFs + preview images). */
+    private function mimeFor(string $ext): string
+    {
+        return match ($ext) {
+            'pdf' => 'application/pdf',
+            'png' => 'image/png',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'bmp' => 'image/bmp',
+            default => 'application/octet-stream',
+        };
+    }
+
+    /**
+     * Encrypt a PDF with the password from tblConfig_Password (PW_Type='PDF')
+     * via scripts/encrypt_pdf.py (pikepdf, AES-256). Returns the temp file path
+     * or null when the password is missing / encryption fails.
+     */
+    private function encryptPdf(string $path): ?string
+    {
+        $password = DB::connection('pusen')
+            ->table('tblConfig_Password')
+            ->where('PW_Type', 'PDF')
+            ->value('Password');
+
+        if (! $password) {
+            Log::error('encryptPdf: no password for PW_Type=PDF in tblConfig_Password');
+
+            return null;
+        }
+
+        $encrypted = tempnam(sys_get_temp_dir(), 'senc') . '.pdf';
+        $script = base_path('scripts/encrypt_pdf.py');
+        $cmd = sprintf(
+            '/usr/bin/python3 %s %s %s %s 2>&1',
+            escapeshellarg($script),
+            escapeshellarg($path),
+            escapeshellarg($encrypted),
+            escapeshellarg((string) $password)
+        );
+        $output = [];
+        exec($cmd, $output, $exitCode);
+
+        if ($exitCode !== 0 || ! is_file($encrypted)) {
+            @unlink($encrypted);
+            Log::error('encryptPdf failed: ' . implode(' ', $output));
+
+            return null;
+        }
+
+        return $encrypted;
     }
 
     /** Best-known original filename for a stored doc (staged meta -> DB -> stripped fallback). */

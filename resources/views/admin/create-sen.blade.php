@@ -759,7 +759,8 @@
   docTableBody.addEventListener('click', (e) => {
     const viewBtn = e.target.closest('[data-view]');
     if (viewBtn) {
-      window.open('/admin/sen-doc/' + encodeURIComponent(viewBtn.dataset.view), '_blank');
+      // locked preview (PDF.js) - no download / no print from the viewer
+      window.open('/admin/sen-doc-viewer/' + encodeURIComponent(viewBtn.dataset.view), '_blank');
       return;
     }
     const dlBtn = e.target.closest('[data-download]');

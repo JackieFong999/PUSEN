@@ -166,6 +166,9 @@ Route::get('/admin/sen-search/export', [SenSearchController::class, 'export']);
     // Admin: SEN document preview (serves the PDF for browser preview)
     Route::get('/admin/sen-doc/{filename}', [CreateSenController::class, 'previewDoc'])->where('filename', '.*');
 
+    // Admin: SEN document locked viewer (PDF.js — no download / no print)
+    Route::get('/admin/sen-doc-viewer/{filename}', [CreateSenController::class, 'viewer'])->where('filename', '.*')->name('admin.sen-doc.viewer');
+
     // Admin: Data Import (Subject first)
     Route::get('/admin/data-import', [ImportController::class, 'index'])->name('admin.data-import');
     Route::post('/admin/data-import/import', [ImportController::class, 'import']);
