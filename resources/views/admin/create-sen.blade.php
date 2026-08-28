@@ -1241,7 +1241,7 @@
         formDirty = false;
         if (IS_EDIT) {
           // back to SEN Search after a short beat so the toast is visible
-          setTimeout(() => { window.location.href = '/admin/sen-search'; }, 900);
+          setTimeout(() => { window.location.href = '/admin/sen-search?restore=1'; }, 900);
           return;
         }
         // advance the auto SEN_Id for the next case (after reset so it isn't wiped)
@@ -1263,7 +1263,7 @@
   /* ---------- Cancel / Back ---------- */
   const backBtn = document.getElementById('backBtn');
   if (backBtn) {
-    backBtn.addEventListener('click', () => { window.location.href = '/admin/sen-search'; });
+    backBtn.addEventListener('click', () => { window.location.href = '/admin/sen-search?restore=1'; });
   }
 
   const cancelBtn = document.getElementById('cancelBtn');
@@ -1280,7 +1280,7 @@
     } catch (e) { /* ignore */ }
     if (IS_EDIT) {
       // discard ALL changes: saved docs stay untouched, staged files already deleted
-      window.location.href = '/admin/sen-search';
+      window.location.href = '/admin/sen-search?restore=1';
       return;
     }
     resetAll();

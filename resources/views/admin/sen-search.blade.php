@@ -262,7 +262,7 @@
     paginationPageSizeSelector: false,
     defaultColDef: { sortable: true, resizable: true },
     getRowId: p => p.data.sen_id,
-    onGridReady: (params) => { gridApi = params.api; },
+    onGridReady: (params) => { gridApi = params.api; maybeRunRestoreSearch(); },
     suppressCellFocus: true,
     loadingOverlayComponent: SenLoadingOverlay,
   };
@@ -286,6 +286,7 @@
     const fd = new FormData(e.target);
     const params = new URLSearchParams();
     for (const [k, v] of fd) { if (v !== '') params.set(k, v); }
+    saveSearchCriteria(); // remember the criteria for the edit/view round-trip
     gridApi.showLoadingOverlay();
     try {
       const res = await fetch('/admin/sen-search/search?' + params.toString());
@@ -327,7 +328,41 @@
     document.getElementById('senSearchForm').reset();
     gridApi.setGridOption('rowData', []);
     lastResultCount = 0;
+    sessionStorage.removeItem(SEARCH_KEY); // forget criteria (Jackie 2026-08-28)
   });
+
+  /* ---------- remember + restore search criteria (Jackie 2026-08-28) ----------
+     Coming back from Create/Edit/View (Cancel/Save/Back) restores the last search:
+     criteria are kept in sessionStorage and re-applied when the URL has ?restore=1. */
+  const SEARCH_KEY = 'senSearchCriteria';
+  let restorePending = false;
+  function saveSearchCriteria() {
+    const fd = new FormData(document.getElementById('senSearchForm'));
+    const obj = {};
+    for (const [k, v] of fd) { if (String(v).trim() !== '') obj[k] = v; }
+    try { sessionStorage.setItem(SEARCH_KEY, JSON.stringify(obj)); } catch (e) { /* ignore */ }
+  }
+  function maybeRunRestoreSearch() {
+    if (restorePending && gridApi) {
+      restorePending = false;
+      document.getElementById('senSearchForm').requestSubmit(); // runs the normal search flow
+    }
+  }
+  function restoreSearchCriteria() {
+    if (!new URLSearchParams(location.search).has('restore')) return;
+    let obj = null;
+    try { obj = JSON.parse(sessionStorage.getItem(SEARCH_KEY) || 'null'); } catch (e) { obj = null; }
+    if (obj === null) return; // nothing was ever searched -> keep the empty state
+    const form = document.getElementById('senSearchForm');
+    for (const [k, v] of Object.entries(obj)) { // {} = empty search (all records) -> no-op populate
+      const el = form.elements.namedItem(k);
+      if (el) el.value = v;
+    }
+    restorePending = true;
+    maybeRunRestoreSearch(); // runs now if the grid is already ready, else on onGridReady
+  }
+  window.addEventListener('beforeunload', saveSearchCriteria);
+  restoreSearchCriteria();
 </script>
 
 @endsection
