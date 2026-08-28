@@ -982,7 +982,8 @@ class CreateSenController extends Controller
             }
             // true original filename from the upload meta (fallback: strip the SEN_ prefix)
             $original = $meta[$name] ?? preg_replace('/^' . preg_quote($senId, '/') . '_\d+_/', '', $name);
-            $original = mb_substr((string) $original, 0, 60);
+            // store the FULL original (column is varchar(150); client blocks > 100 chars),
+            // so Edit/View display the complete filename (was truncated to 60 - Jackie 2026-08-28)
 
             $rows[] = [
                 'SEN_Id'                => $senId,

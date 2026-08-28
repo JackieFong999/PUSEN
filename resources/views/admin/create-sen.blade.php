@@ -729,7 +729,21 @@
     const files = [...docFileInput.files];
     if (!files.length) return;
     const senId = document.getElementById('fSenId').value;
-    for (const file of files) {
+
+    // filename length gate at selection time (Jackie 2026-08-28): files with a name
+    // over 100 characters are rejected immediately and never uploaded/staged
+    const rejected = files.filter(f => f.name.length > 100);
+    const accepted = files.filter(f => f.name.length <= 100);
+    if (rejected.length) {
+      const msgEl = document.getElementById('confirmModalMsg');
+      msgEl.style.whiteSpace = 'pre-line';
+      askConfirm('⚠️ Filename too long',
+        'The following file(s) were NOT added - file name over 100 characters:\n\n' +
+        rejected.map(f => '• ' + f.name + '  (' + f.name.length + ' characters)').join('\n') +
+        '\n\nPlease rename the file(s) and choose them again.');
+    }
+
+    for (const file of accepted) {
       const fd = new FormData();
       fd.append('sen_id', senId);
       fd.append('file', file);
@@ -1178,6 +1192,21 @@
     if (!studentValid) {
       toast('⚠️ Please enter a valid Student Id first (check it on blur)');
       fStudentId.focus();
+      return;
+    }
+
+    // filename length check (Jackie 2026-08-28): originals over 100 chars are not
+    // allowed to save - show a dialog and block (DB now 150 wide, but keep UX rule)
+    const longDocs = currentVisibleDocs
+      .map(n => displayName(n))
+      .filter(n => n.length > 100);
+    if (longDocs.length) {
+      const msgEl = document.getElementById('confirmModalMsg');
+      msgEl.style.whiteSpace = 'pre-line';
+      askConfirm('⚠️ Filename too long',
+        'The following file name(s) are over 100 characters and cannot be saved:\n\n' +
+        longDocs.map(n => '• ' + n + '  (' + n.length + ' characters)').join('\n') +
+        '\n\nPlease remove them or re-upload with a shorter file name.');
       return;
     }
 
