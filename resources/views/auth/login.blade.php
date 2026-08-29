@@ -240,7 +240,7 @@
     @endif
   </div>
 
-  <div class="login-foot">Internal use only &middot; {{ config('app.name', 'PolyU SEN Data Bank') }} &middot; <span style="color:#000000;font-weight:600;">v1.6</span></div>
+  <div class="login-foot">Internal use only &middot; {{ config('app.name', 'PolyU SEN Data Bank') }} &middot; <span style="color:#000000;font-weight:600;">v1.7</span></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

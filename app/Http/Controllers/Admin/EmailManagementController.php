@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\StudentNameEncryption;
 use App\Services\TempEmail;
+use App\Support\SubjectTeacher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -150,9 +151,9 @@ class EmailManagementController extends Controller
             ? $conn->table('tblStudent_Reg')->whereIn('Student_Id', $studentIds)->get(['Student_Id', 'Subject_Code'])
             : collect();
         $subjectCodes = $regs->pluck('Subject_Code')->unique()->filter()->all();
-        $teacherByCode = $subjectCodes
-            ? $conn->table('tblSubject')->whereIn('Subject_Code', $subjectCodes)->get(['Subject_Code', 'Teacher_Staff_Id'])->keyBy('Subject_Code')
-            : collect();
+        // current (Academic_Year, Semester) only — same Subject_Code can have
+        // a different teacher per year/semester (see App\Support\SubjectTeacher)
+        $teacherByCode = collect(SubjectTeacher::mapForCodes($subjectCodes));
         $staffIds = $teacherByCode->pluck('Teacher_Staff_Id')->unique()->filter()->all();
         $staffMap = $staffIds
             ? $conn->table('tblStaff')->whereIn('Staff_Id', $staffIds)->get(['Staff_Id', 'SSO_Email', 'Staff_Display_Name'])->keyBy('Staff_Id')
@@ -357,9 +358,9 @@ class EmailManagementController extends Controller
         if ($studentIds) {
             $regs = $conn->table('tblStudent_Reg')->whereIn('Student_Id', $studentIds)->get(['Student_Id', 'Subject_Code']);
             $subjectCodes = $regs->pluck('Subject_Code')->unique()->filter()->all();
-            $teacherByCode = $subjectCodes
-                ? $conn->table('tblSubject')->whereIn('Subject_Code', $subjectCodes)->get(['Subject_Code', 'Teacher_Staff_Id'])->keyBy('Subject_Code')
-                : collect();
+            // current (Academic_Year, Semester) only — same Subject_Code can have
+            // a different teacher per year/semester (see App\Support\SubjectTeacher)
+            $teacherByCode = collect(SubjectTeacher::mapForCodes($subjectCodes));
             $staffIds = $teacherByCode->pluck('Teacher_Staff_Id')->unique()->filter()->all();
             $staffMap = $staffIds
                 ? $conn->table('tblStaff')->whereIn('Staff_Id', $staffIds)->get(['Staff_Id', 'Staff_Display_Name', 'Staff_Name'])->keyBy('Staff_Id')

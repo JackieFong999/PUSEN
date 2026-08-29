@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\StudentNameEncryption;
+use App\Support\SubjectTeacher;
 use App\Services\TempEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -190,13 +191,17 @@ class CreateSenController extends Controller
             return response()->json(['found' => false]);
         }
 
-        // --- subject teachers: student_reg -> subject codes -> teacher staff ids -> staff names
+        // --- subject teachers: student_reg -> subject codes -> teacher staff ids -> staff names.
+        // Only the teacher for the CURRENT (Academic_Year, Semester) is returned: today's
+        // date is resolved via tblSemester month ranges (App\Support\AcademicPeriod), then
+        // tblSubject is filtered on (Subject_Code, Academic_Year, Semester) — the same
+        // Subject_Code can have a different teacher per year/semester.
         $subjectCodes = $conn->table('tblStudent_Reg')
             ->where('Student_Id', $studentId)
             ->pluck('Subject_Code');
 
         $teacherIds = $subjectCodes->isNotEmpty()
-            ? $conn->table('tblSubject')->whereIn('Subject_Code', $subjectCodes->all())->pluck('Teacher_Staff_Id')->unique()
+            ? collect(SubjectTeacher::mapForCodes($subjectCodes->all()))->pluck('Teacher_Staff_Id')->unique()
             : collect();
 
         $teachers = $teacherIds->isNotEmpty()
