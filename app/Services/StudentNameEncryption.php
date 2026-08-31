@@ -30,7 +30,10 @@ class StudentNameEncryption
     private static function cipher(): Encrypter
     {
         if (self::$cipher === null) {
-            $key = (string) env('STUDENT_NAME_KEY', '');
+            // Read via config() so this survives `php artisan config:cache` -
+            // after caching, env() outside config files returns null and the
+            // key would silently go empty (names show as raw "se1:" text).
+            $key = (string) config('services.student_name_key', '');
             // strip the conventional "base64:" prefix (same convention as APP_KEY)
             if (str_starts_with($key, 'base64:')) {
                 $key = substr($key, 7);

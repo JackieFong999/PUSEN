@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Student name encryption key
+    |--------------------------------------------------------------------------
+    |
+    | Shared across dev / demo / partner so all installations can decrypt the
+    | same encrypted values. Read through config (NOT env() directly in app
+    | code) so it survives `php artisan config:cache` - after caching, env()
+    | calls outside config files return null and decryption silently fails.
+    |
+    */
+    'student_name_key' => env('STUDENT_NAME_KEY', ''),
+
 ];
