@@ -178,5 +178,6 @@ Route::get('/admin/sen-search/export', [SenSearchController::class, 'export']);
     Route::get('/admin/housekeeping', [HousekeepingController::class, 'index'])->name('admin.housekeeping');
     Route::post('/admin/housekeeping/student/preview', [HousekeepingController::class, 'previewStudent']);
     Route::post('/admin/housekeeping/student/run', [HousekeepingController::class, 'runStudent']);
+    Route::get('/admin/housekeeping/runs/search', [HousekeepingController::class, 'searchRuns']);
 
 });

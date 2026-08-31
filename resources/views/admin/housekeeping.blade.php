@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@push('head')
+  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31/styles/ag-grid.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31/styles/ag-theme-alpine.css" rel="stylesheet">
+@endpush
+
 @section('content')
 
 <style>
@@ -37,6 +42,74 @@
   /* wider confirm dialog so the student list table fits comfortably */
   .modal-dialog-hk { max-width: 820px; }
   .modal-dialog-hk .modal-body { overflow-wrap: anywhere; }
+
+  /* ---------- criteria bar ---------- */
+  .form-label { font-size: .78rem; font-weight: 600; color: var(--text-muted); margin-bottom: .35rem; }
+  .form-control, .form-select {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: .85rem;
+    border-radius: 9px;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: rgba(var(--accent-rgb), .5);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .15);
+    background: var(--bg-soft);
+    color: var(--text);
+  }
+  .form-select option { background: var(--card-bg); color: var(--text); }
+  .btn-search {
+    background: #9B2331;
+    color: #fff; font-weight: 600; font-size: .85rem;
+    border: 1px solid #7d1d29; border-radius: 10px; padding: .5rem 1.2rem;
+    box-shadow: 0 4px 14px rgba(155, 35, 49, .3);
+  }
+  .btn-search:hover { background: #d04553; border-color: #a02d38; color: #fff; }
+  .btn-search i { color: #fff; }
+  .btn-cancel { border: 1px solid #7d1d29; color: #fff; background: #9B2331; font-size: .85rem; font-weight: 600; border-radius: 10px; padding: .5rem 1.2rem; }
+  .btn-cancel:hover { background: #d04553; border-color: #a02d38; color: #fff; }
+  .btn-cancel i { color: #fff; }
+
+  /* ---------- AG Grid ---------- */
+  #hkGrid {
+    height: 60vh;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    --ag-background-color: var(--card-bg);
+    --ag-foreground-color: var(--text);
+    --ag-border-color: var(--card-border);
+    --ag-header-background-color: color-mix(in srgb, var(--bg-soft) 70%, transparent);
+    --ag-header-foreground-color: #000;
+    --ag-row-hover-color: var(--accent-soft);
+    --ag-selected-row-background-color: var(--accent-soft);
+    --ag-odd-row-background-color: transparent;
+    --ag-font-family: 'Inter', system-ui, sans-serif;
+    --ag-font-size: 13px;
+    --ag-cell-horizontal-padding: .9rem;
+  }
+  #hkGrid .ag-root-wrapper { border: none; }
+  #hkGrid .ag-header-cell-text { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  #hkGrid .ag-cell { display: flex; align-items: center; }
+  #hkGrid .ag-paging-panel { font-size: .8rem; color: var(--text-muted); border-top: 1px solid var(--card-border); }
+  #hkGrid .ag-overlay { background: color-mix(in srgb, var(--card-bg) 45%, transparent); }
+  .mono-cell { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .8rem; }
+  .remarks-cell { font-size: .78rem; color: var(--text-muted); }
+  .grid-loading-overlay {
+    display: flex; flex-direction: column; align-items: center; gap: .65rem;
+    font-size: .82rem; font-weight: 600; color: var(--text-muted);
+    padding: 1.25rem 1.75rem;
+    background: color-mix(in srgb, var(--card-bg) 92%, transparent);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.18);
+  }
+  .grid-loading-overlay .spinner-border {
+    width: 2.1rem; height: 2.1rem;
+    border-width: .26em;
+    color: var(--accent);
+  }
 </style>
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
@@ -76,50 +149,127 @@
   </div>
 </div>
 
-{{-- ============ RECENT RUNS ============ --}}
+{{-- ============ RUN LOG (AG GRID) ============ --}}
 <div class="stat-card p-0 overflow-hidden mt-4">
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0" style="min-width: 820px;">
-      <thead>
-        <tr>
-          <th>Run</th>
-          <th>Student</th>
-          <th>Status</th>
-          <th style="text-align:right;">SEN</th>
-          <th style="text-align:right;">Docs</th>
-          <th>Deleted At (HK)</th>
-          <th>By</th>
-          <th>Remarks</th>
-        </tr>
-      </thead>
-      <tbody>
-        @forelse ($runs as $run)
-          <tr>
-            <td class="mono">#{{ $run->Id }}</td>
-            <td>
-              <div class="mono">{{ $run->Student_Id }}</div>
-              <div class="text-muted" style="font-size:.75rem;">{{ $run->Student_Name_Eng }} {{ $run->Student_Name_Chn }}</div>
-            </td>
-            <td><span class="badge bg-secondary-subtle text-secondary-emphasis">{{ $run->Student_Status }}</span></td>
-            <td style="text-align:right;">{{ $senCounts[$run->Id] ?? 0 }}</td>
-            <td style="text-align:right;">{{ $docCounts[$run->Id] ?? 0 }}</td>
-            <td style="font-size:.8rem; white-space:nowrap;">
-              {{ $run->Delete_At ? \Carbon\Carbon::parse($run->Delete_At, 'UTC')->setTimezone('Asia/Hong_Kong')->format('Y-m-d H:i:s') : '—' }}
-            </td>
-            <td class="mono">{{ $run->Delete_By }}</td>
-            <td class="text-muted" style="font-size:.78rem; max-width: 300px;">{{ $run->Remarks }}</td>
-          </tr>
-        @empty
-          <tr>
-            <td colspan="8" class="text-center text-muted py-4" style="font-size:.85rem;">
-              No housekeeping runs yet.
-            </td>
-          </tr>
-        @endforelse
-      </tbody>
-    </table>
+  <div class="p-3" style="border-bottom:1px solid var(--card-border);">
+    <div class="fw-semibold" style="font-size:.95rem;">Housekeeping Run Log</div>
+  </div>
+  <div class="p-3">
+    {{-- criteria bar --}}
+    <form id="hkSearchForm" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label" for="fStudentId">Student ID</label>
+        <input type="text" class="form-control" id="fStudentId" name="student_id" list="studentIdList" placeholder="e.g. 25000045G">
+        <datalist id="studentIdList">
+          @foreach ($studentIds as $sid)
+            <option value="{{ $sid }}"></option>
+          @endforeach
+        </datalist>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="fFrom">Deleted At From</label>
+        <input type="date" class="form-control" id="fFrom" name="delete_at_from">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="fTo">Deleted At To</label>
+        <input type="date" class="form-control" id="fTo" name="delete_at_to">
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-search"><i class="bi bi-search me-1"></i>Search</button>
+        <button type="button" id="hkResetBtn" class="btn btn-cancel"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</button>
+      </div>
+    </form>
+  </div>
+  <div class="p-3 pt-0">
+    <div id="hkGrid" class="ag-theme-alpine-dark"></div>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31/dist/ag-grid-community.min.js"></script>
+<script>
+  /* ---------- loading overlay component ---------- */
+  class HkLoadingOverlay {
+    init() {
+      this.eGui = document.createElement('div');
+      this.eGui.className = 'grid-loading-overlay';
+      this.eGui.innerHTML = `
+        <div class="spinner-border" role="status" aria-hidden="true"></div>
+        <div>Loading housekeeping log…</div>
+      `;
+    }
+    getGui() { return this.eGui; }
+  }
+
+  /* ---------- AG Grid ---------- */
+  const hkGridOptions = {
+    columnDefs: [
+      { field: 'id',             headerName: 'Run',         width: 95,  cellClass: 'mono-cell',
+        valueFormatter: p => '#' + p.value },
+      { field: 'student_id',     headerName: 'Student Id',  width: 130, cellClass: 'mono-cell' },
+      { field: 'name_eng',       headerName: 'Name (Eng)',  flex: 1, minWidth: 150 },
+      { field: 'name_chn',       headerName: 'Name (Chn)',  width: 110 },
+      { field: 'student_status', headerName: 'Status',      width: 125 },
+      { field: 'sen_count',      headerName: 'SEN',         width: 70,  cellStyle: { textAlign: 'right' } },
+      { field: 'doc_count',      headerName: 'Docs',        width: 70,  cellStyle: { textAlign: 'right' } },
+      { field: 'delete_at_hk',   headerName: 'Deleted At (HK)', width: 170, cellClass: 'mono-cell' },
+      { field: 'delete_by',      headerName: 'By',          width: 100, cellClass: 'mono-cell' },
+      { field: 'remarks',        headerName: 'Remarks',     flex: 1.4, minWidth: 200, cellClass: 'remarks-cell' },
+    ],
+    rowData: [],
+    pagination: true,
+    paginationPageSize: 10,
+    paginationPageSizeSelector: false,
+    defaultColDef: { sortable: true, resizable: true },
+    getRowId: p => String(p.data.id),
+    suppressCellFocus: true,
+    loadingOverlayComponent: HkLoadingOverlay,
+    onGridReady: (params) => {
+      hkGridApi = params.api;
+      loadHkRuns(); // auto-load all runs on page open (mirrors the old recent-runs table)
+    },
+  };
+  let hkGridApi;
+  agGrid.createGrid(document.getElementById('hkGrid'), hkGridOptions);
+
+  /* ---------- theme sync ---------- */
+  function applyHkGridTheme() {
+    const el = document.getElementById('hkGrid');
+    const dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    el.classList.toggle('ag-theme-alpine-dark', dark);
+    el.classList.toggle('ag-theme-alpine', !dark);
+  }
+  applyHkGridTheme();
+  document.getElementById('themeToggle')?.addEventListener('click', () => setTimeout(applyHkGridTheme, 60));
+
+  /* ---------- load / search ---------- */
+  async function loadHkRuns() {
+    const params = new URLSearchParams();
+    const fd = new FormData(document.getElementById('hkSearchForm'));
+    for (const [k, v] of fd) { if (v !== '') params.set(k, v); }
+    hkGridApi.showLoadingOverlay();
+    try {
+      const res = await fetch('/admin/housekeeping/runs/search?' + params.toString());
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const rows = await res.json();
+      hkGridApi.setGridOption('rowData', rows);
+    } catch (err) {
+      toast('❌ Search failed: ' + err.message);
+    } finally {
+      hkGridApi.hideOverlay();
+    }
+  }
+
+  document.getElementById('hkSearchForm').addEventListener('submit', e => {
+    e.preventDefault();
+    loadHkRuns();
+  });
+
+  document.getElementById('hkResetBtn').addEventListener('click', () => {
+    document.getElementById('hkSearchForm').reset();
+    loadHkRuns();
+    toast('Criteria reset');
+  });
+</script>
 
 {{-- ============ CONFIRM DIALOG ============ --}}
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
