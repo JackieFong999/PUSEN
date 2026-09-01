@@ -60,7 +60,7 @@ class EmailTemplateListController extends Controller
                 'Template_Content' => trim($validated['template_content']),
                 'Template_Remarks' => $this->nullable($request->input('template_remarks')),
                 'updated_at'       => now(),
-                'updated_by'       => 'system01',
+                'updated_by'       => (string) (auth()->id() ?? 'system01'),
                 'updated_ip'       => $request->ip(),
             ]);
             return response()->json(['success' => true, 'id' => $id, 'mode' => 'update']);
@@ -86,9 +86,9 @@ class EmailTemplateListController extends Controller
             'Template_Content' => trim($validated['template_content']),
             'Template_Remarks' => $this->nullable($request->input('template_remarks')),
             'created_at'       => now(),
-            'created_by'       => 'system01',
+            'created_by'       => (string) (auth()->id() ?? 'system01'),
             'updated_at'       => now(),
-            'updated_by'       => 'system01',
+            'updated_by'       => (string) (auth()->id() ?? 'system01'),
             'updated_ip'       => $request->ip(),
         ]);
 

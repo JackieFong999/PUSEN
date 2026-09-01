@@ -83,7 +83,7 @@ class StaffListController extends Controller
             ->update([
                 'status'     => (int) $validated['status'],
                 'updated_at' => now(),
-                'updated_by' => 'system01',
+                'updated_by' => (string) (auth()->id() ?? 'system01'),
                 'updated_ip' => $request->ip(),
             ]);
 
