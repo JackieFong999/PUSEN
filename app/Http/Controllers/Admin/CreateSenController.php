@@ -787,12 +787,15 @@ class CreateSenController extends Controller
     /** next SEN_Id = max numeric part + 1, zero-padded to 3 digits (e.g. SEN-013) */
     private function nextSenId(): string
     {
-        $max = DB::connection('pusen')->table('tblSEN')->max('SEN_Id');
-        $num = 0;
-        if ($max && preg_match('/SEN-(\d+)/', (string) $max, $m)) {
-            $num = (int) $m[1];
-        }
-        return 'SEN-' . str_pad((string) ($num + 1), 3, '0', STR_PAD_LEFT);
+        // MAX(CAST(...)) - a plain max('SEN_Id') on the varchar would compare
+        // lexicographically ("SEN-99" > "SEN-529") and generate a duplicate ID
+        // when the seed data has 2-digit ids like SEN-30..SEN-99.
+        $maxNum = (int) DB::connection('pusen')
+            ->table('tblSEN')
+            ->selectRaw('MAX(CAST(SUBSTRING(SEN_Id, 5) AS UNSIGNED)) AS max_num')
+            ->value('max_num');
+
+        return 'SEN-' . str_pad((string) ($maxNum + 1), 3, '0', STR_PAD_LEFT);
     }
 
     /* ================= document upload (staging) ================= */
