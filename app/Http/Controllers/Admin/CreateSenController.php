@@ -548,6 +548,29 @@ class CreateSenController extends Controller
         }
     }
 
+    /**
+     * Audit log for document downloads (tblDownload_Log) - UAT CC-13, added 2026-09-01.
+     * One row per download click (?dl=1). SEN_Id is parsed from the storage filename;
+     * Doc_Filename_Original is the original client-side filename. Logging never
+     * blocks the download (try/catch).
+     */
+    private function logDownload(string $filename, string $original, string $ip): void
+    {
+        try {
+            $senId = preg_match('/^(SEN-\d+)_/', $filename, $m) ? $m[1] : null;
+            DB::connection('pusen')->table('tblDownload_Log')->insert([
+                'SEN_Id'               => $senId,
+                'Doc_Filename_Original' => $original === '' ? null : $original,
+                'created_at'           => now(),
+                'updated_at'           => now(),
+                'updated_by'           => (string) (auth()->id() ?? 'system01'),
+                'updated_ip'           => $ip,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('logDownload: failed to write tblDownload_Log: ' . $e->getMessage());
+        }
+    }
+
     /** file extensions shown inside the locked viewer (PDF via PDF.js, images natively) */
     private const PREVIEW_IMAGE_EXTS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'];
 
@@ -580,6 +603,9 @@ class CreateSenController extends Controller
 
         // ----- download: PDFs are encrypted with the PW_Type=PDF password -----
         if ($request->boolean('dl')) {
+            // audit trail for downloads (UAT CC-13, Jackie 2026-09-01)
+            $this->logDownload($filename, $original, (string) $request->ip());
+
             if ($ext === 'pdf') {
                 $encrypted = $this->encryptPdf($path);
                 if ($encrypted === null) {
