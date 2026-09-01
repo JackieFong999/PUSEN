@@ -23,7 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // JSON errors for API paths AND any fetch()/AJAX request that asks for JSON
+        // (Accept: application/json). Without expectsJson(), validation failures on
+        // /admin/* returned a 302/HTML redirect, so the frontend showed a broken
+        // "Unexpected token '<'" toast instead of the real message (UAT CC-05, 2026-09-01).
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
     })->create();

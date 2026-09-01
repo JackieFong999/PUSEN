@@ -445,6 +445,7 @@
       </div>
       <div class="modal-body" id="confirmModalMsg"></div>
       <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-search" id="confirmOk" style="display:none;">OK</button>
         <button type="button" class="btn btn-cancel" id="confirmNo">Cancel</button>
         <button type="button" class="btn btn-search" id="confirmYes">Confirm</button>
       </div>
@@ -485,10 +486,26 @@
   const confirmModalEl = document.getElementById('confirmModal');
   let confirmResolve = null;
 
+  // single-OK alert dialog (error notices like "File too large" / "Filename too long")
+  function askAlert(title, message) {
+    return new Promise(resolve => {
+      document.getElementById('confirmModalTitle').textContent = title;
+      document.getElementById('confirmModalMsg').textContent = message;
+      document.getElementById('confirmYes').style.display = 'none';
+      document.getElementById('confirmNo').style.display = 'none';
+      document.getElementById('confirmOk').style.display = '';
+      confirmResolve = resolve;
+      bootstrap.Modal.getOrCreateInstance(confirmModalEl).show();
+    });
+  }
+
   function askConfirm(title, message) {
     return new Promise(resolve => {
       document.getElementById('confirmModalTitle').textContent = title;
       document.getElementById('confirmModalMsg').textContent = message;
+      document.getElementById('confirmYes').style.display = '';
+      document.getElementById('confirmNo').style.display = '';
+      document.getElementById('confirmOk').style.display = 'none';
       confirmResolve = resolve;
       bootstrap.Modal.getOrCreateInstance(confirmModalEl).show();
     });
@@ -499,6 +516,7 @@
   }
   document.getElementById('confirmYes').addEventListener('click', () => closeConfirm(true));
   document.getElementById('confirmNo').addEventListener('click', () => closeConfirm(false));
+  document.getElementById('confirmOk').addEventListener('click', () => closeConfirm(true));
   confirmModalEl.addEventListener('hidden.bs.modal', () => { if (confirmResolve) { confirmResolve(false); confirmResolve = null; } });
 
   /* ---------- Save preview modal (review before saving) ---------- */
@@ -737,13 +755,28 @@
     if (rejected.length) {
       const msgEl = document.getElementById('confirmModalMsg');
       msgEl.style.whiteSpace = 'pre-line';
-      askConfirm('⚠️ Filename too long',
+      askAlert('⚠️ Filename too long',
         'The following file(s) were NOT added - file name over 100 characters:\n\n' +
         rejected.map(f => '• ' + f.name + '  (' + f.name.length + ' characters)').join('\n') +
         '\n\nPlease rename the file(s) and choose them again.');
     }
 
-    for (const file of accepted) {
+    // file size gate at selection time (Jackie 2026-09-01, UAT CC-05): files over
+    // 10 MB are rejected immediately with a DIALOG (never uploaded/staged), so the
+    // user gets a clear message instead of a server-side toast.
+    const MAX_DOC_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+    const tooBig = accepted.filter(f => f.size > MAX_DOC_SIZE_BYTES);
+    const uploadable = accepted.filter(f => f.size <= MAX_DOC_SIZE_BYTES);
+    if (tooBig.length) {
+      const msgEl = document.getElementById('confirmModalMsg');
+      msgEl.style.whiteSpace = 'pre-line';
+      askAlert('⚠️ File too large',
+        'The following file(s) were NOT added - maximum file size is 10 MB:\n\n' +
+        tooBig.map(f => '• ' + f.name + '  (' + (f.size / (1024 * 1024)).toFixed(1) + ' MB)').join('\n') +
+        '\n\nPlease remove them or choose file(s) smaller than 10 MB.');
+    }
+
+    for (const file of uploadable) {
       const fd = new FormData();
       fd.append('sen_id', senId);
       fd.append('file', file);
@@ -1203,7 +1236,7 @@
     if (longDocs.length) {
       const msgEl = document.getElementById('confirmModalMsg');
       msgEl.style.whiteSpace = 'pre-line';
-      askConfirm('⚠️ Filename too long',
+      askAlert('⚠️ Filename too long',
         'The following file name(s) are over 100 characters and cannot be saved:\n\n' +
         longDocs.map(n => '• ' + n + '  (' + n.length + ' characters)').join('\n') +
         '\n\nPlease remove them or re-upload with a shorter file name.');
