@@ -354,7 +354,9 @@ class CreateSenController extends Controller
         $data['Temporary_Special_Support_ID'] = $tempSupportId;
 
         $data['updated_at'] = now();
-        $data['updated_by'] = 'system01';
+        // record the REAL login user (form login or SSO - both set the same auth session).
+        // Was hardcoded 'system01' - UAT CC-10 finding, fixed 2026-09-01.
+        $data['updated_by'] = (string) (auth()->id() ?? 'system01');
         $data['updated_ip'] = $request->ip();
 
         if ($isEdit) {
@@ -363,7 +365,7 @@ class CreateSenController extends Controller
         } else {
             $data['SEN_Id'] = $this->nextSenId();
             $data['created_at'] = now();
-            $data['created_by'] = 'system01';
+            $data['created_by'] = (string) (auth()->id() ?? 'system01');
             $conn->table('tblSEN')->insert($data);
             $finalSenId = $data['SEN_Id'];
         }
@@ -1000,8 +1002,8 @@ class CreateSenController extends Controller
                 'Doc_Filename_Original' => $original === '' ? null : $original,
                 'created_at'            => now(),
                 'updated_at'            => now(),
-                'created_by'            => 'system01',
-                'updated_by'            => 'system01',
+                'created_by'            => (string) (auth()->id() ?? 'system01'),
+                'updated_by'            => (string) (auth()->id() ?? 'system01'),
                 'updated_ip'            => $ip,
             ];
         }
