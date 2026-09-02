@@ -258,7 +258,7 @@
     ],
     rowData: [],
     pagination: true,
-    paginationPageSize: 8,
+    paginationPageSize: 10,
     paginationPageSizeSelector: false,
     defaultColDef: { sortable: true, resizable: true },
     getRowId: p => p.data.sen_id,

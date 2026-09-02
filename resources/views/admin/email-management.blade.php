@@ -52,7 +52,7 @@
   .ac-item .ac-name { color: var(--text-muted); font-size: .8rem; }
   .ac-empty { padding: .5rem .7rem; font-size: .82rem; color: var(--text-faint); }
 
-  #emailGrid { height: 45vh; border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden;
+  #emailGrid { height: 62vh; border: 1px solid var(--card-border); border-radius: var(--radius); overflow: hidden;
     --ag-background-color: var(--card-bg); --ag-foreground-color: var(--text);
     --ag-border-color: var(--card-border); --ag-header-background-color: var(--bg-soft); }
   #emailGrid .ag-header-cell-text { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
@@ -206,7 +206,7 @@
     ],
     rowData: [],
     pagination: true,
-    paginationPageSize: 8,
+    paginationPageSize: 10,
     paginationPageSizeSelector: false,
     defaultColDef: { sortable: true, resizable: true },
     getRowId: p => p.data.sen_id,
