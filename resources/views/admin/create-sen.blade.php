@@ -631,6 +631,7 @@
 
   /* ---------- state ---------- */
   let studentValid = false;
+  let studentHasCase = false; // one-active-SEN-case rule (2026-09-02): blocks Save in create mode
   let nextSenId = '{{ $nextSenId }}'; // advanced locally after each save
   const IS_EDIT = {{ $isEdit ? 'true' : 'false' }};
   const IS_VIEW = {{ $isView ? 'true' : 'false' }};
@@ -689,6 +690,7 @@
     const fileInput = document.getElementById('docFileInput');
     if (fileInput) fileInput.value = '';
     studentValid = false;
+    studentHasCase = false; // one-active-case rule: fresh form -> no case flag
     formDirty = false;
   }
 
@@ -1170,6 +1172,7 @@
 
   async function lookupStudent() {
     const sid = fStudentId.value.trim();
+    studentHasCase = false; // one-active-case rule: cleared until this lookup proves otherwise
     if (!sid) { // placeholder selected -> nothing to look up
       studentValid = false;
       resetDisplayOnly();
@@ -1186,6 +1189,17 @@
       }
       studentValid = true;
       const s = json.student;
+      // one-active-SEN-case rule (2026-09-02): in create mode, warn + block when the
+      // student already has a case (server also rejects on Save as the backstop)
+
+
+      //studentHasCase = !IS_EDIT && !!json.has_case;
+      studentHasCase = false;   // diable the one-active-SEN-case rule for now (2026-09-02)
+      
+      if (studentHasCase && !IS_VIEW) {
+        // dialog (OK button) instead of a toast so the user cannot miss the block
+        askAlert('⚠️ Existing SEN Case', 'Student ' + sid + ' already has SEN case ' + (json.existing_sen_id || '') + ' — only one case per student is allowed. Please edit the existing case instead.');
+      }
       document.getElementById('dNameEng').value = s.student_name_eng ?? '';
       document.getElementById('dNameChn').value = s.student_name_chn ?? '';
       document.getElementById('dFaculty').value = s.faculty ?? '';
@@ -1225,6 +1239,12 @@
     if (!studentValid) {
       toast('⚠️ Please enter a valid Student Id first (check it on blur)');
       fStudentId.focus();
+      return;
+    }
+    // one-active-SEN-case rule (2026-09-02): block Save in create mode when the
+    // student already has a case (server rejects too - this is just early UX)
+    if (!IS_EDIT && studentHasCase) {
+      askAlert('⚠️ Existing SEN Case', 'This student already has an SEN case — only one case per student is allowed. Please edit the existing case instead.');
       return;
     }
 

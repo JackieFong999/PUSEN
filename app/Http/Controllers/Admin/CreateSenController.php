@@ -264,8 +264,13 @@ class CreateSenController extends Controller
             ->orderBy('Subject_Code')
             ->pluck('Subject_Code');
 
+        // does this student already have an SEN case? (one-active-case rule, 2026-09-02)
+        $existingSen = $conn->table('tblSEN')->where('Student_Id', $studentId)->first(['SEN_Id']);
+
         return response()->json([
             'found' => true,
+            'has_case' => $existingSen !== null,
+            'existing_sen_id' => $existingSen->SEN_Id ?? null,
             'student' => [
                 'student_name_eng' => StudentNameEncryption::decrypt($student->Student_Name_Eng),
                 'student_name_chn' => StudentNameEncryption::decrypt($student->Student_Name_Chn),
@@ -304,6 +309,24 @@ class CreateSenController extends Controller
         $isEdit = $senId !== '';
         if ($isEdit && ! $conn->table('tblSEN')->where('SEN_Id', $senId)->exists()) {
             return response()->json(['success' => false, 'message' => 'SEN case not found.'], 404);
+        }
+
+        // ============ ONE ACTIVE SEN CASE PER STUDENT (2026-09-02) ============
+        // Create mode only: a student may only have ONE SEN case.
+        // To DISABLE this rule: flip $oneCasePerStudent to false below,
+        // or comment out the whole if-block.
+        
+        // $oneCasePerStudent = true;
+        $oneCasePerStudent = false;
+
+        if ($oneCasePerStudent && ! $isEdit) {
+            $existingSen = $conn->table('tblSEN')->where('Student_Id', $studentId)->first(['SEN_Id']);
+            if ($existingSen) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This student already has an SEN case (' . $existingSen->SEN_Id . '). Please edit the existing case instead.',
+                ], 422);
+            }
         }
 
         // staff fields: optional; create mode requires an ENABLED staff (status=0),
