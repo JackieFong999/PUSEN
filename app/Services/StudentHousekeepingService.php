@@ -96,7 +96,7 @@ class StudentHousekeepingService
                     'status'        => $s->Student_Status,
                     'updated_at'    => $s->updated_at,
                     'updated_at_hk' => $s->updated_at
-                        ? \Carbon\Carbon::parse($s->updated_at, 'UTC')->setTimezone('Asia/Hong_Kong')->format('Y-m-d H:i:s')
+                        ? \Carbon\Carbon::parse($s->updated_at)->format('Y-m-d H:i:s')
                         : null,
                 ];
             }, $students),

@@ -53,10 +53,11 @@ class HousekeepingController extends Controller
         $from = trim((string) $request->input('delete_at_from'));
         $to   = trim((string) $request->input('delete_at_to'));
         if ($from !== '') {
-            $q->where('Delete_At', '>=', \Carbon\Carbon::parse($from, 'Asia/Hong_Kong')->startOfDay()->utc());
+            // stored Delete_At is HK local since 2026-09-02 (app tz Asia/Hong_Kong)
+            $q->where('Delete_At', '>=', \Carbon\Carbon::parse($from, 'Asia/Hong_Kong')->startOfDay());
         }
         if ($to !== '') {
-            $q->where('Delete_At', '<=', \Carbon\Carbon::parse($to, 'Asia/Hong_Kong')->endOfDay()->utc());
+            $q->where('Delete_At', '<=', \Carbon\Carbon::parse($to, 'Asia/Hong_Kong')->endOfDay());
         }
 
         $runs = $q->orderByDesc('Id')->get();
@@ -87,7 +88,7 @@ class HousekeepingController extends Controller
             'sen_count'      => (int) ($senCounts[$r->Id] ?? 0),
             'doc_count'      => (int) ($docCounts[$r->Id] ?? 0),
             'delete_at_hk'   => $r->Delete_At
-                ? \Carbon\Carbon::parse($r->Delete_At, 'UTC')->setTimezone('Asia/Hong_Kong')->format('Y-m-d H:i:s')
+                ? \Carbon\Carbon::parse($r->Delete_At)->format('Y-m-d H:i:s')
                 : null,
             'delete_by'      => $r->Delete_By,
             'remarks'        => $r->Remarks,

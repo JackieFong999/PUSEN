@@ -233,6 +233,7 @@ class SenSearchController extends Controller
                 'special_support_required'        => $r->Special_Support_Required,
                 'special_examination_arrangement' => $r->Special_Examination_Arrangement,
                 'temporary_special_support'       => $r->Temporary_Special_Support_ID ? ($tempMap->get($r->Temporary_Special_Support_ID) ?? '—') : '—',
+                // app tz is now Asia/Hong_Kong (2026-09-02) - DB stores HK time directly
                 'updated_at'          => $r->updated_at,
             ];
         });

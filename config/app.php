@@ -63,9 +63,11 @@ return [
     | will be used by the PHP date and date-time functions. The timezone
     | is set to "UTC" by default as it is suitable for most use cases.
     |
+    | PUSEN: switched to Asia/Hong_Kong on 2026-09-02 so DB writes and reads
+    | are both in HK local time (HK has no DST, so storage is unambiguous).
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Hong_Kong',
 
     /*
     |--------------------------------------------------------------------------

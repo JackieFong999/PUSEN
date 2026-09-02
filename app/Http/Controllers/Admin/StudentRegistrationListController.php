@@ -63,7 +63,8 @@ class StudentRegistrationListController extends Controller
         return [
             'studentId'   => $r->Student_Id,
             'subjectCode' => $r->Subject_Code,
-            'createdAt'   => $r->created_at ? \Carbon\Carbon::parse($r->created_at)->format('Y-m-d H:i') : null,
+            // app tz is now Asia/Hong_Kong (2026-09-02) - DB stores HK time directly
+            'createdAt'   => $r->created_at,
         ];
     }
 }
