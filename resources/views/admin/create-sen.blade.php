@@ -482,7 +482,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
   const confirmModalEl = document.getElementById('confirmModal');
   let confirmResolve = null;
 

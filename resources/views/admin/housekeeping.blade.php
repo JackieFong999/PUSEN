@@ -186,7 +186,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31/dist/ag-grid-community.min.js"></script>
-<script>
+<script nonce="{{ $cspNonce }}">
   /* ---------- loading overlay component ---------- */
   class HkLoadingOverlay {
     init() {
@@ -304,7 +304,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
   const CSRF = '{{ csrf_token() }}';
   const hkBtn = document.getElementById('hkBtn');
   const confirmModalEl = document.getElementById('confirmModal');

@@ -171,7 +171,7 @@
   </div>
 </div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
   const CSRF = '{{ csrf_token() }}';
   const functions = @json($functions);
 

@@ -123,7 +123,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31/dist/ag-grid-community.min.js"></script>
-<script>
+<script nonce="{{ $cspNonce }}">
   const confirmModalEl = document.getElementById('confirmModal');
   let confirmResolve = null;
 

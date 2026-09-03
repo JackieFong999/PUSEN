@@ -244,7 +244,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script nonce="{{ $cspNonce }}">
   // ---------- Show / hide password ----------
   const pwInput = document.getElementById('password');
   const togglePw = document.getElementById('togglePw');

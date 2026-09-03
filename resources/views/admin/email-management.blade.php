@@ -174,7 +174,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31/dist/ag-grid-community.min.js"></script>
-<script>
+<script nonce="{{ $cspNonce }}">
   const DEV_OVERRIDE = @json($devEmail);
   const STUDENT_EMAIL = @json($studentEmail);
 

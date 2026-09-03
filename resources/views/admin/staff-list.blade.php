@@ -144,11 +144,11 @@
 {{-- ============ AG GRID ============ --}}
 <div id="staffGrid" class="ag-theme-alpine-dark"></div>
 
-<script>
+<script nonce="{{ $cspNonce }}">
   const csrfToken = '{{ csrf_token() }}';
 </script>
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31/dist/ag-grid-community.min.js"></script>
-<script>
+<script nonce="{{ $cspNonce }}">
   const statusMap  = { 0: 'Enable', 1: 'Disable' };
   const statusRev  = { Enable: 0, Disable: 1 };
 
@@ -193,12 +193,12 @@
           const d = params.data;
           if (d._editing) {
             return `<div class="row-actions d-flex gap-1">
-              <button class="btn btn-save"   onclick="saveRow('${d.staff_id}')">Save</button>
-              <button class="btn btn-cancel" onclick="cancelRow('${d.staff_id}')">Cancel</button>
+              <button class="btn btn-save" data-act="save" data-id="${d.staff_id}">Save</button>
+              <button class="btn btn-cancel" data-act="cancel" data-id="${d.staff_id}">Cancel</button>
             </div>`;
           }
           return `<div class="row-actions d-flex gap-1">
-            <button class="btn btn-edit" onclick="editRow('${d.staff_id}')">Edit</button>
+            <button class="btn btn-edit" data-act="edit" data-id="${d.staff_id}">Edit</button>
           </div>`;
         },
       },
@@ -304,6 +304,17 @@
     gridApi.refreshCells({ rowNodes: [node], force: true });
     toast('Change discarded');
   }
+
+  /* Row-action buttons are rendered by AG Grid cell templates. CSP nonces forbid
+     inline onclick= handlers, so dispatch through one delegated listener (2026-09-03). */
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn || !btn.closest('#staffGrid')) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.act === 'save') saveRow(id);
+    else if (btn.dataset.act === 'cancel') cancelRow(id);
+    else if (btn.dataset.act === 'edit') editRow(id);
+  });
 </script>
 
 @endsection

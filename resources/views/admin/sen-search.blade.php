@@ -181,7 +181,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31/dist/ag-grid-community.min.js"></script>
-<script>
+<script nonce="{{ $cspNonce }}">
   /* ---------- loading overlay component (must be defined before gridOptions) ---------- */
   class SenLoadingOverlay {
     init() {

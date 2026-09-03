@@ -159,7 +159,7 @@
   <button type="button" id="fitBtn" title="Fit width">Fit width</button>
 </footer>
 
-<script type="module">
+<script type="module" nonce="{{ $cspNonce }}">
   import * as pdfjsLib from '/vendor/pdfjs/pdf.min.mjs';
   pdfjsLib.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.mjs';
 
