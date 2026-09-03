@@ -12,6 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Runs OUTSIDE the CSRF middleware: re-issues the XSRF-TOKEN cookie with
+        // HttpOnly=true (2026-09-03, ZAP "Cookie No HttpOnly Flag"). The app's JS
+        // never reads that cookie - tokens go via {{ csrf_token() }} headers/inputs.
+        $middleware->web(prepend: [
+            \App\Http\Middleware\XsrfCookieHttpOnly::class,
+        ]);
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         $middleware->alias([
             'role.access' => \App\Http\Middleware\CheckRoleAccess::class,
