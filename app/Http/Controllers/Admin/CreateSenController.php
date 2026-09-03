@@ -879,18 +879,36 @@ class CreateSenController extends Controller
         return storage_path('app/public/sen_docs');
     }
 
-    /** sorted list of staged filenames for a SEN case (e.g. [SEN-013_01_a.pdf, ...]) */
+    /**
+     * sorted list of staged filenames for a SEN case (e.g. [SEN-013_01_a.pdf, ...])
+     *
+     * Fail-closed: only real SEN ids may reach the filesystem (path-traversal guard,
+     * 2026-09-03 Psalm taint finding). Throws on anything else - protects all callers.
+     * @psalm-taint-escape file
+     */
     private function stagedList(string $senId): array
     {
+        if (! preg_match('/^SEN-\d+$/', $senId)) {
+            throw new \InvalidArgumentException('Invalid SEN id: ' . $senId);
+        }
         $files = glob($this->stagingDir() . '/' . $senId . '_*') ?: [];
         $names = array_map('basename', $files);
         sort($names);
         return $names;
     }
 
-    /** sidecar meta file: staged filename -> true original client filename */
+    /**
+     * sidecar meta file: staged filename -> true original client filename
+     *
+     * Fail-closed: only real SEN ids may reach the filesystem (path-traversal guard,
+     * 2026-09-03 Psalm taint finding). Throws on anything else - protects all callers.
+     * @psalm-taint-escape file
+     */
     private function docMetaPath(string $senId): string
     {
+        if (! preg_match('/^SEN-\d+$/', $senId)) {
+            throw new \InvalidArgumentException('Invalid SEN id: ' . $senId);
+        }
         return $this->stagingDir() . '/' . $senId . '.meta.json';
     }
 
@@ -986,6 +1004,10 @@ class CreateSenController extends Controller
     public function removeDoc(Request $request)
     {
         $senId = trim((string) $request->input('sen_id'));
+        // guard: only real SEN ids may build filesystem paths (2026-09-03, Psalm taint finding)
+        if ($senId === '' || ! preg_match('/^SEN-\d+$/', $senId)) {
+            return response()->json(['success' => false, 'message' => 'Missing or invalid SEN_Id.'], 422);
+        }
         $filename = basename((string) $request->input('filename')); // strip any path traversal
 
         // only files belonging to this SEN case may be removed
@@ -1010,6 +1032,10 @@ class CreateSenController extends Controller
     public function clearStaged(Request $request)
     {
         $senId = trim((string) $request->input('sen_id'));
+        // guard: only real SEN ids may build filesystem paths (2026-09-03, Psalm taint finding)
+        if ($senId === '' || ! preg_match('/^SEN-\d+$/', $senId)) {
+            return response()->json(['success' => false, 'message' => 'Missing or invalid SEN_Id.'], 422);
+        }
         foreach ($this->stagedList($senId) as $name) {
             @unlink($this->stagingDir() . '/' . $name);
         }
