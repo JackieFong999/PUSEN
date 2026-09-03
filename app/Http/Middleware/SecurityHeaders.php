@@ -32,6 +32,10 @@ class SecurityHeaders
         $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
+        // CORP: only same-origin pages may load our resources (2026-09-03, ZAP
+        // "Cross-Origin-Resource-Policy Header Missing"). Pairs with XFO/CSP
+        // frame-ancestors - blocks cross-origin embedding + Spectre-class reads.
+        $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
 
