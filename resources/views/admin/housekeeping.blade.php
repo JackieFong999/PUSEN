@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @push('head')
-  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31/styles/ag-grid.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31/styles/ag-theme-alpine.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-grid.css" rel="stylesheet" integrity="sha384-LNcL0K2K7L8L9H0XdFjFVke0Q1STyt3EhtpjMIai3xF3YpjvIOIoQlplKoTiaCS0" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-theme-alpine.css" rel="stylesheet" integrity="sha384-kYz5+ibE+6jW5uFDveyCHnWtCKom1rUsq6SjbxD+EGAXkVIjLGi103ZL7WqhLGPC" crossorigin="anonymous">
 @endpush
 
 @section('content')
@@ -185,7 +185,7 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31/dist/ag-grid-community.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.js" integrity="sha384-4h7f/QzMaQuP/2DCJ4zcUcQzIZ3I9WCVELPmW/umU53xAtAlTH5ym7A/qtFqzhxb" crossorigin="anonymous"></script>
 <script nonce="{{ $cspNonce }}">
   /* ---------- loading overlay component ---------- */
   class HkLoadingOverlay {

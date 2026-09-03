@@ -16,6 +16,13 @@ use Symfony\Component\HttpFoundation\Response;
  * browser. External CDN scripts (jsdelivr) stay host-allowlisted.
  * style-src still allows 'unsafe-inline' (inline styles are used app-wide);
  * moving styles to nonces is a future hardening step.
+ *
+ * ACCEPTED RISK (2026-09-03, decision with Jackie): Cross-Origin-Embedder-Policy
+ * (COEP) is deliberately NOT set. require-corp/credentialless would force every
+ * third-party subresource (AG Grid/Bootstrap from cdn.jsdelivr.net, Google Fonts)
+ * to carry CORP/CORS - high breakage risk for marginal Spectre-isolation benefit
+ * on an authenticated internal app. CORP (same-origin) IS set as the pragmatic
+ * middle ground. Revisit only if the app stops loading third-party resources.
  */
 class SecurityHeaders
 {
