@@ -60,6 +60,15 @@ class SecurityHeaders
         ]);
         $response->headers->set('Content-Security-Policy', $csp);
 
+        // Symfony auto-fills 3xx redirects with a "Redirecting to…" HTML body
+        // (meta-refresh + link). It duplicates the target URL - for /login/sso that
+        // includes the full SAML request + RelayState - and triggers ZAP "Big Redirect"
+        // info-leak warnings. Modern clients only need the Location header, so strip
+        // the body (2026-09-03, ZAP 10044 x3).
+        if ($response->getStatusCode() >= 300 && $response->getStatusCode() < 400) {
+            $response->setContent(null);
+        }
+
         return $response;
     }
 }
