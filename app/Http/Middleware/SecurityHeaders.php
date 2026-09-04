@@ -23,6 +23,12 @@ use Symfony\Component\HttpFoundation\Response;
  * to carry CORP/CORS - high breakage risk for marginal Spectre-isolation benefit
  * on an authenticated internal app. CORP (same-origin) IS set as the pragmatic
  * middle ground. Revisit only if the app stops loading third-party resources.
+ *
+ * UPDATE 2026-09-04 (Jackie decision): COEP require-corp + COOP same-origin now
+ * SET. Google Fonts was self-hosted the same day (SRI fix) and jsdelivr sends
+ * CORP: cross-origin + ACAO * on all resource types (verified), so the only
+ * remaining external host fully complies. Verified via headless Chrome sweep -
+ * no blocked resources, no console errors (incl. AG Grid pages + PDF viewer).
  */
 class SecurityHeaders
 {
@@ -43,6 +49,10 @@ class SecurityHeaders
         // "Cross-Origin-Resource-Policy Header Missing"). Pairs with XFO/CSP
         // frame-ancestors - blocks cross-origin embedding + Spectre-class reads.
         $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+        // COEP/COOP pair (2026-09-04, Jackie decision - see docblock above).
+        // require-corp: cross-origin subresources must opt in via CORP or CORS.
+        $response->headers->set('Cross-Origin-Embedder-Policy', 'require-corp');
+        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
 
