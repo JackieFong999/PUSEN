@@ -7,7 +7,7 @@
 
 @section('content')
 
-<style>
+<style nonce="{{ $cspNonce }}">
   .form-label { font-size: .78rem; font-weight: 600; color: var(--text-muted); margin-bottom: .35rem; }
   .form-control, .form-select {
     background: var(--bg-soft);
@@ -76,9 +76,9 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
   <div>
-    <h1 class="mb-0" style="font-size:1.25rem;">Advisor List for the Student</h1>
+    <h1 class="mb-0 u-fs-125">Advisor List for the Student</h1>
   </div>
-  <div style="font-size:.75rem; color:var(--text-faint);">
+  <div class="u-fs-075 u-c-text-faint">
     <i class="bi bi-database me-1"></i>{{ count($rows) }} record(s) &middot; 10 per page
   </div>
 </div>
@@ -125,7 +125,7 @@
 {{-- ============ AG GRID ============ --}}
 <div id="advisorGrid" class="ag-theme-alpine-dark"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.js" integrity="sha384-4h7f/QzMaQuP/2DCJ4zcUcQzIZ3I9WCVELPmW/umU53xAtAlTH5ym7A/qtFqzhxb" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.noStyle.js" integrity="sha384-s1Ok/d+HoxfYayi4FqY2BuIVIwTHcD2tlc+xGlfbNgeKOkC+L3Mh6yvcfgODPrvU" crossorigin="anonymous"></script>
 <script nonce="{{ $cspNonce }}">
   /* ---------- loading overlay component (must be defined before gridOptions) ---------- */
   class AdvisorLoadingOverlay {

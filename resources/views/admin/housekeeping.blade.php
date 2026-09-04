@@ -7,7 +7,7 @@
 
 @section('content')
 
-<style>
+<style nonce="{{ $cspNonce }}">
   .table { --bs-table-bg: transparent; color: var(--text); }
   .table thead th {
     font-size: .72rem;
@@ -114,8 +114,8 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
   <div>
-    <h1 class="mb-0" style="font-size:1.25rem;">Housekeeping</h1>
-    <div class="text-muted" style="font-size:.85rem;">
+    <h1 class="mb-0 u-fs-125">Housekeeping</h1>
+    <div class="text-muted u-fs-085">
       Permanent data cleanup for students who have left the university.
       Records are written to the <span class="mono">tblHK_*</span> log tables (the backup) before anything is deleted.
     </div>
@@ -125,18 +125,18 @@
 <div class="stat-card p-0 overflow-hidden">
   <div class="p-4">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-      <div style="min-width: 280px; flex: 1;">
-        <div class="fw-semibold" style="font-size:.95rem;">Housekeeping for Student</div>
-        <div class="text-muted mt-1" style="font-size:.8rem;">A student qualifies when ALL of the following are true:</div>
+      <div class="u-minw-280 u-flex-1">
+        <div class="fw-semibold u-fs-095">Housekeeping for Student</div>
+        <div class="text-muted mt-1 u-fs-080">A student qualifies when ALL of the following are true:</div>
         <ul class="criteria mt-2 mb-0">
-          <li><i class="bi bi-check2-circle me-1" style="color:var(--success);"></i><span class="mono">tblStudent.Student_Status</span> is <b>COMPLETED</b>, <b>LEFT</b> or <b>PASSED AWAY</b></li>
-          <li><i class="bi bi-check2-circle me-1" style="color:var(--success);"></i><span class="mono">tblStudent.updated_at</span> is <b>strictly older than 3 years</b> (UTC)</li>
+          <li><i class="bi bi-check2-circle me-1 u-c-success"></i><span class="mono">tblStudent.Student_Status</span> is <b>COMPLETED</b>, <b>LEFT</b> or <b>PASSED AWAY</b></li>
+          <li><i class="bi bi-check2-circle me-1 u-c-success"></i><span class="mono">tblStudent.updated_at</span> is <b>strictly older than 3 years</b> (UTC)</li>
         </ul>
-        <div class="text-muted mt-2" style="font-size:.8rem;">
+        <div class="text-muted mt-2 u-fs-080">
           Deletes: all SEN cases (<span class="mono">tblSEN</span>) + attached documents (<span class="mono">tblSEN_Doc</span>) + physical files on the server +
           advisor assignments (<span class="mono">tblAdvisor_Student</span>) + subject registrations (<span class="mono">tblStudent_Reg</span>) + the student (<span class="mono">tblStudent</span>).
         </div>
-        <div class="mt-2" style="font-size:.78rem; color: var(--danger);">
+        <div class="mt-2 u-fs-078 u-c-danger">
           <i class="bi bi-exclamation-triangle-fill me-1"></i>Permanent — no archive, no recovery. One student is processed at a time.
         </div>
       </div>
@@ -151,8 +151,8 @@
 
 {{-- ============ RUN LOG (AG GRID) ============ --}}
 <div class="stat-card p-0 overflow-hidden mt-4">
-  <div class="p-3" style="border-bottom:1px solid var(--card-border);">
-    <div class="fw-semibold" style="font-size:.95rem;">Housekeeping Run Log</div>
+  <div class="p-3 u-bb-card">
+    <div class="fw-semibold u-fs-095">Housekeeping Run Log</div>
   </div>
   <div class="p-3">
     {{-- criteria bar --}}
@@ -185,7 +185,7 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.js" integrity="sha384-4h7f/QzMaQuP/2DCJ4zcUcQzIZ3I9WCVELPmW/umU53xAtAlTH5ym7A/qtFqzhxb" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.noStyle.js" integrity="sha384-s1Ok/d+HoxfYayi4FqY2BuIVIwTHcD2tlc+xGlfbNgeKOkC+L3Mh6yvcfgODPrvU" crossorigin="anonymous"></script>
 <script nonce="{{ $cspNonce }}">
   /* ---------- loading overlay component ---------- */
   class HkLoadingOverlay {
@@ -276,10 +276,10 @@
   <div class="modal-dialog modal-dialog-centered modal-dialog-hk">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title" id="confirmModalTitle" style="font-size:.95rem;">Confirm Housekeeping</h5>
+        <h5 class="modal-title u-fs-095" id="confirmModalTitle">Confirm Housekeeping</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" id="confirmModalMsg" style="font-size:.85rem;"></div>
+      <div class="modal-body u-fs-085" id="confirmModalMsg"></div>
       <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-cancel" id="confirmNo">Cancel</button>
         <button type="button" class="btn btn-hk" id="confirmYes">Delete Permanently</button>
@@ -293,10 +293,10 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title" id="resultModalTitle" style="font-size:.95rem;">Housekeeping Result</h5>
+        <h5 class="modal-title u-fs-095" id="resultModalTitle">Housekeeping Result</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" id="resultModalBody" style="font-size:.85rem;"></div>
+      <div class="modal-body u-fs-085" id="resultModalBody"></div>
       <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-search" data-bs-dismiss="modal">OK</button>
       </div>
@@ -362,10 +362,10 @@
       if (p.students === 0) {
         showResult('Nothing to Do', `
           <div class="d-flex align-items-start gap-2">
-            <i class="bi bi-check-circle-fill mt-1" style="color:var(--success);"></i>
+            <i class="bi bi-check-circle-fill mt-1 u-c-success"></i>
             <div>
               <div class="fw-semibold">No qualifying students found.</div>
-              <div class="text-muted mt-1" style="font-size:.8rem;">
+              <div class="text-muted mt-1 u-fs-080">
                 Students with status COMPLETED / LEFT / PASSED AWAY and
                 <span class="mono">updated_at</span> older than 3 years will appear here.
               </div>
@@ -382,20 +382,20 @@
           <td>${esc(s.name_eng) || '—'}</td>
           <td>${esc(s.name_chn) || '—'}</td>
           <td>${esc(s.status)}</td>
-          <td class="mono" style="white-space:nowrap;">${esc(s.updated_at_hk) || '—'}</td>
+          <td class="mono u-nowrap">${esc(s.updated_at_hk) || '—'}</td>
         </tr>`).join('');
 
       const ok = await askConfirm(`
         <div class="fw-semibold mb-2">This will permanently delete:</div>
-        <div class="mb-1"><span class="num-ok fw-bold" style="font-size:1rem;">${p.students}</span> student record(s)</div>
-        <div class="mb-1"><span class="num-ok fw-bold" style="font-size:1rem;">${p.sen}</span> SEN case(s)</div>
-        <div class="mb-1"><span class="num-ok fw-bold" style="font-size:1rem;">${p.docs}</span> document record(s) + their physical files on the server</div>
-        <div class="mb-1"><span class="num-dup fw-bold" style="font-size:1rem;">${p.advisor}</span> advisor assignment(s)</div>
-        <div class="mb-1"><span class="num-dup fw-bold" style="font-size:1rem;">${p.reg}</span> subject registration(s)</div>
+        <div class="mb-1"><span class="num-ok fw-bold u-fs-100">${p.students}</span> student record(s)</div>
+        <div class="mb-1"><span class="num-ok fw-bold u-fs-100">${p.sen}</span> SEN case(s)</div>
+        <div class="mb-1"><span class="num-ok fw-bold u-fs-100">${p.docs}</span> document record(s) + their physical files on the server</div>
+        <div class="mb-1"><span class="num-dup fw-bold u-fs-100">${p.advisor}</span> advisor assignment(s)</div>
+        <div class="mb-1"><span class="num-dup fw-bold u-fs-100">${p.reg}</span> subject registration(s)</div>
         <div class="mt-3">
-          <div class="fw-semibold mb-1" style="font-size:.8rem;">Qualifying students — please verify:</div>
-          <div style="max-height:240px; overflow-y:auto; border:1px solid var(--border); border-radius:8px;">
-            <table class="table table-sm mb-0" style="font-size:.75rem;">
+          <div class="fw-semibold mb-1 u-fs-080">Qualifying students — please verify:</div>
+          <div class="u-maxh-240 u-ovy-auto u-b-border u-br-8">
+            <table class="table table-sm mb-0 u-fs-075">
               <thead>
                 <tr>
                   <th>Student ID</th>
@@ -409,7 +409,7 @@
             </table>
           </div>
         </div>
-        <div class="mt-2" style="color:var(--danger);">
+        <div class="mt-2 u-c-danger">
           <i class="bi bi-exclamation-triangle-fill me-1"></i>No archive, no recovery. Log rows are written first as the backup.
         </div>
       `);
@@ -430,25 +430,25 @@
       }
 
       const failRows = (r.details ?? []).filter(d => d.error)
-        .map(d => `<div class="text-muted" style="font-size:.78rem;">
+        .map(d => `<div class="text-muted u-fs-078">
                      <span class="mono">${esc(d.student)}</span> — ${esc(d.error)}</div>`)
         .join('');
 
       showResult('Housekeeping Completed', `
-        <div class="mb-1"><span class="num-ok fw-bold" style="font-size:1.05rem;">${r.students_processed}</span> student(s) processed</div>
-        <div class="mb-1"><span class="num-ok fw-bold" style="font-size:1.05rem;">${r.sen_deleted}</span> SEN case(s) deleted</div>
-        <div class="mb-1"><span class="num-ok fw-bold" style="font-size:1.05rem;">${r.docs_deleted}</span> document record(s) deleted</div>
-        <div class="mb-1"><span class="num-ok fw-bold" style="font-size:1.05rem;">${r.files_deleted}</span> file(s) deleted from server
+        <div class="mb-1"><span class="num-ok fw-bold u-fs-105">${r.students_processed}</span> student(s) processed</div>
+        <div class="mb-1"><span class="num-ok fw-bold u-fs-105">${r.sen_deleted}</span> SEN case(s) deleted</div>
+        <div class="mb-1"><span class="num-ok fw-bold u-fs-105">${r.docs_deleted}</span> document record(s) deleted</div>
+        <div class="mb-1"><span class="num-ok fw-bold u-fs-105">${r.files_deleted}</span> file(s) deleted from server
           ${r.files_missing ? ` <span class="text-muted">(${r.files_missing} already missing)</span>` : ''}
-          ${r.files_failed ? ` <span style="color:var(--danger);">(${r.files_failed} failed)</span>` : ''}
+          ${r.files_failed ? ` <span class="u-c-danger">(${r.files_failed} failed)</span>` : ''}
         </div>
-        <div class="mb-1"><span class="num-dup fw-bold" style="font-size:1.05rem;">${r.advisor_deleted}</span> advisor assignment(s) deleted</div>
-        <div class="mb-1"><span class="num-dup fw-bold" style="font-size:1.05rem;">${r.reg_deleted}</span> subject registration(s) deleted</div>
+        <div class="mb-1"><span class="num-dup fw-bold u-fs-105">${r.advisor_deleted}</span> advisor assignment(s) deleted</div>
+        <div class="mb-1"><span class="num-dup fw-bold u-fs-105">${r.reg_deleted}</span> subject registration(s) deleted</div>
         ${r.students_failed ? `
-          <div class="mt-2 mb-1" style="color:var(--danger);"><span class="fw-bold">${r.students_failed}</span> student(s) failed — records kept, log rows written, re-run after fixing:</div>
+          <div class="mt-2 mb-1 u-c-danger"><span class="fw-bold">${r.students_failed}</span> student(s) failed — records kept, log rows written, re-run after fixing:</div>
           ${failRows}
         ` : ''}
-        <div class="text-muted mt-2" style="font-size:.78rem;"><i class="bi bi-journal-check me-1"></i>Audit rows written to tblHK_Student_Log / tblHK_SEN_Log / tblHK_SEN_Doc_Log.</div>
+        <div class="text-muted mt-2 u-fs-078"><i class="bi bi-journal-check me-1"></i>Audit rows written to tblHK_Student_Log / tblHK_SEN_Log / tblHK_SEN_Doc_Log.</div>
       `);
       resultModalEl.addEventListener('hidden.bs.modal', () => location.reload(), { once: true });
     } catch (e) {

@@ -7,7 +7,7 @@
 
 @section('content')
 
-<style>
+<style nonce="{{ $cspNonce }}">
   .form-label { font-size: .78rem; font-weight: 600; color: var(--text-muted); margin-bottom: .35rem; }
   .form-control, .form-select {
     background: var(--bg-soft);
@@ -87,9 +87,9 @@
   .btn-cancel:hover i { color: #fff; }
 </style>
 
-<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
+<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 u-mt-neg-15 u-mb-075">
   <div>
-    <h1 class="mb-0" style="font-size:1.25rem;">Staff List</h1>
+    <h1 class="mb-0 u-fs-125">Staff List</h1>
   </div>
 </div>
 
@@ -147,7 +147,7 @@
 <script nonce="{{ $cspNonce }}">
   const csrfToken = '{{ csrf_token() }}';
 </script>
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.js" integrity="sha384-4h7f/QzMaQuP/2DCJ4zcUcQzIZ3I9WCVELPmW/umU53xAtAlTH5ym7A/qtFqzhxb" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.noStyle.js" integrity="sha384-s1Ok/d+HoxfYayi4FqY2BuIVIwTHcD2tlc+xGlfbNgeKOkC+L3Mh6yvcfgODPrvU" crossorigin="anonymous"></script>
 <script nonce="{{ $cspNonce }}">
   const statusMap  = { 0: 'Enable', 1: 'Disable' };
   const statusRev  = { Enable: 0, Disable: 1 };

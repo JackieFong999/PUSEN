@@ -2,7 +2,7 @@
 
 @section('content')
 
-<style>
+<style nonce="{{ $cspNonce }}">
   .table { --bs-table-bg: transparent; color: var(--text); }
   .table thead th {
     font-size: .72rem;
@@ -26,16 +26,16 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
   <div>
-    <h1 class="mb-0" style="font-size:1.25rem;">Academic Year Semester</h1>
+    <h1 class="mb-0 u-fs-125">Academic Year Semester</h1>
   </div>
 </div>
 
 <div class="stat-card p-0 overflow-hidden">
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0" style="min-width: 560px;">
+    <table class="table table-hover align-middle mb-0 u-minw-560">
       <thead>
         <tr>
-          <th style="width:180px;">Year Semester Code</th>
+          <th class="u-w-180">Year Semester Code</th>
           <th>Year Semester Description</th>
         </tr>
       </thead>
@@ -56,7 +56,7 @@
 </div>
 
 <div class="text-center mt-4">
-  <span style="font-size:.78rem; color:var(--text-faint);">
+  <span class="u-fs-078 u-c-text-faint">
     <i class="bi bi-database me-1"></i>{{ count($years) }} record(s) from {{ config('database.connections.pusen.database') }}.tblAcademicYear_Semester
   </span>
 </div>

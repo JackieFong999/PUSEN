@@ -29,6 +29,16 @@ use Symfony\Component\HttpFoundation\Response;
  * CORP: cross-origin + ACAO * on all resource types (verified), so the only
  * remaining external host fully complies. Verified via headless Chrome sweep -
  * no blocked resources, no console errors (incl. AG Grid pages + PDF viewer).
+ *
+ * style-src: since 2026-09-04 (round 2) 'unsafe-inline' is DROPPED from
+ * style-src-elem (which governs <style> tags + <link> stylesheets) and split into
+ * style-src-elem (strict, nonce) + style-src-attr 'unsafe-inline'. Round 1 failed
+ * because AG Grid's normal build injects ~840KB of CSS as runtime <style> tags.
+ * Fix: ag-grid-community.min.noStyle.js build (CSS stays in <link> tags) + app
+ * inline style="" attrs moved to utilities.css classes + nonced <style> blocks.
+ * style-src-attr keeps 'unsafe-inline' because AG Grid 31 positions rows via
+ * runtime style-attribute writes (translateY) which CSP3 cannot nonce/hash -
+ * style-src-attr is the spec-sanctioned allowance for style attributes only.
  */
 class SecurityHeaders
 {
@@ -59,7 +69,13 @@ class SecurityHeaders
         $csp = implode('; ', [
             "default-src 'self'",
             "script-src 'self' 'nonce-{$cspNonce}' https://cdn.jsdelivr.net",
-            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+            // style-src-elem: governs <style> tags + <link> stylesheets - strict, nonce only.
+            // style-src-attr: governs style="" attributes. AG Grid 31 writes row
+            // transforms/positions via style attributes at runtime (noStyle build,
+            // 2026-09-04) - style attributes CANNOT be nonced/hashed, so per CSP3
+            // this is the only way to allow them while <style> injection stays blocked.
+            "style-src-elem 'self' 'nonce-{$cspNonce}' https://cdn.jsdelivr.net",
+            "style-src-attr 'unsafe-inline'",
             "font-src 'self' https://cdn.jsdelivr.net data:",
             "img-src 'self' data: blob:",
             "connect-src 'self'",

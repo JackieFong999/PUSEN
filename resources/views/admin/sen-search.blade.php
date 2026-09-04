@@ -7,7 +7,7 @@
 
 @section('content')
 
-<style>
+<style nonce="{{ $cspNonce }}">
   .form-label { font-size: .78rem; font-weight: 600; color: var(--text-muted); margin-bottom: .35rem; }
   .form-control, .form-select {
     background: var(--bg-soft);
@@ -79,9 +79,9 @@
   .btn-edit-sm { font-size: .78rem; padding: .38rem .9rem; border-radius: 10px; line-height: 1.4; white-space: nowrap; }
 </style>
 
-<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
+<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 u-mt-neg-15 u-mb-075">
   <div>
-    <h1 class="mb-0" style="font-size:1.25rem;">SEN Search</h1>
+    <h1 class="mb-0 u-fs-125">SEN Search</h1>
   </div>
 </div>
 
@@ -162,25 +162,25 @@
 
 {{-- ============ NO RESULT DIALOG ============ --}}
 <div class="modal fade" id="noResultModal" tabindex="-1" aria-labelledby="noResultModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+  <div class="modal-dialog modal-dialog-centered u-maxw-400">
     <div class="modal-content">
-      <div class="modal-body" style="padding:1.4rem 1.5rem;">
+      <div class="modal-body u-p-14-15">
         <div class="d-flex align-items-center gap-3">
-          <i class="bi bi-search" style="font-size:1.5rem;color:var(--accent-solid);"></i>
+          <i class="bi bi-search u-fs-150 u-c-accent-solid"></i>
           <div>
-            <div style="font-weight:700;color:var(--text);font-size:.95rem;">No records found</div>
-            <div style="font-size:.82rem;color:var(--text-muted);margin-top:.15rem;">No SEN cases match your search criteria. Please try different keywords.</div>
+            <div class="u-fw-700 u-c-text u-fs-095">No records found</div>
+            <div class="u-fs-082 u-c-text-muted u-mt-015">No SEN cases match your search criteria. Please try different keywords.</div>
           </div>
         </div>
       </div>
-      <div class="modal-footer" style="border-top:1px solid var(--card-border);padding:.7rem 1.5rem;">
-        <button type="button" class="btn btn-save" data-bs-dismiss="modal" style="min-width:90px;">OK</button>
+      <div class="modal-footer u-bt-card u-p-07-15">
+        <button type="button" class="btn btn-save u-minw-90" data-bs-dismiss="modal">OK</button>
       </div>
     </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.js" integrity="sha384-4h7f/QzMaQuP/2DCJ4zcUcQzIZ3I9WCVELPmW/umU53xAtAlTH5ym7A/qtFqzhxb" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.noStyle.js" integrity="sha384-s1Ok/d+HoxfYayi4FqY2BuIVIwTHcD2tlc+xGlfbNgeKOkC+L3Mh6yvcfgODPrvU" crossorigin="anonymous"></script>
 <script nonce="{{ $cspNonce }}">
   /* ---------- loading overlay component (must be defined before gridOptions) ---------- */
   class SenLoadingOverlay {

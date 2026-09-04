@@ -10,8 +10,10 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" integrity="sha384-XGjxtQfXaH2tnPFa9x+ruJTuLE3Aa6LhHSWRr1XeTyhezb4abCG4ccI5AkVDxqC+" crossorigin="anonymous">
 {{-- Inter font: self-hosted (2026-09-04) - removes external fonts.googleapis.com stylesheet + SRI gap --}}
 <link href="{{ asset('css/fonts.css') }}?v=20260904" rel="stylesheet">
+{{-- Local utility classes replacing inline style="" attrs (2026-09-04) --}}
+<link href="{{ asset('css/utilities.css') }}?v=20260904" rel="stylesheet">
 
-<style>
+<style nonce="{{ $cspNonce }}">
   :root {
     --bg: #0e1016;
     --bg-soft: #131722;
@@ -239,7 +241,7 @@
     @endif
   </div>
 
-  <div class="login-foot">Internal use only &middot; {{ config('app.name', 'PolyU SEN Data Bank') }} &middot; <span style="color:#000000;font-weight:600;">v1.10</span></div>
+  <div class="login-foot">Internal use only &middot; {{ config('app.name', 'PolyU SEN Data Bank') }} &middot; <span class="u-c-black u-fw-600">v1.10</span></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
