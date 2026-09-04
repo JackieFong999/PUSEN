@@ -7,7 +7,7 @@
 
 @section('content')
 
-<style nonce="{{ $cspNonce }}">
+<style>
   .form-label { font-size: .78rem; font-weight: 600; color: var(--text-muted); margin-bottom: .35rem; }
   .form-control, .form-select {
     background: var(--bg-soft);
@@ -76,9 +76,9 @@
   .dev-note b { color: var(--accent); }
 </style>
 
-<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 u-mt-neg-15 u-mb-075">
+<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
   <div>
-    <h1 class="mb-0 u-fs-125">Email Management</h1>
+    <h1 class="mb-0" style="font-size:1.25rem;">Email Management</h1>
   </div>
 </div>
 
@@ -88,11 +88,11 @@
     <div class="radio-group">
       <div class="form-check">
         <input class="form-check-input" type="radio" name="recipientType" id="rtTeacher" value="subject_teacher" checked>
-        <label class="form-check-label" for="rtTeacher">Send email to Subject teacher <span class="text-muted u-fs-078">(template ET-003)</span></label>
+        <label class="form-check-label" for="rtTeacher">Send email to Subject teacher <span class="text-muted" style="font-size:.78rem;">(template ET-003)</span></label>
       </div>
       <div class="form-check">
         <input class="form-check-input" type="radio" name="recipientType" id="rtStudent" value="student">
-        <label class="form-check-label" for="rtStudent">Send email to Student <span class="text-muted u-fs-078">(template ET-004)</span></label>
+        <label class="form-check-label" for="rtStudent">Send email to Student <span class="text-muted" style="font-size:.78rem;">(template ET-004)</span></label>
       </div>
       <div class="form-check">
         <input class="form-check-input" type="radio" name="recipientType" id="rtBoth" value="both">
@@ -119,7 +119,7 @@
       </div>
     </div>
 
-    <div class="u-dn" id="specificArea">
+    <div id="specificArea" style="display:none;">
       <div class="row g-3">
         <div class="col-md-5">
           <label class="form-label" for="fSenCase">SEN case</label>
@@ -128,7 +128,7 @@
               <input type="text" class="form-control" id="fSenCase" placeholder="Type SEN case to search…" autocomplete="off">
               <div class="ac-list" id="senCaseAc"></div>
             </div>
-            <button type="button" class="btn btn-cancel u-nowrap" id="addSenCaseBtn"><i class="bi bi-plus-lg me-1"></i>Add</button>
+            <button type="button" class="btn btn-cancel" id="addSenCaseBtn" style="white-space:nowrap;"><i class="bi bi-plus-lg me-1"></i>Add</button>
           </div>
           <div class="dev-note" id="senCaseNote"></div>
         </div>
@@ -139,7 +139,7 @@
               <input type="text" class="form-control" id="fStudentNo" placeholder="Type Student Id / name to search…" autocomplete="off">
               <div class="ac-list" id="studentAc"></div>
             </div>
-            <button type="button" class="btn btn-cancel u-nowrap" id="addStudentBtn"><i class="bi bi-plus-lg me-1"></i>Add</button>
+            <button type="button" class="btn btn-cancel" id="addStudentBtn" style="white-space:nowrap;"><i class="bi bi-plus-lg me-1"></i>Add</button>
           </div>
           <div class="dev-note" id="studentNote"></div>
         </div>
@@ -161,10 +161,10 @@
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title u-fs-095">Confirm Send</h5>
+        <h5 class="modal-title" style="font-size:.95rem;">Confirm Send</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body u-fs-085" id="confirmSendMsg"></div>
+      <div class="modal-body" id="confirmSendMsg" style="font-size:.85rem;"></div>
       <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-search" id="confirmSendYes">Send</button>

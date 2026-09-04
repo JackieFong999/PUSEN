@@ -5,7 +5,7 @@
 <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-grid.css" rel="stylesheet" integrity="sha384-LNcL0K2K7L8L9H0XdFjFVke0Q1STyt3EhtpjMIai3xF3YpjvIOIoQlplKoTiaCS0" crossorigin="anonymous">
 <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-theme-alpine.css" rel="stylesheet" integrity="sha384-kYz5+ibE+6jW5uFDveyCHnWtCKom1rUsq6SjbxD+EGAXkVIjLGi103ZL7WqhLGPC" crossorigin="anonymous">
 
-<style nonce="{{ $cspNonce }}">
+<style>
   .btn-del {
     border: 1px solid #7d1d29; color: #fff; background: #9B2331;
     font-size: .78rem; font-weight: 600;
@@ -66,9 +66,9 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
   <div>
-    <h1 class="mb-0 u-fs-125">Temporary Special Support</h1>
+    <h1 class="mb-0" style="font-size:1.25rem;">Temporary Special Support</h1>
   </div>
-  <div class="u-fs-075 u-c-text-faint">
+  <div style="font-size:.75rem; color:var(--text-faint);">
     <i class="bi bi-database me-1"></i>{{ count($supports) }} record(s) &middot; 10 per page
   </div>
 </div>
@@ -80,12 +80,12 @@
 
 {{-- ============ ADD / EDIT ENTRY (below the list) ============ --}}
 <div class="stat-card p-3 mt-4">
-  <div class="u-fs-072 u-fw-700 u-ls-006 u-tt-up u-c-black u-mb-060" id="entryTitle">Add New Temporary Special Support</div>
+  <div style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#000; margin-bottom:.6rem;" id="entryTitle">Add New Temporary Special Support</div>
   <div class="d-flex gap-2 align-items-center">
-    <input type="text" id="newSupport" class="form-control u-maxw-420" maxlength="40"
-           placeholder="Enter a new value…">
+    <input type="text" id="newSupport" class="form-control" maxlength="40"
+           placeholder="Enter a new value…" style="max-width:420px;">
     <button type="button" id="addSupportBtn" class="btn btn-add"><i class="bi bi-plus-lg me-1"></i>Save</button>
-    <button type="button" id="cancelEditBtn" class="btn btn-cancel u-dn">Cancel</button>
+    <button type="button" id="cancelEditBtn" class="btn btn-cancel" style="display:none;">Cancel</button>
   </div>
 </div>
 
@@ -99,8 +99,8 @@
       </div>
       <div class="modal-body" id="confirmModalMsg"></div>
       <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-del u-bc-border u-bg-soft u-c-text-muted" id="confirmNo">Cancel</button>
-        <button type="button" class="btn btn-add u-bg-red u-bc-red-dark" id="confirmYes">Delete</button>
+        <button type="button" class="btn btn-del" id="confirmNo" style="border-color:var(--border); background:var(--bg-soft); color:var(--text-muted);">Cancel</button>
+        <button type="button" class="btn btn-add" id="confirmYes" style="background:#dc2626; border-color:#b91c1c;">Delete</button>
       </div>
     </div>
   </div>
@@ -111,7 +111,7 @@
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title" id="infoModalTitle"><i class="bi bi-info-circle me-1 u-c-danger"></i>Cannot Delete</h5>
+        <h5 class="modal-title" id="infoModalTitle"><i class="bi bi-info-circle me-1" style="color:var(--danger);"></i>Cannot Delete</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="infoModalMsg"></div>
@@ -150,8 +150,8 @@
     const titleEl = document.getElementById('infoModalTitle');
     if (title) {
       const icon = isSuccess
-        ? '<i class="bi bi-check-circle me-1 u-c-success"></i>'
-        : '<i class="bi bi-info-circle me-1 u-c-danger"></i>';
+        ? '<i class="bi bi-check-circle me-1" style="color:var(--success);"></i>'
+        : '<i class="bi bi-info-circle me-1" style="color:var(--danger);"></i>';
       titleEl.innerHTML = icon + esc(title);
     }
     bootstrap.Modal.getOrCreateInstance(infoModalEl).show();
@@ -302,7 +302,7 @@
     editingId = id;
     document.getElementById('entryTitle').textContent = 'Edit Temporary Special Support';
     document.getElementById('addSupportBtn').innerHTML = '<i class="bi bi-check-lg me-1"></i>Save';
-    document.getElementById('cancelEditBtn').style.display = 'inline-block';
+    document.getElementById('cancelEditBtn').style.display = '';
     const input = document.getElementById('newSupport');
     input.value = support;
     input.placeholder = 'Enter the new value…';

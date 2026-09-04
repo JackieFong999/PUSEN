@@ -7,7 +7,7 @@
 
 @section('content')
 
-<style nonce="{{ $cspNonce }}">
+<style>
   .form-label { font-size: .78rem; font-weight: 600; color: var(--text-muted); margin-bottom: .35rem; }
   .form-control, .form-select {
     background: var(--bg-soft);
@@ -87,9 +87,9 @@
   .btn-cancel:hover i { color: #fff; }
 </style>
 
-<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 u-mt-neg-15 u-mb-075">
+<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
   <div>
-    <h1 class="mb-0 u-fs-125">Staff List</h1>
+    <h1 class="mb-0" style="font-size:1.25rem;">Staff List</h1>
   </div>
 </div>
 

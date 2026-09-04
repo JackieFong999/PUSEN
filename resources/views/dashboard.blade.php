@@ -12,7 +12,7 @@
     };
 @endphp
 
-<style nonce="{{ $cspNonce }}">
+<style>
   .stat-card { border-color: #000; }
   .table {
     --bs-table-bg: transparent;
@@ -59,7 +59,7 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
     <div>
-        <h1 class="mb-0 u-fs-125">Dashboard</h1>
+        <h1 class="mb-0" style="font-size:1.25rem;">Dashboard</h1>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('dashboard') }}" class="filter-btn {{ $status ? '' : 'active' }}">
@@ -77,11 +77,11 @@
 {{-- ============ IMPORT LOGGING (ALL TYPES) ============ --}}
 <div class="stat-card p-0 overflow-hidden">
   <div class="d-flex align-items-center justify-content-between px-3 pt-3 pb-2">
-    <span class="u-fs-072 u-fw-700 u-ls-006 u-tt-up u-c-black">Import Logging</span>
-    <span class="u-fs-075 u-c-text-faint">Latest 50</span>
+    <span style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#000;">Import Logging</span>
+    <span style="font-size:.75rem; color:var(--text-faint);">Latest 50</span>
   </div>
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0 u-minw-1150">
+    <table class="table table-hover align-middle mb-0" style="min-width: 1150px;">
       <thead>
         <tr>
           <th>Import Time</th>
@@ -112,7 +112,7 @@
           </tr>
         @empty
           <tr>
-            <td colspan="10" class="text-muted u-fs-085">No import logs yet.</td>
+            <td colspan="10" class="text-muted" style="font-size:.85rem;">No import logs yet.</td>
           </tr>
         @endforelse
       </tbody>
@@ -123,10 +123,10 @@
 {{-- ============ LOGIN STATISTIC (LAST 10 DAYS) ============ --}}
 <div class="stat-card p-3 mt-4">
   <div class="d-flex align-items-center justify-content-between mb-2">
-    <span class="u-fs-072 u-fw-700 u-ls-006 u-tt-up u-c-text-faint">Login Statistic</span>
-    <span class="u-fs-075 u-c-text-faint">Recent 10 days</span>
+    <span style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint);">Login Statistic</span>
+    <span style="font-size:.75rem; color:var(--text-faint);">Recent 10 days</span>
   </div>
-  <div class="u-h-300 u-pos-rel">
+  <div style="height: 300px; position: relative;">
     <canvas id="loginChart"></canvas>
   </div>
 </div>

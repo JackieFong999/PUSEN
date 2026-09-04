@@ -14,11 +14,8 @@ use Symfony\Component\HttpFoundation\Response;
  * injected into every inline <script> tag in the Blade views), so script-src can
  * drop 'unsafe-inline' - injected scripts without the nonce are blocked by the
  * browser. External CDN scripts (jsdelivr) stay host-allowlisted.
- * style-src: since 2026-09-04 all inline style="" attributes were moved to local
- * utility classes (public/css/utilities.css, loaded from 'self') and every
- * <style> block carries the same per-request nonce, so style-src can also drop
- * 'unsafe-inline'. CSSOM style writes from JS (el.style.x = ...) are not governed
- * by CSP and keep working (display toggles etc.).
+ * style-src still allows 'unsafe-inline' (inline styles are used app-wide);
+ * moving styles to nonces is a future hardening step.
  *
  * ACCEPTED RISK (2026-09-03, decision with Jackie): Cross-Origin-Embedder-Policy
  * (COEP) is deliberately NOT set. require-corp/credentialless would force every
@@ -52,7 +49,7 @@ class SecurityHeaders
         $csp = implode('; ', [
             "default-src 'self'",
             "script-src 'self' 'nonce-{$cspNonce}' https://cdn.jsdelivr.net",
-            "style-src 'self' 'nonce-{$cspNonce}' https://cdn.jsdelivr.net https://fonts.googleapis.com",
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:",
             "img-src 'self' data: blob:",
             "connect-src 'self'",

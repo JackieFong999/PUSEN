@@ -12,12 +12,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-{{-- Local utility classes replacing inline style="" attrs (2026-09-04, CSP style-src cleanup) --}}
-<link href="{{ asset('css/utilities.css') }}?v=20260904" rel="stylesheet">
 
 @stack('head')
 
-<style nonce="{{ $cspNonce }}">
+<style>
   :root {
     --bg: #f4f6fb;
     --bg-soft: #ffffff;
@@ -445,10 +443,10 @@
     @php $authStaff = Auth::user(); @endphp
     {{-- Login name / title --}}
     <div class="d-flex align-items-center gap-2 me-2">
-      <div class="avatar u-w-32 u-h-32 u-fsx-0">{{ $authStaff ? strtoupper(mb_substr($authStaff->Staff_Display_Name ?: $authStaff->Staff_Name, 0, 1)) : config('nav.profile.initial') }}</div>
+      <div class="avatar" style="width:32px;height:32px;flex-shrink:0;">{{ $authStaff ? strtoupper(mb_substr($authStaff->Staff_Display_Name ?: $authStaff->Staff_Name, 0, 1)) : config('nav.profile.initial') }}</div>
       <div class="d-none d-md-block lh-1">
-        <div class="u-fs-080 u-fw-600 u-c-text u-mb-3px">{{ $authStaff ? ($authStaff->Staff_Display_Name ?: $authStaff->Staff_Name) : config('nav.profile.name') }}</div>
-        <div class="u-fs-068 u-c-text-faint">{{ $authStaff ? ($authStaff->role?->Role_Desc ?: $authStaff->Staff_Id) : config('nav.profile.role') }}</div>
+        <div style="font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:3px;">{{ $authStaff ? ($authStaff->Staff_Display_Name ?: $authStaff->Staff_Name) : config('nav.profile.name') }}</div>
+        <div style="font-size:.68rem;color:var(--text-faint);">{{ $authStaff ? ($authStaff->role?->Role_Desc ?: $authStaff->Staff_Id) : config('nav.profile.role') }}</div>
       </div>
     </div>
     {{-- Logout --}}
@@ -521,7 +519,7 @@
         <h5 class="modal-title">Unsaved changes</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body u-fs-088 u-c-text">This form has unsaved changes. If you leave this page, all unsaved changes will be discarded. Do you want to continue?</div>
+      <div class="modal-body" style="font-size:.88rem;color:var(--text);">This form has unsaved changes. If you leave this page, all unsaved changes will be discarded. Do you want to continue?</div>
       <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-cancel" id="navConfirmStay">Stay</button>
         <button type="button" class="btn btn-search" id="navConfirmLeave">Discard &amp; Leave</button>
@@ -535,10 +533,10 @@
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title"><i class="bi bi-box-arrow-right me-1 u-c-accent"></i>Log out</h5>
+        <h5 class="modal-title"><i class="bi bi-box-arrow-right me-1" style="color:var(--accent);"></i>Log out</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body u-fs-088 u-c-text">Are you sure you want to log out of the system?</div>
+      <div class="modal-body" style="font-size:.88rem;color:var(--text);">Are you sure you want to log out of the system?</div>
       <div class="modal-footer border-0 pt-0">
         <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-search" id="logoutConfirmYes">Log out</button>
@@ -725,7 +723,7 @@
     el.style.background = 'var(--card-bg)';
     el.style.color = 'var(--text)';
     el.style.boxShadow = 'var(--shadow)';
-    el.innerHTML = `<div class="d-flex"><div class="toast-body u-fs-085 u-fw-500">${msg}</div>
+    el.innerHTML = `<div class="d-flex"><div class="toast-body" style="font-size:.85rem;font-weight:500;">${msg}</div>
       <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
     holder.appendChild(el);
     setTimeout(() => el.remove(), 2600);

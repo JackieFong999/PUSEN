@@ -11,7 +11,7 @@
     };
 @endphp
 
-<style nonce="{{ $cspNonce }}">
+<style>
   .form-label { font-size: .78rem; font-weight: 600; color: var(--text-muted); margin-bottom: .35rem; }
   .form-control, .form-select, .form-check-input {
     background: var(--bg-soft);
@@ -238,9 +238,9 @@
   .preview-email-list .pkey { font-weight: 700; color: var(--text-muted); }
 </style>
 
-<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 u-mt-neg-15 u-mb-075">
+<div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3" style="margin-top:-1.5rem; margin-bottom:.75rem;">
   <div>
-    <h1 class="mb-0 u-fs-125">{{ $isView ? 'View SEN' : ($isEdit ? 'Edit SEN' : 'Create SEN') }}</h1>
+    <h1 class="mb-0" style="font-size:1.25rem;">{{ $isView ? 'View SEN' : ($isEdit ? 'Edit SEN' : 'Create SEN') }}</h1>
   </div>
 </div>
 
@@ -268,7 +268,7 @@
             <input type="text" class="form-control" id="fStudentId" name="student_id"
                    placeholder="Type Student Id to search…" autocomplete="off"
                    value="{{ $isEdit ? $editSen->Student_Id : '' }}" disabled>
-            <div class="student-autocomplete u-dn" id="studentAutocomplete"></div>
+            <div class="student-autocomplete" id="studentAutocomplete" style="display:none;"></div>
           </div>
         </div>
       </div>
@@ -284,7 +284,7 @@
             <input type="text" class="form-control" id="fDA" placeholder="Type Staff Id / name to search…" autocomplete="off"
                    value="{{ $isEdit ? $staffLabelOf('department_admin_staff', $editSen->Department_Admin_Staff) : '' }}" disabled>
             <input type="hidden" name="department_admin_staff" id="fDA_h" value="{{ $isEdit ? $editSen->Department_Admin_Staff : '' }}">
-            <div class="student-autocomplete u-dn" id="fDA_ac"></div>
+            <div class="student-autocomplete" id="fDA_ac" style="display:none;"></div>
           </div>
         </div>
         <div class="col-md-4">
@@ -293,7 +293,7 @@
             <input type="text" class="form-control" id="fC" placeholder="Type Staff Id / name to search…" autocomplete="off"
                    value="{{ $isEdit ? $staffLabelOf('counsellor', $editSen->Counsellor) : '' }}" disabled>
             <input type="hidden" name="counsellor" id="fC_h" value="{{ $isEdit ? $editSen->Counsellor : '' }}">
-            <div class="student-autocomplete u-dn" id="fC_ac"></div>
+            <div class="student-autocomplete" id="fC_ac" style="display:none;"></div>
           </div>
         </div>
         <div class="col-md-4">
@@ -302,7 +302,7 @@
             <input type="text" class="form-control" id="fUSSO" placeholder="Type Staff Id / name to search…" autocomplete="off"
                    value="{{ $isEdit ? $staffLabelOf('undergraduate_studies_support_officer', $editSen->Undergraduate_Studies_Support_Officer) : '' }}" disabled>
             <input type="hidden" name="undergraduate_studies_support_officer" id="fUSSO_h" value="{{ $isEdit ? $editSen->Undergraduate_Studies_Support_Officer : '' }}">
-            <div class="student-autocomplete u-dn" id="fUSSO_ac"></div>
+            <div class="student-autocomplete" id="fUSSO_ac" style="display:none;"></div>
           </div>
         </div>
         <div class="col-md-4">
@@ -349,19 +349,19 @@
 
   {{-- ============ DOCUMENT UPLOAD ============ --}}
   <div class="form-card mb-3">
-    <div class="card-head">Documents @if (! $isView)<span class="text-muted u-tt-none u-ls-0">(upload)</span>@endif <span class="badge-soft" id="docCountLabel">0 / 20</span></div>
+    <div class="card-head">Documents @if (! $isView)<span class="text-muted" style="text-transform:none;letter-spacing:0;">(upload)</span>@endif <span class="badge-soft" id="docCountLabel">0 / 20</span></div>
     <div class="card-body">
       @if (! $isView)
       <div class="d-flex align-items-center gap-2 mb-2">
         <button type="button" id="chooseFilesBtn" class="btn btn-cancel"><i class="bi bi-paperclip me-1"></i>Choose Files</button>
-        <span class="text-muted u-fs-075">Any file except executables (.exe, .js, etc.) &middot; max 10 MB each</span>
+        <span class="text-muted" style="font-size:.75rem;">Any file except executables (.exe, .js, etc.) &middot; max 10 MB each</span>
       </div>
       <input type="file" id="docFileInput" multiple hidden>
       @endif
-      <div class="table-responsive u-maxh-230 u-ovy-auto">
-        <table class="table table-hover align-middle mb-0 u-minw-460" id="docTable">
+      <div class="table-responsive" style="max-height:230px; overflow-y:auto;">
+        <table class="table table-hover align-middle mb-0" id="docTable" style="min-width:460px;">
           <tbody id="docTableBody">
-            <tr><td colspan="3" class="text-muted u-fs-085">— none —</td></tr>
+            <tr><td colspan="3" class="text-muted" style="font-size:.85rem;">— none —</td></tr>
           </tbody>
         </table>
       </div>
@@ -412,7 +412,7 @@
           <label class="form-label" for="dSubjects">Subject</label>
           <textarea class="form-control display-only" id="dSubjects" rows="4" readonly disabled></textarea>
           @if (!$isView)
-          <div class="form-check mt-3 u-pl-0">
+          <div class="form-check mt-3" style="padding-left:0;">
             <input class="form-check-input" type="checkbox" id="sendEmailChk" name="send_email" value="1">
             <label class="form-check-label" for="sendEmailChk">Send email to related stakeholder</label>
           </div>
@@ -445,7 +445,7 @@
       </div>
       <div class="modal-body" id="confirmModalMsg"></div>
       <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-search u-dn" id="confirmOk">OK</button>
+        <button type="button" class="btn btn-search" id="confirmOk" style="display:none;">OK</button>
         <button type="button" class="btn btn-cancel" id="confirmNo">Cancel</button>
         <button type="button" class="btn btn-search" id="confirmYes">Confirm</button>
       </div>
@@ -458,16 +458,16 @@
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title"><i class="bi bi-eye me-1 u-c-accent"></i>Preview SEN</h5>
+        <h5 class="modal-title"><i class="bi bi-eye me-1" style="color:var(--accent);"></i>Preview SEN</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <div id="previewEmailBox" class="preview-email-box u-dn">
+        <div id="previewEmailBox" class="preview-email-box" style="display:none;">
           <div class="preview-email-title"><i class="bi bi-envelope me-1"></i>Email will be sent to the following stakeholders:</div>
           <div id="previewEmailList" class="preview-email-list"></div>
         </div>
-        <div class="u-fs-080 u-c-text-faint u-mb-060">Review the SEN details below, then Save or Cancel.</div>
-        <div class="table-responsive u-maxh-52vh u-ovy-auto">
+        <div style="font-size:.8rem;color:var(--text-faint);margin-bottom:.6rem;">Review the SEN details below, then Save or Cancel.</div>
+        <div class="table-responsive" style="max-height:52vh;overflow-y:auto;">
           <table class="table table-sm preview-table mb-2">
             <tbody id="previewBody"></tbody>
           </table>
@@ -493,7 +493,7 @@
       document.getElementById('confirmModalMsg').textContent = message;
       document.getElementById('confirmYes').style.display = 'none';
       document.getElementById('confirmNo').style.display = 'none';
-      document.getElementById('confirmOk').style.display = 'inline-block';
+      document.getElementById('confirmOk').style.display = '';
       confirmResolve = resolve;
       bootstrap.Modal.getOrCreateInstance(confirmModalEl).show();
     });
@@ -611,7 +611,7 @@
       ? '<div class="preview-docs-label">Documents</div>' + docs
           .map(d => '<span class="preview-doc"><i class="bi bi-file-earmark-text"></i>' + escapeHtml(d) + '</span>')
           .join('')
-      : '<div class="text-muted u-fs-085">No documents</div>';
+      : '<div class="text-muted" style="font-size:.85rem;">No documents</div>';
   }
 
   function askPreview() {

@@ -2,7 +2,7 @@
 
 @section('content')
 
-<style nonce="{{ $cspNonce }}">
+<style>
   .table { --bs-table-bg: transparent; color: var(--text); }
   .table thead th {
     font-size: .72rem;
@@ -26,13 +26,13 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
   <div>
-    <h1 class="mb-0 u-fs-125">Subject Type</h1>
+    <h1 class="mb-0" style="font-size:1.25rem;">Subject Type</h1>
   </div>
 </div>
 
 <div class="stat-card p-0 overflow-hidden">
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0 u-minw-480">
+    <table class="table table-hover align-middle mb-0" style="min-width: 480px;">
       <thead>
         <tr>
           <th>Subject Type</th>
@@ -54,7 +54,7 @@
 </div>
 
 <div class="text-center mt-4">
-  <span class="u-fs-078 u-c-text-faint">
+  <span style="font-size:.78rem; color:var(--text-faint);">
     <i class="bi bi-database me-1"></i>{{ count($subjectTypes) }} record(s) from {{ config('database.connections.pusen.database') }}.tblSubject_Type
   </span>
 </div>
