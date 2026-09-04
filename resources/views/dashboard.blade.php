@@ -2,6 +2,16 @@
 
 @section('content')
 
+@php
+    // Status -> Bootstrap text colour. Inline style= moved to a class (Option A pilot,
+    // 2026-09-04) so style-src 'unsafe-inline' can eventually be dropped (ZAP 10055).
+    $importStatusClass = fn ($status) => match (true) {
+        $status === 'Success' => 'text-success',
+        (bool) $status        => 'text-danger',
+        default               => 'text-muted',
+    };
+@endphp
+
 <style>
   .stat-card { border-color: #000; }
   .table {
@@ -92,7 +102,7 @@
             <td>{{ $log->created_at ? \Carbon\Carbon::parse($log->created_at)->format('Y-m-d H:i') : '—' }}</td>
             <td>{{ $log->File_Name }}</td>
             <td>{{ $log->FileType }}</td>
-            <td style="color:{{ $log->Import_Status === 'Success' ? 'var(--success)' : ($log->Import_Status ? 'var(--danger)' : 'var(--text-muted)') }}; font-weight:600;">{{ $log->Import_Status ?: '—' }}</td>
+            <td class="{{ $importStatusClass($log->Import_Status) }} fw-semibold">{{ $log->Import_Status ?: '—' }}</td>
             <td>{{ $log->CSV_Row_Count }}</td>
             <td>{{ $log->Import_Count }}</td>
             <td>{{ $log->Updated_Count }}</td>
