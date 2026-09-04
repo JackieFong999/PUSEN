@@ -5,7 +5,7 @@
 <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-grid.css" rel="stylesheet" integrity="sha384-LNcL0K2K7L8L9H0XdFjFVke0Q1STyt3EhtpjMIai3xF3YpjvIOIoQlplKoTiaCS0" crossorigin="anonymous">
 <link href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/styles/ag-theme-alpine.css" rel="stylesheet" integrity="sha384-kYz5+ibE+6jW5uFDveyCHnWtCKom1rUsq6SjbxD+EGAXkVIjLGi103ZL7WqhLGPC" crossorigin="anonymous">
 
-<style>
+<style nonce="{{ $cspNonce }}">
   .btn-del {
     border: 1px solid #7d1d29; color: #fff; background: #9B2331;
     font-size: .78rem; font-weight: 600;
@@ -66,9 +66,9 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
   <div>
-    <h1 class="mb-0" style="font-size:1.25rem;">SEN Type</h1>
+    <h1 class="mb-0 u-fs-125">SEN Type</h1>
   </div>
-  <div style="font-size:.75rem; color:var(--text-faint);">
+  <div class="u-fs-075 u-c-text-faint">
     <i class="bi bi-database me-1"></i>{{ count($senTypes) }} record(s) &middot; 10 per page
   </div>
 </div>
@@ -80,12 +80,12 @@
 
 {{-- ============ ADD / EDIT ENTRY (below the list) ============ --}}
 <div class="stat-card p-3 mt-4">
-  <div style="font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin-bottom:.6rem;" id="entryTitle">Add New SEN Type</div>
+  <div class="u-fs-072 u-fw-700 u-ls-006 u-tt-up u-c-text-faint u-mb-060" id="entryTitle">Add New SEN Type</div>
   <div class="d-flex gap-2 align-items-center">
-    <input type="text" id="newSenType" class="form-control" maxlength="60"
-           placeholder="Enter a new SEN Type code…" style="max-width:420px;">
+    <input type="text" id="newSenType" class="form-control u-maxw-420" maxlength="60"
+           placeholder="Enter a new SEN Type code…">
     <button type="button" id="addSenTypeBtn" class="btn btn-add"><i class="bi bi-plus-lg me-1"></i>Save</button>
-    <button type="button" id="cancelEditBtn" class="btn btn-cancel" style="display:none;">Cancel</button>
+    <button type="button" id="cancelEditBtn" class="btn btn-cancel u-dn">Cancel</button>
   </div>
 </div>
 
@@ -99,8 +99,8 @@
       </div>
       <div class="modal-body" id="confirmModalMsg"></div>
       <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-del" id="confirmNo" style="border-color:var(--border); background:var(--bg-soft); color:var(--text-muted);">Cancel</button>
-        <button type="button" class="btn btn-add" id="confirmYes" style="background:#dc2626; border-color:#b91c1c;">Delete</button>
+        <button type="button" class="btn btn-del u-bc-border u-bg-soft u-c-text-muted" id="confirmNo">Cancel</button>
+        <button type="button" class="btn btn-add u-bg-red u-bc-red-dark" id="confirmYes">Delete</button>
       </div>
     </div>
   </div>
@@ -111,7 +111,7 @@
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title" id="infoModalTitle"><i class="bi bi-info-circle me-1" style="color:var(--danger);"></i>Cannot Delete</h5>
+        <h5 class="modal-title" id="infoModalTitle"><i class="bi bi-info-circle me-1 u-c-danger"></i>Cannot Delete</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="infoModalMsg"></div>
@@ -150,8 +150,8 @@
     const titleEl = document.getElementById('infoModalTitle');
     if (title) {
       const icon = isSuccess
-        ? '<i class="bi bi-check-circle me-1" style="color:var(--success);"></i>'
-        : '<i class="bi bi-info-circle me-1" style="color:var(--danger);"></i>';
+        ? '<i class="bi bi-check-circle me-1 u-c-success"></i>'
+        : '<i class="bi bi-info-circle me-1 u-c-danger"></i>';
       titleEl.innerHTML = icon + esc(title);
     }
     bootstrap.Modal.getOrCreateInstance(infoModalEl).show();
@@ -303,7 +303,7 @@
     editingId = id;
     document.getElementById('entryTitle').textContent = 'Edit SEN Type';
     document.getElementById('addSenTypeBtn').innerHTML = '<i class="bi bi-check-lg me-1"></i>Save';
-    document.getElementById('cancelEditBtn').style.display = '';
+    document.getElementById('cancelEditBtn').style.display = 'inline-block';
     const input = document.getElementById('newSenType');
     input.value = senType;
     input.placeholder = 'Enter the new SEN Type code…';

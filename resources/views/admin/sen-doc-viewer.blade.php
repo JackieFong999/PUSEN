@@ -9,7 +9,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Document Preview - {{ config('app.name', 'PolyU SEN Data Bank') }}</title>
-<style>
+{{-- Local utility classes replacing inline style="" attrs (2026-09-04) --}}
+<link href="{{ asset('css/utilities.css') }}?v=20260904" rel="stylesheet">
+<style nonce="{{ $cspNonce }}">
   :root {
     --bg: #10141d;
     --panel: #1a2130;
@@ -143,16 +145,16 @@
 
 <main id="main">
   <div id="statusBox"><div class="spinner"></div>Loading document&hellip;</div>
-  <div id="errorBox" style="display:none;"></div>
-  <img id="imageViewer" alt="" style="display:none;">
-  <div id="pdfPages" style="display:none;"></div>
+  <div class="u-dn" id="errorBox"></div>
+  <img class="u-dn" id="imageViewer" alt="">
+  <div class="u-dn" id="pdfPages"></div>
 </main>
 
-<footer id="toolbar" style="display:none;">
+<footer class="u-dn" id="toolbar">
   <button type="button" id="prevBtn" title="Previous page">&#9664; Prev</button>
   <span class="pageinfo" id="pageInfo">- / -</span>
   <button type="button" id="nextBtn" title="Next page">Next &#9654;</button>
-  <span style="opacity:.4;">|</span>
+  <span class="u-op-04">|</span>
   <button type="button" id="zoomOutBtn" title="Zoom out">&#8722;</button>
   <span class="zoominfo" id="zoomInfo">100%</span>
   <button type="button" id="zoomInBtn" title="Zoom in">+</button>
@@ -188,7 +190,7 @@
     pagesEl.style.display = 'none';
     toolbar.style.display = 'none';
     errorEl.style.display = 'block';
-    errorEl.innerHTML = '<div style="font-size:1.6rem;margin-bottom:.5rem;">&#128196;</div>' + msg;
+    errorEl.innerHTML = '<div class="u-fs-160 u-mb-050">&#128196;</div>' + msg;
   }
 
   // ---------- print / download protection ----------

@@ -2,7 +2,7 @@
 
 @section('content')
 
-<style>
+<style nonce="{{ $cspNonce }}">
   .table { --bs-table-bg: transparent; color: var(--text); }
   .table thead th {
     font-size: .72rem;
@@ -48,8 +48,8 @@
 
 <div class="page-header d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
   <div>
-    <h1 class="mb-0" style="font-size:1.25rem;">Data Import</h1>
-    <div class="text-muted" style="font-size:.85rem;">
+    <h1 class="mb-0 u-fs-125">Data Import</h1>
+    <div class="text-muted u-fs-085">
       Import master data from the SFTP server. Files are picked from
       <span class="import-file"><i class="bi bi-folder2-open me-1"></i>upload/</span>
       and archived to <span class="import-file"><i class="bi bi-archive me-1"></i>processed/</span> after a successful import.
@@ -58,7 +58,7 @@
 </div>
 
 @if ($sftpError)
-  <div class="alert alert-danger d-flex align-items-center gap-2 py-2" style="font-size:.85rem;">
+  <div class="alert alert-danger d-flex align-items-center gap-2 py-2 u-fs-085">
     <i class="bi bi-exclamation-triangle-fill"></i>
     <span>{{ $sftpError }}</span>
   </div>
@@ -66,11 +66,11 @@
 
 <div class="stat-card p-0 overflow-hidden">
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0" style="min-width: 720px;">
+    <table class="table table-hover align-middle mb-0 u-minw-720">
       <thead>
         <tr>
           <th>Import Function</th>
-          <th style="width:140px;">Action</th>
+          <th class="u-w-140">Action</th>
           <th>Latest File in SFTP</th>
         </tr>
       </thead>
@@ -80,7 +80,7 @@
           <tr>
             <td>
               <div class="fw-semibold">{{ $fn['label'] }}</div>
-              <div class="text-muted" style="font-size:.75rem;">{{ $fn['desc'] }}</div>
+              <div class="text-muted u-fs-075">{{ $fn['desc'] }}</div>
             </td>
             <td>
               <button type="button" class="btn btn-import btn-sm" data-type="{{ $fn['type'] }}"
@@ -97,7 +97,7 @@
                   No new file in upload/
                 </span>
                 @if ($fn['last'])
-                  <div class="text-muted mt-1" style="font-size:.72rem;">
+                  <div class="text-muted mt-1 u-fs-072">
                     Last imported: <span class="import-file">{{ $fn['last'] }}</span>
                   </div>
                 @endif
@@ -124,10 +124,10 @@
   <div class="modal-dialog modal-dialog-centered modal-sm">
     <div class="modal-content">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title" style="font-size:.95rem;">Confirm Send Email</h5>
+        <h5 class="modal-title u-fs-095">Confirm Send Email</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" style="font-size:.85rem;">
+      <div class="modal-body u-fs-085">
         Detect SEN stakeholder changes from today's imports and send ET-002 emails to the affected stakeholders?
       </div>
       <div class="modal-footer border-0 pt-0">
@@ -237,7 +237,7 @@
             <div class="mb-1"><span class="num num-update">${data.updated}</span> record(s) updated</div>
             <div><span class="num num-dup">${data.duplicated}</span> record(s) duplicated</div>
           </div>
-          <div class="text-muted mt-2" style="font-size:.78rem;">
+          <div class="text-muted mt-2 u-fs-078">
             <i class="bi bi-check-circle me-1"></i>${data.archive_moved ? `File archived to processed/ as ${esc(data.archive_name ?? fn.file)}` : 'File NOT archived (check server)'}
           </div>
         `);
@@ -249,7 +249,7 @@
             <i class="bi bi-x-octagon-fill text-danger mt-1"></i>
             <div>
               <div class="fw-semibold">${data.failures} error record(s) found in the CSV file.</div>
-              <div class="text-muted" style="font-size:.85rem;">No records imported. The file stays in upload/ — fix the source data and try again.</div>
+              <div class="text-muted u-fs-085">No records imported. The file stays in upload/ — fix the source data and try again.</div>
             </div>
           </div>
         `);
@@ -259,7 +259,7 @@
             <i class="bi bi-exclamation-triangle-fill text-danger mt-1"></i>
             <div>
               <div class="fw-semibold">Something went wrong.</div>
-              <div class="text-muted" style="font-size:.85rem;">${esc(data.message ?? 'Unknown error')}</div>
+              <div class="text-muted u-fs-085">${esc(data.message ?? 'Unknown error')}</div>
             </div>
           </div>
         `);
