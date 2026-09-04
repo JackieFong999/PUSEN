@@ -50,10 +50,14 @@ Connection settings are not hard-coded — read from `tblConfig_SFTP` (single ac
 | 7 | Start Date | tblAdvisor_Student.Start_Date | date — `YYYY-MM-DD` or `dd-MMM-yy` (e.g. 12-Mar-15 / 5-Sep-16, day 1–2 digits), normalized to YYYY-MM-DD |
 | 8 | End Date | tblAdvisor_Student.End_Date | date — `YYYY-MM-DD` or `dd-MMM-yy`, normalized to YYYY-MM-DD, mandatory |
 
-**Dedup model (no key in the CSV):** there is no key column and no composite key. Duplicate detection is a **full-row match** on all 5 stored fields `(Advisor_Id, Student_Id, Advisor_Type, Start_Date, End_Date)`. Consequences (confirmed):
-- The same advisor + student pair may have **multiple rows** (e.g. PRIMARY and PROG_LEADER) — each distinct combination is a separate record.
-- Changed data creates a **new row**; existing rows are never updated or removed by this import.
-- No UNIQUE index is added on (Advisor_Id, Student_Id) — it would block this design.
+**Dedup/update model (revised 2026-09-05):** the CSV has no key column, so the natural key is `(Advisor_Id, Student_Id, Advisor_Type)`. For each valid row:
+- The key lookup scans **ALL** existing rows (history included).
+- An **active** row = `Start_Date <= today <= End_Date`.
+- **Active row(s) exist AND the CSV row is full-row identical to an active row** → **Duplicated** (no DB change).
+- **Active row(s) exist AND dates differ** → **Update** — every active row of that key gets its `Start_Date`/`End_Date` replaced with the CSV values (+ audit stamps `updated_by`/`updated_ip`; `created_at` untouched).
+- **No active row** (key is new, or only historical rows exist) → **Insert** a new row — even if an identical *historical* row exists, and even if the CSV row's own dates do not cover today.
+- Historical rows are **never** modified or removed by this import.
+- The same advisor + student pair may have multiple rows (e.g. PRIMARY and PROG_LEADER, or multiple date ranges) — each is a separate record. No UNIQUE index on (Advisor_Id, Student_Id).
 
 **Staff re-enable side effect:** when a row's Advisor_Id exists in `tblStaff.Staff_Id` with `status = 1` (disabled), that staff record is re-enabled (`status = 0`). This runs inside the import transaction for all distinct Advisor_Ids in the CSV once the file passes validation.
 
@@ -88,24 +92,27 @@ Connection settings are not hard-coded — read from `tblConfig_SFTP` (single ac
 | f | Student Id not in tblStudent (CI) | Failure | Student Id not exist in tblStudent master table |
 | g | Advisor Type not in tblAdvisor_Type (CI) | Failure | Advisor Type not exist in tblAdvisor_Type master table |
 | h | Identical row (all 5 fields) already seen earlier in this file | Failure | Duplicated record in the same CSV file |
-| i | Identical row (all 5 fields) already exists in tblAdvisor_Student | Duplicated | Same data already exists, no update occurred |
-| j | otherwise | — | eligible for INSERT |
+| i | Active row(s) of the key exist & CSV row full-row identical to an active row | Duplicated | Same data already exists, no update occurred |
+| j | Active row(s) of the key exist & dates differ | Update | Information: Key already exist (active), Start_Date/End_Date will be updated |
+| k | otherwise (no active row for the key) | — | eligible for INSERT |
 
 - All fields trimmed before validation.
 - Case-insensitive matching; stored values normalized: Advisor_Id → tblStaff casing, Student_Id → tblStudent casing (uppercase letter), Advisor_Type → tblAdvisor_Type casing, dates → YYYY-MM-DD (two-digit years interpreted as 2000–2099).
-- i is informational — doesn't block the import.
-- There is **no Update case**: existing rows are never modified.
+- Key = (Advisor_Id, Student_Id, Advisor_Type); active = covers today; key lookup scans all rows.
+- i and j are informational — they don't block the import. Update rows are logged with Import_Status='Update'.
+- **Update/Insert decision (revised 2026-09-05, Jackie):** key found but not covering today → ignore the historical record, insert a new one.
 
 **Column widths (for rule c):** Advisor_Id 20 · Student_Id 12 · Advisor_Type 14 (dates are fixed-length, no width check).
 
 **Import (transaction, all-or-nothing) — runs only with zero Failure rows:**
-- INSERT (j): Advisor_Id, Student_Id, Advisor_Type, Start_Date, End_Date + updated_by=login user, updated_ip=request IP (created_at/updated_at use DB defaults).
+- INSERT (k): Advisor_Id, Student_Id, Advisor_Type, Start_Date, End_Date + updated_by=login user, updated_ip=request IP (created_at/updated_at use DB defaults).
+- UPDATE (j): for each active row Id of the key, `UPDATE tblAdvisor_Student SET Start_Date=?, End_Date=?, updated_by=?, updated_ip=?, updated_at=NOW() WHERE Id=?` (created_at untouched).
 - **Staff re-enable** (inside the same transaction): for each distinct Advisor_Id among the valid rows, `UPDATE tblStaff SET status = 0 WHERE Staff_Id = ? AND status = 1` (also stamps updated_by/updated_ip). Not counted in the result dialog.
 - One transaction: commit all or rollback all. Duplicated (i): no DB change.
 
 ## 5. Result Dialogs
 
-- Success: "X inserted / Y updated / Z duplicated" (Y is always 0 for this import)
+- Success: "X inserted / Y updated / Z duplicated"
 - Abort: "N error record(s) found. No records imported." — file stays in upload/
 - Counts: `SELECT Import_Status, COUNT(*) FROM tblImport_Failed_Log WHERE Import_Log_Id=? GROUP BY Import_Status`; inserted count from transaction result.
 
@@ -128,5 +135,5 @@ Fill per function: filename prefix / FileType / target table / stored columns / 
 2. Re-import of identical filename allowed; add a File_Name pre-check on `tblImport_Log` if it must be rejected.
 3. `processed/` = sibling of Remote_Path at chroot root (/home/import/processed), owned import:users.
 4. `tblConfig_SFTP` holds a single active row; add an Active flag column later if multiple environments are needed.
-5. Full-row dedup confirmed — multiple rows per (Advisor_Id, Student_Id) pair allowed; changed data inserts new rows; no updates ever.
+5. Key-based upsert confirmed (revised 2026-09-05): key = (Advisor_Id, Student_Id, Advisor_Type); active row(s) updated in place when dates differ, otherwise new rows inserted; historical rows never modified; identical-to-active rows are Duplicated.
 6. Date formats accepted: `YYYY-MM-DD` and `dd-MMM-yy` (e.g. 12-Mar-15, 5-Sep-16 — day may be 1 or 2 digits); both normalized to `YYYY-MM-DD`. Two-digit years → 2000–2099 (15 → 2015, 99 → 2099).

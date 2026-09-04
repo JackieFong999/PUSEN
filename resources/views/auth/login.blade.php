@@ -241,7 +241,7 @@
     @endif
   </div>
 
-  <div class="login-foot">Internal use only &middot; {{ config('app.name', 'PolyU SEN Data Bank') }} &middot; <span class="u-c-black u-fw-600">v1.10</span></div>
+  <div class="login-foot">Internal use only &middot; {{ config('app.name', 'PolyU SEN Data Bank') }} &middot; <span class="u-c-black u-fw-600">v1.11</span></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

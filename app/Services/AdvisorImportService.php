@@ -8,12 +8,21 @@ namespace App\Services;
  * Spec: docs/pusen01-import-spec-advisor.md
  *
  * Differences from other imports: 8-column CSV (cols 2-4 ignored), target
- * tblAdvisor_Student, and a FULL-ROW dedup model — the CSV has no key, so
- * duplicate detection compares all 5 stored fields
- * (Advisor_Id, Student_Id, Advisor_Type, Start_Date, End_Date). There is no
- * update case: existing rows are never modified, changed data inserts a new
- * row. Side effect (inside the transaction): disabled staff whose Staff_Id
- * appears as an Advisor_Id in the file are re-enabled (status 1 -> 0).
+ * tblAdvisor_Student.
+ *
+ * Dedup/update model (revised 2026-09-05, Jackie): the natural key is
+ * (Advisor_Id, Student_Id, Advisor_Type). For each valid CSV row:
+ *  - key lookup spans ALL rows (history included)
+ *  - an "active" row = Start_Date <= today <= End_Date
+ *  - active row(s) exist AND the CSV row is full-row identical to an active
+ *    row            -> Duplicated (no DB change)
+ *  - active row(s) exist AND dates differ -> UPDATE every active row of that
+ *    key (only Start_Date/End_Date + audit stamps)
+ *  - no active row  -> INSERT a new row (even if an identical historical row
+ *    exists, even if the CSV row's own dates don't cover today)
+ * Historical rows are never modified. Side effect (inside the transaction):
+ * disabled staff whose Staff_Id appears as an Advisor_Id in the file are
+ * re-enabled (status 1 -> 0).
  */
 class AdvisorImportService extends AbstractImportService
 {
@@ -68,8 +77,13 @@ class AdvisorImportService extends AbstractImportService
      * Validate every row; write tblImport_Failed_Log for non-insert rows.
      * Rules (first hit wins): a column count, b empty, c max length,
      * d date format, e Advisor in tblStaff, f Student in tblStudent,
-     * g Advisor Type in master, h in-file duplicate, i full-row duplicate
-     * in tblAdvisor_Student, j new row -> INSERT. No update case.
+     * g Advisor Type in master, h in-file duplicate (full row),
+     * then the key-based decision (revised 2026-09-05, Jackie):
+     *   i active row exists & CSV row full-row identical to it -> Duplicated
+     *   j active row exists & dates differ                        -> Update
+     *   k no active row                                          -> Insert
+     * (key = Advisor_Id|Student_Id|Advisor_Type; active = covers today;
+     *  key lookup scans all rows; identical HISTORICAL rows never block insert)
      *
      * @return array{failures: int, duplicated: int, inserts: array, updates: array,
      *               advisorIds: array} advisorIds = distinct Advisor_Ids to re-enable
@@ -92,14 +106,19 @@ class AdvisorImportService extends AbstractImportService
             $typeMap[strtolower($t->Advisor_Type)] = $t->Advisor_Type;
         }
 
-        // existing rows keyed by lowercase full-row (all 5 stored fields)
-        $existingMap = [];
+        // existing rows grouped by the natural key (Advisor_Id|Student_Id|Advisor_Type),
+        // each with its row Id + full-row key + active flag (covers today)
+        $byKey = [];
+        $today = now()->toDateString();
         foreach ($conn->table('tblAdvisor_Student')
-                     ->select('Advisor_Id', 'Student_Id', 'Advisor_Type', 'Start_Date', 'End_Date')
+                     ->select('Id', 'Advisor_Id', 'Student_Id', 'Advisor_Type', 'Start_Date', 'End_Date')
                      ->get() as $r) {
-            $existingMap[$this->rowKey(
-                $r->Advisor_Id, $r->Student_Id, $r->Advisor_Type, $r->Start_Date, $r->End_Date
-            )] = true;
+            $k = $this->key3($r->Advisor_Id, $r->Student_Id, $r->Advisor_Type);
+            $byKey[$k][] = [
+                'id'      => $r->Id,
+                'full'    => $this->rowKey($r->Advisor_Id, $r->Student_Id, $r->Advisor_Type, $r->Start_Date, $r->End_Date),
+                'active'  => $r->Start_Date <= $today && $r->End_Date >= $today,
+            ];
         }
 
         $fileDate  = $this->fileDateFromName($filename);
@@ -107,11 +126,11 @@ class AdvisorImportService extends AbstractImportService
         $advisorIds = []; // distinct advisor ids among valid rows (for staff re-enable)
         $counters = ['failures' => 0, 'duplicated' => 0];
         $inserts  = [];
+        $updates  = [];
 
         foreach ($rows as $row) {
             $status  = null;
             $remarks = null;
-            $entry   = null; // normalized insert candidate
 
             // a. column count (cols 2-4 are present but ignored)
             if (count($row) !== 8) {
@@ -165,22 +184,45 @@ class AdvisorImportService extends AbstractImportService
                                 $status  = 'Failure';
                                 $remarks = 'Advisor Type not exist in tblAdvisor_Type master table.';
                             } else {
-                                $key = $this->rowKey($advNorm, $stuNorm, $typNorm, $startNorm, $endNorm);
-
-                                // h. identical row already in this file
-                                if (isset($seenKeys[$key])) {
+                                // in-file duplicate check stays FULL-ROW based (unchanged)
+                                $fullKey = $this->rowKey($advNorm, $stuNorm, $typNorm, $startNorm, $endNorm);
+                                if (isset($seenKeys[$fullKey])) {
                                     $status  = 'Failure';
                                     $remarks = 'Duplicated record in the same CSV file';
                                 } else {
-                                    $seenKeys[$key] = true;
+                                    $seenKeys[$fullKey] = true;
                                     $advisorIds[$advNorm] = $advNorm;
 
-                                    // i. identical row already in tblAdvisor_Student
-                                    if (isset($existingMap[$key])) {
-                                        $status  = 'Duplicated';
-                                        $remarks = 'Same data already exists, no update occurred.';
+                                    // --- key-based decision (revised 2026-09-05) ---
+                                    $key = $this->key3($advNorm, $stuNorm, $typNorm);
+                                    $existing = $byKey[$key] ?? [];
+                                    $activeRows = array_values(array_filter(
+                                        $existing,
+                                        fn ($e) => $e['active']
+                                    ));
+
+                                    if ($activeRows) {
+                                        $identicalToActive = collect($activeRows)
+                                            ->contains(fn ($e) => $e['full'] === $fullKey);
+                                        if ($identicalToActive) {
+                                            // i. same data already active -> no change
+                                            $status  = 'Duplicated';
+                                            $remarks = 'Same data already exists, no update occurred.';
+                                        } else {
+                                            // j. active row(s) exist but dates differ -> update all active rows
+                                            $status  = 'Update';
+                                            $remarks = 'Information: Key already exist (active), Start_Date/End_Date will be updated.';
+                                            $updates[] = [
+                                                'ids'     => array_column($activeRows, 'id'),
+                                                'advisor' => $advNorm,
+                                                'student' => $stuNorm,
+                                                'type'    => $typNorm,
+                                                'start'   => $startNorm,
+                                                'end'     => $endNorm,
+                                            ];
+                                        }
                                     } else {
-                                        // j. new row
+                                        // k. no active row -> insert (historical rows untouched)
                                         $inserts[] = [
                                             'advisor' => $advNorm,
                                             'student' => $stuNorm,
@@ -223,16 +265,17 @@ class AdvisorImportService extends AbstractImportService
             'failures'   => $counters['failures'],
             'duplicated' => $counters['duplicated'],
             'inserts'    => $inserts,
-            'updates'    => [], // no update case for this import
+            'updates'    => $updates,
             'advisorIds' => array_values($advisorIds),
         ];
     }
 
     /**
-     * Insert new rows + re-enable disabled staff (inside the caller's
-     * transaction). No update case: existing rows are never modified.
+     * Insert new rows, update active rows of existing keys, and re-enable
+     * disabled staff (inside the caller's transaction).
+     * Historical rows are never modified.
      *
-     * @return array{0: int, 1: int} [inserted, updated=0]
+     * @return array{0: int, 1: int} [inserted, updated]
      */
     protected function applyChanges($conn, array $plan, string $user, string $ip): array
     {
@@ -251,6 +294,23 @@ class AdvisorImportService extends AbstractImportService
             $inserted++;
         }
 
+        // update every active row of the key (Start_Date/End_Date only + audit)
+        $updated = 0;
+        foreach ($plan['updates'] as $r) {
+            foreach ($r['ids'] as $id) {
+                $conn->table('tblAdvisor_Student')
+                    ->where('Id', $id)
+                    ->update([
+                        'Start_Date' => $r['start'],
+                        'End_Date'   => $r['end'],
+                        'updated_by' => $user,
+                        'updated_ip' => $ip,
+                        'updated_at' => now(),
+                    ]);
+                $updated++;
+            }
+        }
+
         // re-enable disabled staff for every distinct Advisor_Id in the file
         foreach ($plan['advisorIds'] ?? [] as $advisorId) {
             $conn->table('tblStaff')
@@ -263,10 +323,16 @@ class AdvisorImportService extends AbstractImportService
                 ]);
         }
 
-        return [$inserted, 0];
+        return [$inserted, $updated];
     }
 
-    /** Lowercased full-row key used for in-file and DB duplicate checks. */
+    /** Lowercased natural key (Advisor_Id|Student_Id|Advisor_Type). */
+    private function key3($adv, $stu, $typ): string
+    {
+        return strtolower(implode('|', [$adv, $stu, $typ]));
+    }
+
+    /** Lowercased full-row key used for in-file and active-row duplicate checks. */
     private function rowKey($adv, $stu, $typ, $start, $end): string
     {
         return strtolower(implode('|', [$adv, $stu, $typ, $start, $end]));

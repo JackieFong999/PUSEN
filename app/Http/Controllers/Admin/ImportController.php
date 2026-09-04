@@ -66,11 +66,11 @@ class ImportController extends Controller
                 [
                     'type'    => 'advisor',
                     'label'   => 'Advisor List for the Student List',
-                    'desc'    => 'tblAdvisor_Student — full-row dedup (no key), no update case',
+                    'desc'    => 'tblAdvisor_Student - key (Advisor_Id, Student_Id, Advisor_Type); active row updated, else inserted',
                     'file'    => $advisor['filename'],
                     'ready'   => $advisor['exists'],
                     'last'    => $this->advisorImportService->lastImportedFile(),
-                    'confirm' => 'This will validate every row and then insert new advisor-student records in one transaction. Existing records are never updated.',
+                    'confirm' => 'This will validate every row and then, in one transaction, insert new advisor-student records or update the Start_Date/End_Date of currently-active records with the same key (Advisor_Id, Student_Id, Advisor_Type). Historical records are never modified.',
                 ],
                 [
                     'type'    => 'studentreg',
